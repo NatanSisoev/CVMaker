@@ -3,8 +3,17 @@ body {
   height: 100%;
 }
 
-.navbar-brand {
-  font-family: 'Peralta', cursive;
+@font-face {
+  font-family: "Computer Modern";
+  src: url("{% static 'fonts/cmunss.otf' %}") format('opentype');
+}
+
+body {
+  font-family: "Computer Modern", sans-serif;
+}
+
+.navbar {
+  font-family: "Computer Modern", sans-serif;
 }
 
 blockquote {
