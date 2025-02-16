@@ -4,8 +4,8 @@ from django.utils import timezone
 
 from entries.models import CVEntry
 
-# convert { CV, CVDesign, CVLocale } -> python dict (method for each one, where cv is recursive)
-# convert python dict ->  rendercv.data.RenderCVDataModel (using rendercv.api.read_a_python_dictionary_and_return_a_data_model)
+# convert { CV, CVDesign, CVLocale } -> python asdict (method for each one, where cv is recursive)
+# convert python asdict ->  rendercv.data.RenderCVDataModel (using rendercv.api.read_a_python_dictionary_and_return_a_data_model)
 # convert RenderCVDataModel -> typst file (using rendercv.api.create_a_typst_file)
 #                                         -> pdf file (using rendercv.api.render_a_pdf_from_typst)
 #                                         -> pdf file (using rendercv.api.render_pngs_from_typst)
@@ -40,7 +40,11 @@ class CVDesign(models.Model):
     def __str__(self) -> str:
         return f"[{self.__class__.__name__}({self.theme})]"
 
+    def asdict(self):
+        # TODO: return the python asdict with design (read file in yaml and process)
+        return {"theme": self.theme, "nom fitxer": self.custom_design.name}
 
+    
 class CVLocale(models.Model):
     PHONENUMBERFORMAT_CHOICES =  [("national", "National"), ("international", "International"), ("E164", "E164")]
 
@@ -76,6 +80,21 @@ class CVLocale(models.Model):
     full_names_of_months = models.JSONField(blank=True, default=FULLNAMESOFMONTHS_DEFAULT,
                                             help_text="Full names of the months in the locale.")
 
+    def asdict(self):
+        return {"language": self.language,
+                "phone_number_format": self.phone_number_format,
+                "page_numbering_template": self.page_numbering_template,
+                "last_updated_date_template": self.last_updated_date_template,
+                "date_template": self.date_template,
+                "month": self.month,
+                "months": self.months,
+                "year": self.year,
+                "years": self.years,
+                "present": self.present,
+                "to": self.to,
+                "abbreviations_for_months": self.abbreviations_for_months,
+                "full_names_of_months": self.full_names_of_months}
+
     def __str__(self) -> str:
         return f"{self.__class__.__name__}({self.language})"
 
@@ -94,6 +113,7 @@ class CV(models.Model):
                               help_text="A URL to the individual's personal or professional website")
     social_networks = models.JSONField(null=True, blank=True,
                                        help_text="A list of social media profiles in JSON format")
+
     date = models.DateField(default=timezone.now,
                             help_text="The date that will be used for various computations (default: today)")
     bold_keywords = models.JSONField(default=list, blank=True,
@@ -105,6 +125,42 @@ class CV(models.Model):
 
     def __str__(self) -> str:
         return f"[{self.__class__.__name__}({self.name})]"
+
+    @property
+    def _social_networks(self):
+        return [{"network": network, "username": username} for network, username in self.social_networks.items()]
+
+    @property
+    def _cv(self):
+        # TODO: finish sections (get all related entries)
+        return {"name": self.name,
+                "location": self.location,
+                "email": self.email,
+                "photo": self.photo.name,
+                "phone": f"tel:{self.phone}",
+                "website": self.website,
+                "social_networks": self._social_networks,
+                "sections": None}
+
+    @property
+    def _design(self):
+        return self.design.asdict()
+
+    @property
+    def _settings(self):
+        return {"date": self.date,
+                "bold_keywords": self.bold_keywords,
+                "render_command": None}
+
+    @property
+    def _locale(self):
+        return self.locale.asdict()
+    
+    def asdict(self):
+        return {"cv": self._cv,
+                "design": self._design,
+                "rendercv_settings": self._settings,
+                "locale": self._locale}
 
 
 class CVEntryOrder(models.Model):

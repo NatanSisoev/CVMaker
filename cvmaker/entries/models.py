@@ -4,6 +4,7 @@ from django.db import models
 
 class CVEntry(models.Model):
     user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name='%(class)s')
+    alias = models.CharField(max_length=20, null=False, blank=False, help_text="Alias for the CV entry")
     start_date = models.DateField(null=True, blank=True, help_text="The start date")
     end_date = models.DateField(null=True, blank=True, help_text="The end date")
     date = models.DateField(null=True, blank=True, help_text="Custom date (overrides start_date and end_date)")
@@ -11,7 +12,7 @@ class CVEntry(models.Model):
     highlights = models.CharField(max_length=500, blank=True, help_text="List of highlights separated by ;")
 
     def __str__(self) -> str:
-        return f"[{self.__class__.__name__}]"
+        return f"[{self.__class__.__name__}({self.alias})]"
 
 
 class EducationEntry(CVEntry):

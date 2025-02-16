@@ -5,6 +5,10 @@ cv:
   location: Sabadell, Barcelona
   email: natan.sisoev@gmail.com
   phone: tel:+34 633 20 29 34
+  website: "http://example.com"
+  social_networks:
+    - network: GitHub
+      username: "@natan"
 
   sections:
     # --- ACADÈMIC ---
@@ -100,3 +104,54 @@ cv:
         details: "escalada, alpinisme, escacs, cubs de Rubik, bateria, cuinar, apologètica, estratègia, jocs de taula"
       - label: Qualitats personals
         details: "responsable i compromès amb els projectes, proactiu i amb iniciativa per aprendre de manera autònoma, excel·lent treball en equip i habilitats comunicatives"
+design:
+  theme: classic
+  page:
+    size: a4
+rendercv_settings:
+  date: 2025-02-12
+  bold_keywords:
+    - Python
+  render_command:
+    output_folder_name: RenderCV\output
+    dont_generate_html: false
+    dont_generate_markdown: false
+    dont_generate_png: false
+locale:
+  language: ca
+  phone_number_format: national
+  page_numbering_template: NAME - Pàgina PAGE_NUMBER de TOTAL_PAGES
+  last_updated_date_template: Última actualització el TODAY
+  date_template: MONTH_ABBREVIATION YEAR
+  month: mes
+  months: mesos
+  year: any
+  years: anys
+  present: present
+  to: –
+  abbreviations_for_months:
+    - Gen
+    - Febr
+    - Març
+    - Abr
+    - Maig
+    - Juny
+    - Jul
+    - Ag
+    - Set
+    - Oct
+    - Nov
+    - Des
+  full_names_of_months:
+    - Gener
+    - Febrer
+    - Març
+    - Abril
+    - Maig
+    - Juny
+    - Juliol
+    - Agost
+    - Setembre
+    - Octubre
+    - Novembre
+    - Desembre
