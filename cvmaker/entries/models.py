@@ -14,6 +14,20 @@ class CVEntry(models.Model):
     def __str__(self) -> str:
         return f"[{self.__class__.__name__}({self.alias})]"
 
+    def asdict(self) -> dict:
+        info = {}
+        if self.start_date:
+            info["start_date"] = self.start_date
+        if self.end_date:
+            info["end_date"] = self.end_date
+        if self.date:
+            info["date"] = self.date
+        if self.summary:
+            info["summary"] = self.summary
+        if self.highlights:
+            info["highlights"] = self.highlights
+        return info
+
 
 class EducationEntry(CVEntry):
     institution = models.CharField(max_length=100, null=False, blank=False, help_text="The name of the institution")
@@ -23,6 +37,18 @@ class EducationEntry(CVEntry):
 
     def __str__(self) -> str:
         return f"[{self.institution}({self.area})]"
+
+    def asdict(self) -> dict:
+        info = super().asdict()
+        if self.institution:
+            info["institution"] = self.institution
+        if self.area:
+            info["area"] = self.area
+        if self.degree:
+            info["degree"] = self.degree
+        if self.location:
+            info["location"] = self.location
+        return info
 
 
 class ExperienceEntry(CVEntry):
@@ -41,6 +67,14 @@ class NormalEntry(CVEntry):
     def __str__(self) -> str:
         return f"[{self.name}]"
 
+    def asdict(self) -> dict:
+        info = super().asdict()
+        if self.name:
+            info["name"] = self.name
+        if self.location:
+            info["location"] = self.location
+        return info
+
 
 class PublicationEntry(CVEntry):
     title = models.CharField(max_length=200, null=False, blank=False, help_text="The title of the publication")
@@ -52,6 +86,20 @@ class PublicationEntry(CVEntry):
     def __str__(self) -> str:
         return f"[{self.title}]"
 
+    def asdict(self) -> dict:
+        info = super().asdict()
+        if self.title:
+            info["title"] = self.title
+        if self.authors:
+            info["authors"] = self.authors
+        if self.doi:
+            info["doi"] = self.doi
+        if self.url:
+            info["url"] = self.url
+        if self.journal:
+            info["journal"] = self.journal
+        return info
+
 
 class OneLineEntry(CVEntry):
     label = models.CharField(max_length=100, null=False, blank=False, help_text="The label of the entry")
@@ -60,6 +108,14 @@ class OneLineEntry(CVEntry):
     def __str__(self) -> str:
         return f"[{self.label}({self.details})]"
 
+    def asdict(self) -> dict:
+        info = super().asdict()
+        if self.label:
+            info["label"] = self.label
+        if self.details:
+            info["details"] = self.details
+        return info
+
 
 class BulletEntry(CVEntry):
     bullet = models.CharField(max_length=300, null=False, blank=False, help_text="The bullet point")
@@ -67,12 +123,24 @@ class BulletEntry(CVEntry):
     def __str__(self) -> str:
         return f"[Bulleted({self.bullet})]"
 
+    def asdict(self) -> dict:
+        info = super().asdict()
+        if self.bullet:
+            info["bullet"] = self.bullet
+        return info
+
 
 class NumberedEntry(CVEntry):
     number = models.CharField(max_length=300, null=False, blank=False, help_text="The numbered entry content")
 
     def __str__(self) -> str:
         return f"[Numbered({self.number})]"
+
+    def asdict(self) -> dict:
+        info = super().asdict()
+        if self.number:
+            info["number"] = self.number
+        return info
 
 
 class ReversedNumberedEntry(CVEntry):
@@ -82,9 +150,21 @@ class ReversedNumberedEntry(CVEntry):
     def __str__(self) -> str:
         return f"[ReversedNumbered({self.reversed_number})]"
 
+    def asdict(self) -> dict:
+        info = super().asdict()
+        if self.reversed_number:
+            info["reversed_number"] = self.reversed_number
+        return info
+
 
 class TextEntry(CVEntry):
     text = models.TextField(null=False, blank=False, help_text="The text content for the entry")
 
     def __str__(self) -> str:
         return f"[Text({self.text})]"
+
+    def asdict(self) -> dict:
+        info = super().asdict()
+        if self.text:
+            info["text"] = self.text
+        return info

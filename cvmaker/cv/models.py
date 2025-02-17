@@ -1,7 +1,9 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
+from rendercv.data import read_a_yaml_file
 
+from cvmaker import settings
 from entries.models import CVEntry
 
 # convert { CV, CVDesign, CVLocale } -> python asdict (method for each one, where cv is recursive)
@@ -41,8 +43,7 @@ class CVDesign(models.Model):
         return f"[{self.__class__.__name__}({self.theme})]"
 
     def asdict(self):
-        # TODO: return the python asdict with design (read file in yaml and process)
-        return {"theme": self.theme, "nom fitxer": self.custom_design.name}
+        return {"theme": self.theme} if not self.custom_design else read_a_yaml_file(settings.MEDIA_ROOT / self.custom_design.name)["design"]
 
     
 class CVLocale(models.Model):
@@ -133,6 +134,10 @@ class CV(models.Model):
     @property
     def _cv(self):
         # TODO: finish sections (get all related entries)
+        # problem: used as CVEntry not specific entries
+        entries = self.entries.all()
+        sections = {entry.alias: [entry.asdict()] for entry in entries}
+        print(sections)
         return {"name": self.name,
                 "location": self.location,
                 "email": self.email,
@@ -150,7 +155,7 @@ class CV(models.Model):
     def _settings(self):
         return {"date": self.date,
                 "bold_keywords": self.bold_keywords,
-                "render_command": None}
+                "render_command": {"output_folder_name": "out"}}
 
     @property
     def _locale(self):
