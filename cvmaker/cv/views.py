@@ -1,8 +1,6 @@
 from django.http import FileResponse, HttpResponse
 import os
 from rendercv import data
-from rendercv.cli.utilities import read_and_construct_the_input, get_default_render_command_cli_arguments
-from rendercv.data import validate_input_dictionary_and_return_the_data_model
 from rendercv.renderer import renderer
 
 from cv.models import CV
@@ -17,10 +15,9 @@ def render_to_pdf(request):
     # TODO: cv.photo location
 
     cv = CV.objects.get(user=request.user)
-    print(cv.entries.all(), file=log)
-    data_model = data.validate_input_dictionary_and_return_the_data_model(cv.asdict())
+    print(cv.serialize(), file=log)
+    data_model = data.validate_input_dictionary_and_return_the_data_model(cv.serialize())
 
-    print(f"{data_model.cv.photo.name}", file=log)
 
     ############################################
 

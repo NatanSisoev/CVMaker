@@ -1,0 +1,82 @@
+@startuml
+' Entities
+class CV {
+  + name: CharField
+}
+
+class CVInfo {
+  + full_name: CharField
+  + email: EmailField
+  + phone: CharField
+}
+
+class CVDesign {
+  + theme: CharField
+  + custom_css: TextField
+}
+
+class CVLocale {
+  + language: CharField
+  + date_format: CharField
+}
+
+class CVSettings {
+  + output_format: CharField
+  + page_size: CharField
+}
+
+class Section {
+  + title: CharField
+}
+
+class SectionEntry {
+  + order: PositiveIntegerField
+  + content_type: ForeignKey(ContentType)
+  + object_id: PositiveIntegerField
+  + content_object: GenericForeignKey
+}
+
+class EducationEntry {
+  + institution: CharField
+  + degree: CharField
+}
+
+class ExperienceEntry {
+  + company: CharField
+  + position: CharField
+}
+
+' Relationships
+CV ||--o{ CVInfo : has
+CV ||--o{ CVDesign : uses
+CV ||--o{ CVLocale : uses
+CV ||--o{ CVSettings : uses
+
+CVInfo "1" o-- "0..*" Section : through CVInfoSection
+CVInfo --o CVInfoSection
+
+Section "1" o-- "0..*" SectionEntry : contains
+SectionEntry ..> EducationEntry : generic
+SectionEntry ..> ExperienceEntry : generic
+
+class CVInfoSection {
+  + order: PositiveIntegerField
+}
+
+' Notes
+note top of CV
+  Main CV container with direct relationships
+  to singleton components
+end note
+
+note top of CVInfo
+  Contains personal information and
+  sections organization through M2M
+end note
+
+note top of SectionEntry
+  Generic foreign key relationship
+  to any entry type
+end note
+
+@enduml
