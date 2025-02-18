@@ -9,6 +9,7 @@ from entries.models import EducationEntry, ExperienceEntry, PublicationEntry, On
 def home(request):
     if request.user.is_authenticated:
         context = {
+            # TODO: pass CV/ CVInfo not entries
             'education_entries': EducationEntry.objects.filter(user=request.user),
             'experience_entries': ExperienceEntry.objects.filter(user=request.user),
             'normal_entries': NormalEntry.objects.filter(user=request.user),
@@ -18,7 +19,8 @@ def home(request):
             'numbered_entries': NumberedEntry.objects.filter(user=request.user),
             'reversed_numbered_entries': ReversedNumberedEntry.objects.filter(user=request.user),
             'text_entries': TextEntry.objects.filter(user=request.user),
-            'user': request.user
+            'user': request.user,
+            'cv_id': 1  # TODO: get user cvs
         }
         return render(request, "home.html", context)
     else:

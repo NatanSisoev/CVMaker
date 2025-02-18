@@ -9,7 +9,9 @@
         <button id="savePdfButton" class="btn btn-primary">Save as PDF</button>
         <script>
             document.getElementById("savePdfButton").addEventListener("click", function () {
-                window.open("{% url 'render' %}", "_blank");
+                const cvId = "{{ cv_id }}";
+                const url = "{% url 'render-cv' cv_id=0 %}".replace("0", cvId);
+                window.open(url, "_blank");
             });
         </script>
     </div>

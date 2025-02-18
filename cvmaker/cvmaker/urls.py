@@ -19,13 +19,19 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 
-from cv.views import render_to_pdf
 from entries.views import home
 
 urlpatterns = [
+    # ADMIN
     path("admin/", admin.site.urls),
-    path("render/", render_to_pdf, name="render"),
+
+    # CV CRUD
+    path("<cv_id>/", include("cv.urls")),
+
+    # ACCOUNTS
     path("accounts/", include("accounts.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
-    path("", home, name="home"),  # new
+
+    # HOME
+    path("", home, name="home"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
