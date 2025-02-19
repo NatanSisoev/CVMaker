@@ -1,274 +1,97 @@
+<!-- home.html -->
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}My CV Entries{% endblock %}
+{% block title %}Create Professional CVs - CV Maker Pro{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>My CV Entries</h1>
-        <button id="savePdfButton" class="btn btn-primary">Save as PDF</button>
-        <script>
-            document.getElementById("savePdfButton").addEventListener("click", function () {
-                const cvId = "{{ cv_id }}";
-                const url = "{% url 'render-cv' cv_id=0 %}".replace("0", cvId);
-                window.open(url, "_blank");
-            });
-        </script>
-    </div>
-    <!-- Education Entries Section -->
-    <div class="mb-5">
-        <h2>Education Entries</h2>
-        {% if education_entries %}
-        <div class="row row-cols-1 g-4 justify-content-center">
-            {% for entry in education_entries %}
-            <div class="col-12">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ entry.institution }} ({{ entry.area }})</h5>
-                        {% if entry.degree %}
-                        <p class="card-text"><strong>Degree:</strong> {{ entry.degree }}</p>
-                        {% endif %}
-                        {% if entry.location %}
-                        <p class="card-text"><strong>Location:</strong> {{ entry.location }}</p>
-                        {% endif %}
-                        {% if entry.start_date %}
-                        <p class="card-text"><strong>Start Date:</strong> {{ entry.start_date }}</p>
-                        {% endif %}
-                        {% if entry.end_date %}
-                        <p class="card-text"><strong>End Date:</strong> {{ entry.end_date }}</p>
-                        {% endif %}
-                        {% if entry.date %}
-                        <p class="card-text"><strong>Date:</strong> {{ entry.date }}</p>
-                        {% endif %}
-                        {% if entry.summary %}
-                        <p class="card-text"><strong>Summary:</strong> {{ entry.summary }}</p>
-                        {% endif %}
-                        {% if entry.highlights %}
-                        <p class="card-text"><strong>Highlights:</strong> {{ entry.highlights }}</p>
-                        {% endif %}
-                        {% if entry.description %}
-                        <p class="card-text"><strong>Description:</strong> {{ entry.description }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container text-center">
+            <h1 class="display-4 mb-4">Create Stunning CVs in Minutes</h1>
+            <p class="lead mb-4">Professional templates • Easy customization • Download in PDF</p>
+            <a href="{% url 'cv-create' %}" class="btn btn-custom btn-lg px-5">
+                Create Your CV Now
+            </a>
         </div>
+    </div>
+
+    <!-- CV Dashboard -->
+    <div class="container my-5">
+        <h2 class="mb-4">Your CVs</h2>
+
+        {% if cvs %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for cv in cvs %}
+                    <div class="col">
+                        <div class="card cv-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ cv.alias }}</h5>
+                                <p class="card-text text-muted">
+                                    Last updated: {{ cv.modified_date|date:"M d, Y" }}
+                                </p>
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'cv-edit' cv.id %}" class="btn btn-outline-secondary">
+                                        Edit CV
+                                    </a>
+                                    <a href="{% url 'cv-detail' cv.id %}" class="btn btn-outline-primary">
+                                        Preview
+                                    </a>
+                                    <a href="{% url 'cv-download' cv.id %}" class="btn btn-outline-success">
+                                        Download PDF
+                                    </a>
+                                    <button class="btn btn-outline-danger" data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal{{ cv.id }}">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
         {% else %}
-        <p>No education entries found.</p>
+            <div class="text-center py-5">
+                <h4 class="mb-3">No CVs found</h4>
+                <p class="text-muted mb-4">Start by creating your first professional CV</p>
+                <a href="{% url 'cv-create' %}" class="btn btn-custom btn-lg px-5">
+                    Create New CV
+                </a>
+            </div>
         {% endif %}
     </div>
 
-    <!-- Experience Entries Section -->
-    <div class="mb-5">
-        <h2>Experience Entries</h2>
-        {% if experience_entries %}
-        <div class="row row-cols-1 g-4 justify-content-center">
-            {% for entry in experience_entries %}
-            <div class="col-12">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ entry.company }} - {{ entry.position }}</h5>
-                        {% if entry.location %}
-                        <p class="card-text"><strong>Location:</strong> {{ entry.location }}</p>
-                        {% endif %}
-                        {% if entry.start_date %}
-                        <p class="card-text"><strong>Start Date:</strong> {{ entry.start_date }}</p>
-                        {% endif %}
-                        {% if entry.end_date %}
-                        <p class="card-text"><strong>End Date:</strong> {{ entry.end_date }}</p>
-                        {% endif %}
-                        {% if entry.date %}
-                        <p class="card-text"><strong>Date:</strong> {{ entry.date }}</p>
-                        {% endif %}
-                        {% if entry.summary %}
-                        <p class="card-text"><strong>Summary:</strong> {{ entry.summary }}</p>
-                        {% endif %}
-                        {% if entry.highlights %}
-                        <p class="card-text"><strong>Highlights:</strong> {{ entry.highlights }}</p>
-                        {% endif %}
-                        {% if entry.description %}
-                        <p class="card-text"><strong>Description:</strong> {{ entry.description }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p>No experience entries found.</p>
-        {% endif %}
+    <!-- Create New CV Floating Button -->
+    <div class="position-fixed bottom-0 end-0 m-4">
+        <a href="{% url 'cv-create' %}" class="btn btn-custom btn-lg rounded-circle shadow-lg"
+           style="width: 60px; height: 60px; padding: 0;">
+            <span style="font-size: 24px">+</span>
+        </a>
     </div>
+{% endblock %}
 
-    <!-- General Entries Section -->
-    <div class="mb-5">
-        <h2>General Entries</h2>
-        {% if normal_entries %}
-        <div class="row row-cols-1 g-4 justify-content-center">
-            {% for entry in normal_entries %}
-            <div class="col-12">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ entry.name }}</h5>
-                        {% if entry.location %}
-                        <p class="card-text"><strong>Location:</strong> {{ entry.location }}</p>
-                        {% endif %}
-                        {% if entry.start_date %}
-                        <p class="card-text"><strong>Start Date:</strong> {{ entry.start_date }}</p>
-                        {% endif %}
-                        {% if entry.end_date %}
-                        <p class="card-text"><strong>End Date:</strong> {{ entry.end_date }}</p>
-                        {% endif %}
-                        {% if entry.date %}
-                        <p class="card-text"><strong>Date:</strong> {{ entry.date }}</p>
-                        {% endif %}
-                        {% if entry.summary %}
-                        <p class="card-text"><strong>Summary:</strong> {{ entry.summary }}</p>
-                        {% endif %}
-                        {% if entry.highlights %}
-                        <p class="card-text"><strong>Highlights:</strong> {{ entry.highlights }}</p>
-                        {% endif %}
-                        {% if entry.description %}
-                        <p class="card-text"><strong>Description:</strong> {{ entry.description }}</p>
-                        {% endif %}
-                    </div>
+{% block extra_js %}
+    <!-- Delete Confirmation Modals -->
+    {% for cv in cvs %}
+    <div class="modal fade" id="deleteModal{{ cv.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete CV</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete "{{ cv.alias }}"?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form action="{% url 'cv-delete' cv.id %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
                 </div>
             </div>
-            {% endfor %}
         </div>
-        {% else %}
-        <p>No general entries found.</p>
-        {% endif %}
     </div>
-
-    <!-- Publications Section -->
-    <div class="mb-5">
-        <h2>Publications</h2>
-        {% if publication_entries %}
-        <div class="row row-cols-1 g-4 justify-content-center">
-            {% for entry in publication_entries %}
-            <div class="col-12">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ entry.title }}</h5>
-                        <p class="card-text"><strong>Authors:</strong> {{ entry.authors }}</p>
-                        {% if entry.doi %}
-                        <p class="card-text"><strong>DOI:</strong> {{ entry.doi }}</p>
-                        {% endif %}
-                        {% if entry.url %}
-                        <p class="card-text"><strong>URL:</strong> <a href="{{ entry.url }}" target="_blank">Link</a>
-                        </p>
-                        {% endif %}
-                        {% if entry.journal %}
-                        <p class="card-text"><strong>Journal:</strong> {{ entry.journal }}</p>
-                        {% endif %}
-                        {% if entry.date %}
-                        <p class="card-text"><strong>Date:</strong> {{ entry.date }}</p>
-                        {% endif %}
-                        {% if entry.description %}
-                        <p class="card-text"><strong>Description:</strong> {{ entry.description }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p>No publications found.</p>
-        {% endif %}
-    </div>
-
-    <!-- One-Line Entries Section -->
-    <div class="mb-5">
-        <h2>One-Line Entries</h2>
-        {% if oneline_entries %}
-        <div class="row row-cols-1 g-4 justify-content-center">
-            {% for entry in oneline_entries %}
-            <div class="col-12">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ entry.label }}</h5>
-                        <p class="card-text">{{ entry.details }}</p>
-                        {% if entry.description %}
-                        <p class="card-text"><strong>Description:</strong> {{ entry.description }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p>No one-line entries found.</p>
-        {% endif %}
-    </div>
-
-    <!-- Bullet Entries Section -->
-    <div class="mb-5">
-        <h2>Bullet Entries</h2>
-        {% if bullet_entries %}
-        <div class="row row-cols-1 g-4 justify-content-center">
-            {% for entry in bullet_entries %}
-            <div class="col-12">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <p class="card-text">{{ entry.bullet }}</p>
-                        {% if entry.description %}
-                        <p class="card-text"><strong>Description:</strong> {{ entry.description }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p>No bullet entries found.</p>
-        {% endif %}
-    </div>
-
-    <!-- Numbered Entries Section -->
-    <div class="mb-5">
-        <h2>Numbered Entries</h2>
-        {% if numbered_entries %}
-        <div class="row row-cols-1 g-4 justify-content-center">
-            {% for entry in numbered_entries %}
-            <div class="col-12">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <p class="card-text">{{ entry.number }}</p>
-                        {% if entry.description %}
-                        <p class="card-text"><strong>Description:</strong> {{ entry.description }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p>No numbered entries found.</p>
-        {% endif %}
-    </div>
-
-    <!-- Reversed Numbered Entries Section -->
-    <div class="mb-5">
-        <h2>Reversed Numbered Entries</h2>
-        {% if reversed_numbered_entries %}
-        <div class="row row-cols-1 g-4 justify-content-center">
-            {% for entry in reversed_numbered_entries %}
-            <div class="col-12">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <p class="card-text">{{ entry.reversed_number }}</p>
-                        {% if entry.description %}
-                        <p class="card-text"><strong>Description:</strong> {{ entry.description }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p>No reversed numbered entries found.</p>
-        {% endif %}
-    </div>
-</div>
+    {% endfor %}
 {% endblock %}

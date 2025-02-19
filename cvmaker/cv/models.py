@@ -15,7 +15,7 @@ from rendercv.data import read_a_yaml_file
 class CV(models.Model):
     # KEYS
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cvs')
-    alias = models.CharField(max_length=20, help_text="Alias for the curriculum vitae", default="default")
+    alias = models.CharField(max_length=20, null=False, blank=False, help_text="Alias for the curriculum vitae", default="CV")
 
     # TODO: optionally upload file
 
@@ -24,6 +24,10 @@ class CV(models.Model):
     design = models.ForeignKey("CVDesign", on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     locale = models.ForeignKey("CVLocale", on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     settings = models.ForeignKey("CVSettings", on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+
+    # EXTRA
+    created_date = models.DateTimeField(auto_now_add=True)
+    modified_date = models.DateTimeField(auto_now=True)
 
     def serialize(self) -> dict:
         return {

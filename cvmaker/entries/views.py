@@ -2,11 +2,12 @@ import pathlib
 
 from django.shortcuts import render, redirect
 
+from cv.models import CV
 from entries.models import EducationEntry, ExperienceEntry, PublicationEntry, OneLineEntry, BulletEntry, NormalEntry, \
     NumberedEntry, ReversedNumberedEntry, TextEntry
 
 
-def home(request):
+def homeOLD(request):
     if request.user.is_authenticated:
         context = {
             # TODO: pass CV/ CVInfo not entries
@@ -22,6 +23,10 @@ def home(request):
             'user': request.user,
             'cv_id': 1  # TODO: get user cvs
         }
-        return render(request, "home.html", context)
+        return render(request, "homeOLD.html", context)
     else:
         return redirect("login")
+
+def home(request):
+    cvs = CV.objects.filter(user=request.user) if request.user.is_authenticated else []
+    return render(request, 'home.html', {'cvs': cvs})

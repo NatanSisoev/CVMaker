@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Editing CV: {{ cv.title }}</h2>
+
+  <a href="{% url 'cv-section-add' cv.id %}" class="btn btn-success">Add Section</a>
+
+  <ul>
+    {% for section in sections %}
+      <li>
+        {{ section.title }}
+        <a href="{% url 'cv-section-edit' cv.id section.id %}">Edit</a>
+        <a href="{% url 'cv-section-delete' cv.id section.id %}">Delete</a>
+      </li>
+    {% empty %}
+      <li>No sections added yet.</li>
+    {% endfor %}
+  </ul>
+
+  <a href="{% url 'home' %}" class="btn btn-secondary">Back</a>
+{% endblock %}
