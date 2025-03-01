@@ -37,7 +37,7 @@
                                     <a href="{% url 'cv-detail' cv.id %}" class="btn btn-outline-primary">
                                         Preview
                                     </a>
-                                    <a href="{% url 'cv-download' cv.id %}" class="btn btn-outline-success">
+                                    <a href="{% url 'cv-download' cv_id=cv.id %}" class="btn btn-outline-success">
                                         Download PDF
                                     </a>
                                     <button class="btn btn-outline-danger" data-bs-toggle="modal"

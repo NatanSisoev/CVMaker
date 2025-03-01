@@ -57,7 +57,7 @@
         </div>
 
         <div class="card-body">
-            <div class="entries-list">
+            <div class="entry-list">
                 {% for section_entry in info_section.section.section_entries.all|dictsort:"order" %}
                 <div class="entry-item card mb-3" data-entry-id="{{ section_entry.id }}">
                     <div class="card-body">
@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Entry sorting within sections
-    document.querySelectorAll('.entries-list').forEach(entriesList => {
+    document.querySelectorAll('.entry-list').forEach(entriesList => {
         new Sortable(entriesList, {
             animation: 150,
             onUpdate: function(evt) {

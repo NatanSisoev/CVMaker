@@ -3,9 +3,14 @@ from pathlib import Path
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from rendercv.data import read_a_yaml_file
+from rendercv.data.models.curriculum_vitae import available_social_networks
+
+from sections.models import Section
+
 
 ########################################################################################################################
 ########################################### LEVEL 1: CV ################################################################
@@ -15,9 +20,8 @@ from rendercv.data import read_a_yaml_file
 class CV(models.Model):
     # KEYS
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cvs')
-    alias = models.CharField(max_length=20, null=False, blank=False, help_text="Alias for the curriculum vitae", default="CV")
-
-    # TODO: optionally upload file
+    alias = models.CharField(max_length=20, null=False, blank=False, help_text="Alias for the curriculum vitae",
+                             default="CV")
 
     # OTHERS
     info = models.ForeignKey("CVInfo", on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
@@ -54,9 +58,12 @@ class CVInfo(models.Model):
     email = models.EmailField(null=True, blank=True, help_text="The email address of the individual")
     photo = models.ImageField(upload_to='photos/', null=True, blank=True, help_text="Path to the individual's photo")
     phone = models.CharField(max_length=20, null=True, blank=True, help_text="The phone number, including country code")
-    website = models.URLField(null=True, blank=True, help_text="A URL to the individual's personal or professional website")
-    social_networks = models.JSONField(null=True, blank=True, help_text="A list of social media profiles in JSON format")
+    website = models.URLField(null=True, blank=True,
+                              help_text="A URL to the individual's personal or professional website")
+    social_networks = models.JSONField(null=True, blank=True,
+                                       help_text="A list of social media profiles in JSON format")
 
+    # TODO: need?
     # FILE
     data_file = models.FileField(
         upload_to="media/cvs/src",
@@ -66,17 +73,19 @@ class CVInfo(models.Model):
     )
 
     # OTHER
-    sections: "Section" = models.ManyToManyField("Section", through="CVInfoSection", related_name="cv_infos")
+    sections = models.ManyToManyField("sections.Section", through="CVInfoSection", related_name="cv_infos")
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.social_networks[0] not in available_social_networks:
+            raise ValidationError("Network currently unavailable")
 
     def _format_social_networks(self):
-        # TODO: check if available networks
         if not self.social_networks:
             return None
         return [{"network": k, "username": v} for k, v in self.social_networks.items()]
 
-
     def serialize(self) -> dict:
-        # TODO: ordering
         if self.data_file and Path(self.data_file.path).exists():
             return read_a_yaml_file(self.data_file.path)
 
@@ -132,9 +141,11 @@ class CVDesign(models.Model):
 def months_abbreviations_defaults():
     return ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]
 
+
 def months_full_names_defaults():
     return ["January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"]
+
 
 class CVLocale(models.Model):
     # DEFAULTS
@@ -145,19 +156,33 @@ class CVLocale(models.Model):
     alias = models.CharField(max_length=20, help_text="Alias for the locale", default="default")
 
     # INFO
-    language = models.CharField(max_length=2, null=False, blank=False, default='en', help_text="The language as an ISO 639 alpha-2 code")
-    phone_number_format = models.CharField(max_length=20, blank=True, choices=phone_number_format_choices, default="national", help_text="The format of phone numbers (national, international, or E164)")
-    page_numbering_template = models.CharField(max_length=255, default="NAME - Page PAGE_NUMBER of TOTAL_PAGES", help_text="The template for page numbering in the CV.")
-    last_updated_date_template = models.CharField(max_length=255, default="Last updated in TODAY", help_text="The template for the last updated date.")
-    date_template = models.CharField(max_length=255, blank=True, default="MONTH_ABBREVIATION YEAR", help_text="The template for dates.")
-    month = models.CharField(max_length=100, blank=True, default="month", help_text="Translation of the word 'month' in the locale.")
-    months = models.CharField(max_length=100, blank=True, default="months", help_text="Translation of the word 'months' in the locale.")
-    year = models.CharField(max_length=100, blank=True, default="year", help_text="Translation of the word 'year' in the locale.")
-    years = models.CharField(max_length=100, blank=True, default="years", help_text="Translation of the word 'years' in the locale.")
-    present = models.CharField(max_length=100, blank=True, default="present", help_text="Translation of the word 'present' in the locale.")
-    to = models.CharField(max_length=10, blank=True, default="–", help_text="The word or character used to indicate a range (e.g., '2020 - 2021').")
-    abbreviations_for_months = models.JSONField(blank=True, default=months_abbreviations_defaults, help_text="Abbreviations of the months in the locale.")
-    full_names_of_months = models.JSONField(blank=True, default=months_full_names_defaults, help_text="Full names of the months in the locale.")
+    language = models.CharField(max_length=2, null=False, blank=False, default='en',
+                                help_text="The language as an ISO 639 alpha-2 code")
+    phone_number_format = models.CharField(max_length=20, blank=True, choices=phone_number_format_choices,
+                                           default="national",
+                                           help_text="The format of phone numbers (national, international, or E164)")
+    page_numbering_template = models.CharField(max_length=255, default="NAME - Page PAGE_NUMBER of TOTAL_PAGES",
+                                               help_text="The template for page numbering in the CV.")
+    last_updated_date_template = models.CharField(max_length=255, default="Last updated in TODAY",
+                                                  help_text="The template for the last updated date.")
+    date_template = models.CharField(max_length=255, blank=True, default="MONTH_ABBREVIATION YEAR",
+                                     help_text="The template for dates.")
+    month = models.CharField(max_length=100, blank=True, default="month",
+                             help_text="Translation of the word 'month' in the locale.")
+    months = models.CharField(max_length=100, blank=True, default="months",
+                              help_text="Translation of the word 'months' in the locale.")
+    year = models.CharField(max_length=100, blank=True, default="year",
+                            help_text="Translation of the word 'year' in the locale.")
+    years = models.CharField(max_length=100, blank=True, default="years",
+                             help_text="Translation of the word 'years' in the locale.")
+    present = models.CharField(max_length=100, blank=True, default="present",
+                               help_text="Translation of the word 'present' in the locale.")
+    to = models.CharField(max_length=10, blank=True, default="–",
+                          help_text="The word or character used to indicate a range (e.g., '2020 - 2021').")
+    abbreviations_for_months = models.JSONField(blank=True, default=months_abbreviations_defaults,
+                                                help_text="Abbreviations of the months in the locale.")
+    full_names_of_months = models.JSONField(blank=True, default=months_full_names_defaults,
+                                            help_text="Full names of the months in the locale.")
 
     # FILE
     locale_file = models.FileField(
@@ -194,8 +219,10 @@ class CVSettings(models.Model):
     alias = models.CharField(max_length=20, help_text="Alias for the settings", default="default")
 
     # INFO
-    date = models.DateField(default=timezone.now, help_text="The date that will be used for various computations (default: today)")
-    bold_keywords = models.JSONField(default=list, blank=True, help_text="A list of keywords that will be bolded in the output")
+    date = models.DateField(default=timezone.now,
+                            help_text="The date that will be used for various computations (default: today)")
+    bold_keywords = models.JSONField(default=list, blank=True,
+                                     help_text="A list of keywords that will be bolded in the output")
 
     # FILE
     settings_file = models.FileField(
@@ -214,7 +241,14 @@ class CVSettings(models.Model):
             'date': self.date.isoformat(),
             'bold_keywords': self.bold_keywords,
             'render_command': {
-                "output_folder_name": "RenderCV\output"
+                "output_folder_name": r"RenderCV\output",
+                "pdf_path": "NAME_IN_SNAKE_CASE_CV.pdf",
+                "typst_path": "NAME_IN_LOWER_SNAKE_CASE_cv.typ",
+                "html_path": "NAME_IN_KEBAB_CASE_CV.html",
+                "markdown_path": "NAME.md",
+                "dont_generate_html": "true",
+                "dont_generate_markdown": "true",
+                "dont_generate_png": "true"
             }
         }
 
@@ -227,7 +261,7 @@ class CVSettings(models.Model):
 class CVInfoSection(models.Model):
     # KEYS
     cv_info = models.ForeignKey("CVInfo", on_delete=models.CASCADE)
-    section = models.ForeignKey("Section", on_delete=models.CASCADE)
+    section = models.ForeignKey("sections.Section", on_delete=models.CASCADE)
 
     # INFO
     order = models.PositiveIntegerField()
@@ -235,25 +269,6 @@ class CVInfoSection(models.Model):
     class Meta:
         ordering = ['order']
         unique_together = ('cv_info', 'section')
-
-
-########################################################################################################################
-######################################### LEVEL 3: SECTIONS ############################################################
-########################################################################################################################
-
-
-class Section(models.Model):
-    # KEYS
-    user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name='cv_sections')
-    title = models.CharField(max_length=50, help_text="Name of the section")
-    alias = models.CharField(max_length=20, help_text="Alias for the section", default="default")
-
-    def serialize(self) -> list:
-        # TODO: not list but dict
-        return [
-                entry.content_object.serialize()
-                for entry in self.section_entries.order_by('order')
-            ]
 
 
 ########################################################################################################################

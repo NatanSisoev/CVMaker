@@ -5,7 +5,7 @@ from django.db import models
 class CVEntry(models.Model):
     # KEY
     user: models.ForeignKey = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name='%(class)s')
-    alias: models.CharField = models.CharField(max_length=20, null=True, blank=True, help_text="Alias for the CV entry")
+    alias: models.CharField = models.CharField(max_length=20, null=False, blank=False, help_text="Alias for the CV entry")
 
     # TYPE-HINTING FOR METHODS
     start_date: models.DateField

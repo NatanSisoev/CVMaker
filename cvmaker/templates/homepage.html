@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}CVMaker - Professional Resume Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-center">
+    <div class="text-center px-3" style="max-width: 800px;">
+        <h1 class="display-1 fw-light mb-4 text-primary">Professional Resume Builder</h1>
+        <div class="d-flex gap-3 justify-content-center flex-md-row flex-column">
+            <a href="{% url 'cv-create' %}" class="btn btn-xl btn-dark rounded-pill px-5 py-4 shadow-lg">
+                Create Your CV Now →
+            </a>
+            <a href="{% url 'cv-list' %}" class="btn btn-xl btn-outline-dark rounded-pill px-5 py-4 border-2">
+                Browse Your CVs →
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-outline-dark {
+        border-color: #1a1b1f;
+        color: #1a1b1f;
+        background: transparent;
+        border-width: 2px;
+    }
+
+    .btn-outline-dark:hover {
+        background: rgba(26, 27, 31, 0.05);
+        color: #1a1b1f;
+        border-color: #1a1b1f;
+    }
+
+    @media (max-width: 768px) {
+        .btn-xl {
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+    }
+</style>
+{% endblock %}

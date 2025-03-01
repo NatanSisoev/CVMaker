@@ -41,9 +41,11 @@ INSTALLED_APPS = [
     "widget_tweaks",
 
     "accounts",
-    "entries",
+
     "cv",
     "cv.templatetags",
+    "sections",
+    "entries",
 ]
 
 MIDDLEWARE = [
@@ -62,7 +64,7 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
-            os.path.join(BASE_DIR, "templates"),
+            BASE_DIR / "templates",
         ],
         "APP_DIRS": True,
         "OPTIONS": {

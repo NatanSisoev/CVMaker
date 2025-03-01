@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}CVs{% endblock %}
+
+{% block content %}
+    <div class="container my-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>CVs</h2>
+            <a href="{% url 'cv-create' %}" class="btn btn-primary">Create New CV</a>
+        </div>
+
+        {% if cvs %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for cv in cvs %}
+                    <div class="col">
+                        <div class="card h-100 shadow">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ cv.alias }}</h5>
+                                <p class="card-text text-muted">
+                                    Last updated: {{ cv.modified_date|date:"M d, Y" }}
+                                </p>
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'cv-edit' cv.id %}" class="btn btn-outline-secondary">
+                                        Edit CV
+                                    </a>
+                                    <a href="{% url 'cv-detail' cv.id %}" class="btn btn-outline-primary">
+                                        Preview
+                                    </a>
+                                    <a href="{% url 'cv-download' cv_id=cv.id %}" class="btn btn-outline-success">
+                                        Download PDF
+                                    </a>
+                                    <button class="btn btn-outline-danger" data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal{{ cv.id }}">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <h4 class="mb-3">No CVs found</h4>
+                <p class="text-muted mb-4">Start by creating your first professional CV</p>
+            </div>
+        {% endif %}
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    {% for cv in cvs %}
+    <div class="modal fade" id="deleteModal{{ cv.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete CV</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete "{{ cv.alias }}"?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form action="{% url 'cv-delete' cv.id %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endblock %}

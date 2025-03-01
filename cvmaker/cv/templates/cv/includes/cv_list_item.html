@@ -1,0 +1,7 @@
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ cv.alias }}</h5>
+        <p class="card-text">{{ cv.info }}</p>
+        <a href="{% url 'cv-detail' cv.id %}" class="btn btn-primary">View CV</a>
+    </div>
+</div>

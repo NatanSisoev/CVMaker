@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}CV Entries{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Entries</h2>
+        <a href="{% url 'entry-create' %}" class="btn btn-primary">Add Entry</a>
+    </div>
+
+    {% if entries %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for entry in entries %}
+        <div class="col">
+            <div class="card h-100 shadow">
+                <div class="card-body">
+                    <h5 class="card-title">{{ entry.alias }}</h5>
+                    <p class="card-text"><small class="text-muted">
+                        {% if entry.institution %}Education Entry{% elif entry.company %}Experience Entry{% elif
+                        entry.name %}General Entry{% elif entry.title and entry.authors %}Publication Entry{% elif
+                        entry.label and entry.details %}One-Line Entry{% elif entry.bullet %}Bullet Entry{% elif
+                        entry.number %}Numbered Entry{% elif entry.reversed_number %}Reversed Numbered Entry{% elif
+                        entry.text %}Text Entry{% endif %}
+                    </small></p>
+                    <ul class="list-unstyled">
+                        {% if entry.institution %}
+                        <li><strong>Institution:</strong> {{ entry.institution|default:"-" }}</li>
+                        <li><strong>Area:</strong> {{ entry.area|default:"-" }}</li>
+                        <li><strong>Degree:</strong> {{ entry.degree|default:"-" }}</li>
+                        <li><strong>Location:</strong> {{ entry.location|default:"-" }}</li>
+                        <li><strong>Start Date:</strong> {{ entry.start_date|default:"-" }}</li>
+                        <li><strong>End Date:</strong> {{ entry.end_date|default:"-" }}</li>
+                        <li><strong>Date:</strong> {{ entry.date|default:"-" }}</li>
+                        <li><strong>Summary:</strong> {{ entry.summary|default:"-" }}</li>
+                        <li><strong>Highlights:</strong> {{ entry.highlights|default:"-" }}</li>
+                        <li><strong>Description:</strong> {{ entry.description|default:"-" }}</li>
+                        {% elif entry.company %}
+                        <li><strong>Company:</strong> {{ entry.company|default:"-" }}</li>
+                        <li><strong>Position:</strong> {{ entry.position|default:"-" }}</li>
+                        <li><strong>Location:</strong> {{ entry.location|default:"-" }}</li>
+                        <li><strong>Start Date:</strong> {{ entry.start_date|default:"-" }}</li>
+                        <li><strong>End Date:</strong> {{ entry.end_date|default:"-" }}</li>
+                        <li><strong>Date:</strong> {{ entry.date|default:"-" }}</li>
+                        <li><strong>Summary:</strong> {{ entry.summary|default:"-" }}</li>
+                        <li><strong>Highlights:</strong> {{ entry.highlights|default:"-" }}</li>
+                        <li><strong>Description:</strong> {{ entry.description|default:"-" }}</li>
+                        {% elif entry.name %}
+                        <li><strong>Name:</strong> {{ entry.name|default:"-" }}</li>
+                        <li><strong>Location:</strong> {{ entry.location|default:"-" }}</li>
+                        <li><strong>Start Date:</strong> {{ entry.start_date|default:"-" }}</li>
+                        <li><strong>End Date:</strong> {{ entry.end_date|default:"-" }}</li>
+                        <li><strong>Date:</strong> {{ entry.date|default:"-" }}</li>
+                        <li><strong>Summary:</strong> {{ entry.summary|default:"-" }}</li>
+                        <li><strong>Highlights:</strong> {{ entry.highlights|default:"-" }}</li>
+                        <li><strong>Description:</strong> {{ entry.description|default:"-" }}</li>
+                        {% elif entry.title and entry.authors %}
+                        <li><strong>Title:</strong> {{ entry.title|default:"-" }}</li>
+                        <li><strong>Authors:</strong> {{ entry.authors|default:"-" }}</li>
+                        <li><strong>DOI:</strong> {{ entry.doi|default:"-" }}</li>
+                        <li><strong>URL:</strong> {% if entry.url %}<a href="{{ entry.url }}" target="_blank">Link</a>{%
+                            else %}-{% endif %}
+                        </li>
+                        <li><strong>Journal:</strong> {{ entry.journal|default:"-" }}</li>
+                        <li><strong>Date:</strong> {{ entry.date|default:"-" }}</li>
+                        <li><strong>Description:</strong> {{ entry.description|default:"-" }}</li>
+                        {% elif entry.label and entry.details %}
+                        <li><strong>Label:</strong> {{ entry.label|default:"-" }}</li>
+                        <li>{{ entry.details|default:"-" }}</li>
+                        <li><strong>Description:</strong> {{ entry.description|default:"-" }}</li>
+                        {% elif entry.bullet %}
+                        <li>{{ entry.bullet|default:"-" }}</li>
+                        <li><strong>Description:</strong> {{ entry.description|default:"-" }}</li>
+                        {% elif entry.number %}
+                        <li>{{ entry.number|default:"-" }}</li>
+                        <li><strong>Description:</strong> {{ entry.description|default:"-" }}</li>
+                        {% elif entry.reversed_number %}
+                        <li>{{ entry.reversed_number|default:"-" }}</li>
+                        <li><strong>Description:</strong> {{ entry.description|default:"-" }}</li>
+                        {% elif entry.text %}
+                        <li>{{ entry.text|default:"-" }}</li>
+                        <li><strong>Description:</strong> {{ entry.description|default:"-" }}</li>
+                        {% endif %}
+                    </ul>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'entry-edit' entry_id=entry.id %}" class="btn btn-outline-secondary">Edit</a>
+                        <button class="btn btn-outline-danger" data-bs-toggle="modal"
+                                data-bs-target="#deleteModal{{ entry.id }}">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <h4 class="mb-3">No entries found.</h4>
+        <p class="text-muted mb-4">Start by adding your first entry to your CV.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% for entry in entries %}
+<div class="modal fade" id="deleteModal{{ entry.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this entry?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{% url 'entry-delete' entry_id=entry.id %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

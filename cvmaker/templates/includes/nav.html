@@ -1,0 +1,118 @@
+{% load static %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-dark border-2">
+    <div class="container">
+        <a class="navbar-brand fs-4 fw-semibold" href="{% url 'homepage' %}">
+            CVMaker
+        </a>
+
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainMenu">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item mx-2">
+                    <a class="nav-link position-relative px-3 py-2" href="{% url 'cv-list' %}">
+                        <span class="nav-link-text">CVs</span>
+                    </a>
+                </li>
+                <li class="nav-item mx-2">
+                    <a class="nav-link position-relative px-3 py-2" href="{% url 'section-list' %}">
+                        <span class="nav-link-text">Sections</span>
+                    </a>
+                </li>
+                <li class="nav-item mx-2">
+                    <a class="nav-link position-relative px-3 py-2" href="{% url 'entry-list' %}">
+                        <span class="nav-link-text">Entries</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center ms-auto">
+                {% if user.is_authenticated %}
+                <div class="dropdown">
+                    <a class="btn btn-link text-white dropdown-toggle d-flex align-items-center" href="#" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        {{ user.username }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'password_change' %}">
+                                Change Password
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'profile' %}">
+                                Account
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form action="{% url 'logout' %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item">
+                                    Log Out
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+                {% else %}
+                <div class="d-flex gap-2">
+                    <a href="{% url 'login' %}" class="btn btn-outline-light rounded-pill px-4">Log In</a>
+                    <a href="{% url 'signup' %}" class="btn btn-primary rounded-pill px-4">Sign Up</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<style>
+.navbar {
+    --navbar-bg: #1a1d24;
+    --navbar-border: rgba(255,255,255,0.1);
+    background: var(--navbar-bg) !important;
+    padding: 0.5rem 0;
+}
+
+.nav-link {
+    color: rgba(255,255,255,0.8) !important;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    color: white !important;
+}
+
+.dropdown-menu {
+    background: #252a33;
+    border-radius: 0.5rem;
+    min-width: 200px;
+}
+
+.dropdown-item {
+    color: rgba(255,255,255,0.8);
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.dropdown-item:hover {
+    background: rgba(255,255,255,0.05);
+    color: white;
+}
+
+.dropdown-header {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+}
+
+.btn-outline-light {
+    border-color: rgba(255,255,255,0.2);
+}
+
+.btn-outline-light:hover {
+    background: rgba(255,255,255,0.05);
+}
+</style>

@@ -1,6 +1,7 @@
 from django import forms
 from entries.models import EducationEntry, ExperienceEntry, PublicationEntry
 
+
 class EducationEntryForm(forms.ModelForm):
     class Meta:
         model = EducationEntry

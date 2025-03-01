@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}{% if form.instance.pk %}Edit Section{% else %}Add Section{% endif %}{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>{% if form.instance.pk %}Edit Section{% else %}Add Section{% endif %}</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</div>
+{% endblock %}
