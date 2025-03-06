@@ -69,11 +69,10 @@ class CVCreateView(CreateView):
 
 class CVDetailView(DetailView):
     model = CV
-    template_name = 'cv_detail.html'
+    template_name = 'cv/detail.html'
     context_object_name = 'cv'
 
     def get_object(self, queryset=None):
-        # Ensure the user can only access their own CV
         return get_object_or_404(CV, pk=self.kwargs['cv_id'], user=self.request.user)
 
 

@@ -16,7 +16,13 @@
             <div class="card h-100 shadow">
                 <div class="card-body">
                     <h5 class="card-title">{{ section.title }}</h5>
-                    <p class="card-text"><strong>Order:</strong> {{ section.order }}</p>
+                    <ul>
+                        {% for entry in section.section_entries.all|dictsort:"order" %}
+                            <li>{{ entry.content_object.alias }}</li>
+                        {% empty %}
+                            <li>No entries in this section.</li>
+                        {% endfor %}
+                    </ul>
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <a href="{% url 'section-edit' section_id=section.id %}" class="btn btn-outline-secondary">Edit</a>
                         <button class="btn btn-outline-danger" data-bs-toggle="modal"

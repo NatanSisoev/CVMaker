@@ -15,3 +15,9 @@ def input_class(field):
 @register.filter
 def class_name(value):
     return value.__class__.__name__
+
+@register.filter
+def split_highlights(value):
+    if value:
+        return value.split(";")
+    return []
