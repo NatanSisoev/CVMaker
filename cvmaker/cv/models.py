@@ -1,15 +1,20 @@
 from pathlib import Path
 
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from rendercv.data import read_a_yaml_file
 from rendercv.data.models.curriculum_vitae import available_social_networks
 
-from sections.models import Section
+
+def months_abbreviations_defaults():
+    return ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]
+
+
+def months_full_names_defaults():
+    return ["January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"]
 
 
 ########################################################################################################################
@@ -19,23 +24,35 @@ from sections.models import Section
 
 class CV(models.Model):
     # KEYS
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cvs')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cvs', default=1, null=True)
     alias = models.CharField(max_length=20, null=False, blank=False, help_text="Alias for the curriculum vitae",
                              default="CV")
 
-    # OTHERS
     info = models.ForeignKey("CVInfo", on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     design = models.ForeignKey("CVDesign", on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     locale = models.ForeignKey("CVLocale", on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     settings = models.ForeignKey("CVSettings", on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+
+    sections = models.ManyToManyField(
+        "sections.Section",
+        through="sections.CVSection",
+        related_name="cvs",
+        blank=True
+    )
 
     # EXTRA
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
 
     def serialize(self) -> dict:
+        cv = self.info.serialize() if self.info else None
+        for section in self.sections.all():
+            if "sections" not in cv:
+                cv["sections"] = {}
+            cv["sections"][section.title] = section.serialize()
+
         return {
-            'cv': self.info.serialize() if self.info else None,
+            'cv': cv if cv else None,
             'design': self.design.serialize() if self.design else None,
             'locale': self.locale.serialize() if self.locale else None,
             'rendercv_settings': self.settings.serialize() if self.settings else None
@@ -72,13 +89,12 @@ class CVInfo(models.Model):
         help_text="Upload YAML file with complete info"
     )
 
-    # OTHER
-    sections = models.ManyToManyField("sections.Section", through="CVInfoSection", related_name="cv_infos")
-
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        if self.social_networks[0] not in available_social_networks:
-            raise ValidationError("Network currently unavailable")
+        if self.social_networks:
+            for social_network in self.social_networks:
+                if social_network not in available_social_networks:
+                    raise ValidationError("Network currently unavailable")
 
     def _format_social_networks(self):
         if not self.social_networks:
@@ -96,11 +112,7 @@ class CVInfo(models.Model):
             'phone': self.phone if self.phone else None,
             'website': self.website if self.website else None,
             'social_networks': self._format_social_networks(),
-            'photo': self.photo.url if self.photo else None,
-            'sections': {
-                section.title: section.serialize()
-                for section in self.sections.all()
-            }
+            'photo': self.photo.url if self.photo else None
         }
 
         return {k: v for k, v in info.items() if v is not None}
@@ -136,15 +148,6 @@ class CVDesign(models.Model):
             return read_a_yaml_file(self.design_file.path)
 
         return {'theme': self.theme}
-
-
-def months_abbreviations_defaults():
-    return ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]
-
-
-def months_full_names_defaults():
-    return ["January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"]
 
 
 class CVLocale(models.Model):
@@ -251,46 +254,3 @@ class CVSettings(models.Model):
                 "dont_generate_png": "true"
             }
         }
-
-
-########################################################################################################################
-######################################## LEVEL 2.5: RELATIONS ##########################################################
-########################################################################################################################
-
-
-class CVInfoSection(models.Model):
-    # KEYS
-    cv_info = models.ForeignKey("CVInfo", on_delete=models.CASCADE)
-    section = models.ForeignKey("sections.Section", on_delete=models.CASCADE)
-
-    # INFO
-    order = models.PositiveIntegerField()
-
-    class Meta:
-        ordering = ['order']
-        unique_together = ('cv_info', 'section')
-
-
-########################################################################################################################
-######################################## LEVEL 3.5: RELATIONS ##########################################################
-########################################################################################################################
-
-
-class SectionEntry(models.Model):
-    # KEYS
-    user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name='cv_section_entry')
-    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name='section_entries')
-
-    # INFO
-    order = models.PositiveIntegerField()
-
-    # OTHER
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey("content_type", "object_id")
-
-    class Meta:
-        ordering = ['order']
-
-    def serialize(self) -> dict:
-        return self.content_object.serialize()

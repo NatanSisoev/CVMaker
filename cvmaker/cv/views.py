@@ -21,8 +21,7 @@ class HomePageView(View):
     template_name = 'homepage.html'
 
     def get(self, request, *args, **kwargs):
-        current_year = datetime.datetime.now().year
-        context = {'current_year': current_year}
+        context = {}
 
         if request.user.is_authenticated:
             cv_list = CV.objects.filter(user=request.user)

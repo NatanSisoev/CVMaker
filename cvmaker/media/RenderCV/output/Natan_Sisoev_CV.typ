@@ -3,7 +3,7 @@
 
 #let name = "Natan Sisoev"
 #let locale-catalog-page-numbering-style = context { "Natan Sisoev - Page " + str(here().page()) + " of " + str(counter(page).final().first()) + "" }
-#let locale-catalog-last-updated-date-style = "Last updated in Apr 2005"
+#let locale-catalog-last-updated-date-style = "Last updated in Mar 2025"
 #let locale-catalog-language = "en"
 #let design-page-size = "us-letter"
 #let design-section-titles-font-size = 1.4em
@@ -451,9 +451,41 @@
 
 // Print connections:
 #let connections-list = (
-  [#fa-icon("location-dot", size: 0.9em) #h(0.05cm)Sabadell],
+  [#fa-icon("location-dot", size: 0.9em) #h(0.05cm)Sabadell, BCN],
+  [#box(original-link("mailto:natan.sisoev@gmail.com")[#fa-icon("envelope", size: 0.9em) #h(0.05cm)natan.sisoev\@gmail.com])],
+  [#box(original-link("tel:+34-633-20-29-34")[#fa-icon("phone", size: 0.9em) #h(0.05cm)633 20 29 34])],
+  [#box(original-link("http://natan.com/")[#fa-icon("link", size: 0.9em) #h(0.05cm)natan.com])],
 )
 #connections(connections-list)
+
+
+
+== Education
+
+
+// YES DATE, NO DEGREE
+#two-col-entry(
+  left-content: [
+    #strong[Universitat Autònoma de Barcelona \(UAB\)]
+
+#emph[BS in MatCAD]
+  ],
+  right-content: [
+    #emph[Cerdanyola, Barcelona]
+
+#emph[Sept 2019 – June 2022]
+  ],
+)
+#block(
+  [
+    #set par(spacing: 0pt)
+    
+  ],
+  inset: (
+    left: design-entries-left-and-right-margin,
+    right: design-entries-left-and-right-margin,
+  ),
+)
 
 
 

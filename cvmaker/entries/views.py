@@ -3,7 +3,7 @@ from django.http import Http404
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 
-from cv.models import Section, SectionEntry
+from sections.models import Section, SectionEntry
 from .models import *
 from .forms import EducationEntryForm, ExperienceEntryForm, PublicationEntryForm
 
