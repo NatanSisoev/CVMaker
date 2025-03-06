@@ -451,7 +451,7 @@
 
 // Print connections:
 #let connections-list = (
-  [#fa-icon("location-dot", size: 0.9em) #h(0.05cm)Sabadell, BCN],
+  [#fa-icon("location-dot", size: 0.9em) #h(0.05cm)Cerdanyola, Barcelona],
   [#box(original-link("mailto:natan.sisoev@gmail.com")[#fa-icon("envelope", size: 0.9em) #h(0.05cm)natan.sisoev\@gmail.com])],
   [#box(original-link("tel:+34-633-20-29-34")[#fa-icon("phone", size: 0.9em) #h(0.05cm)633 20 29 34])],
   [#box(original-link("http://natan.com/")[#fa-icon("link", size: 0.9em) #h(0.05cm)natan.com])],

@@ -1,10 +1,68 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
+{% load cv_tags %}
+{% load widget_tweaks %}
 
-</body>
-</html>
+{% block title %}CV Edit - {{ cv.alias }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Edit CV - {{ cv.alias }}</h1>
+        <div>
+            <a href="{% url 'cv-detail' cv.id %}" class="btn btn-secondary">Preview</a>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="card mb-4">
+            <div class="card-header" style="background-color: #e3f2fd;">
+                <h3 class="mb-0">Personal Information</h3>
+            </div>
+            <div class="card-body">
+                {{ cv_info_form.as_p }}
+            </div>
+        </div>
+
+        {% for section in cv.sections.all %}
+        <div class="section-block card mb-4" data-section-id="{{ section.id }}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">{{ section.title }}</h3>
+            </div>
+
+            <div class="card-body">
+                <div class="entry-list">
+                    {% for section_entry in section.section_entries.all %}
+                    <div class="entry-item card mb-3" data-entry-id="{{ section_entry.id }}">
+                        <div class="card-body">
+                            {% with entry=section_entry.content_object %}
+                            {% if entry|class_name == 'EducationEntry' %}
+                                {{ education_forms|get_form:section_entry.id }}
+                            {% elif entry|class_name == 'ExperienceEntry' %}
+                                {{ experience_forms|get_form:section_entry.id }}
+                            {% elif entry|class_name == 'PublicationEntry' %}
+                                {{ publication_forms|get_form:section_entry.id }}
+                            {% else %}
+                                {{ other_entry_forms|get_form:section_entry.id }}
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // JavaScript enhancements (e.g., dynamic add/remove) can go here
+</script>
+{% endblock %}

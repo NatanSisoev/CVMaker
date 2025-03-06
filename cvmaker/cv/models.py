@@ -28,10 +28,10 @@ class CV(models.Model):
     alias = models.CharField(max_length=20, null=False, blank=False, help_text="Alias for the curriculum vitae",
                              default="CV")
 
-    info = models.ForeignKey("CVInfo", on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
-    design = models.ForeignKey("CVDesign", on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
-    locale = models.ForeignKey("CVLocale", on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
-    settings = models.ForeignKey("CVSettings", on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    info = models.ForeignKey("CVInfo", on_delete=models.SET_NULL, null=True, blank=True, related_name='cv')
+    design = models.ForeignKey("CVDesign", on_delete=models.SET_NULL, null=True, blank=True, related_name='cv')
+    locale = models.ForeignKey("CVLocale", on_delete=models.SET_NULL, null=True, blank=True, related_name='cv')
+    settings = models.ForeignKey("CVSettings", on_delete=models.SET_NULL, null=True, blank=True, related_name='cv')
 
     sections = models.ManyToManyField(
         "sections.Section",

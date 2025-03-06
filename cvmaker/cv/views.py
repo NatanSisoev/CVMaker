@@ -1,4 +1,3 @@
-import datetime
 import os
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -12,7 +11,10 @@ from rendercv import data
 from rendercv.renderer import renderer
 
 from cvmaker import settings
-from .models import CV
+from entries.forms import EducationEntryForm, ExperienceEntryForm, PublicationEntryForm
+from entries.models import EducationEntry, ExperienceEntry, PublicationEntry
+from .forms import CVInfoForm
+from .models import CV, CVInfo
 
 
 ################################################## HOME ################################################################
@@ -78,10 +80,11 @@ class CVDetailView(DetailView):
 
 ################################################### EDIT ###############################################################
 
+
 class CVUpdateView(LoginRequiredMixin, UpdateView):
     model = CV
-    template_name = 'cv_form.html'
-    fields = ['alias', 'info', 'design', 'locale']
+    template_name = 'cv/edit.html'
+    fields = ['alias', 'design', 'locale']
 
     def get_queryset(self):
         return super().get_queryset().filter(user=self.request.user)
@@ -90,8 +93,66 @@ class CVUpdateView(LoginRequiredMixin, UpdateView):
         return reverse_lazy('cv-detail', kwargs={'cv_id': self.object.id})
 
     def get_object(self, queryset=None):
-        # Ensure the object is fetched by its ID from the kwargs and filtered by user
         return get_object_or_404(CV, id=self.kwargs["cv_id"], user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cv = self.get_object()
+        cv_info, created = CVInfo.objects.get_or_create(cv=cv)
+
+        if self.request.POST:
+            context['cv_info_form'] = CVInfoForm(self.request.POST, self.request.FILES, instance=cv_info)
+        else:
+            context['cv_info_form'] = CVInfoForm(instance=cv_info)
+
+        education_forms = {}
+        experience_forms = {}
+        publication_forms = {}
+
+        for section in cv.sections.all():
+            for section_entry in section.section_entries.all():
+                if isinstance(section_entry.content_object, EducationEntry):
+                    if self.request.POST:
+                        education_forms[section_entry.id] = EducationEntryForm(self.request.POST,
+                                                                               instance=section_entry.content_object)
+                    else:
+                        education_forms[section_entry.id] = EducationEntryForm(instance=section_entry.content_object)
+                elif isinstance(section_entry.content_object, ExperienceEntry):
+                    if self.request.POST:
+                        experience_forms[section_entry.id] = ExperienceEntryForm(self.request.POST,
+                                                                                 instance=section_entry.content_object)
+                    else:
+                        experience_forms[section_entry.id] = ExperienceEntryForm(instance=section_entry.content_object)
+                elif isinstance(section_entry.content_object, PublicationEntry):
+                    if self.request.POST:
+                        publication_forms[section_entry.id] = PublicationEntryForm(self.request.POST,
+                                                                                   instance=section_entry.content_object)
+                    else:
+                        publication_forms[section_entry.id] = PublicationEntryForm(
+                            instance=section_entry.content_object)
+
+        context['education_forms'] = education_forms
+        context['experience_forms'] = experience_forms
+        context['publication_forms'] = publication_forms
+
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        cv_info_form = context['cv_info_form']
+        education_forms = context['education_forms']
+        experience_forms = context['experience_forms']
+        publication_forms = context['publication_forms']
+
+        if cv_info_form.is_valid():
+            cv_info_form.save()
+
+        for form_dict in [education_forms, experience_forms, publication_forms]:
+            for form in form_dict.values():
+                if form.is_valid():
+                    form.save()
+
+        return super().form_valid(form)
 
 
 ################################################# DELETE ###############################################################

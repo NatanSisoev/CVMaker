@@ -5,12 +5,19 @@
 {% block title %}CV Preview - {{ cv.alias }}{% endblock %}
 
 {% block content %}
+<head>
+    <!-- Bootstrap Icons CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+</head>
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>{{ cv.alias }} Preview</h1>
         <div>
-            <a href="{% url 'cv-download' cv.id %}" class="btn btn-primary">
-                Download PDF
+            <a href="{% url 'cv-download' cv.id %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-download"></i>
+            </a>
+            <a href="{% url 'cv-edit' cv.id %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-pencil"></i>
             </a>
         </div>
     </div>
@@ -19,9 +26,11 @@
         <div class="card-header" style="background-color: #e3f2fd;">
             <div class="d-flex justify-content-between align-items-center">
                 <h3 class="mb-0">Personal Information</h3>
-                <a href="{% url 'cv-edit' cv.id %}" class="btn btn-sm btn-outline-secondary">
-                    Edit
-                </a>
+                <div>
+                    <a href="{% url 'cv-edit' cv.id %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                </div>
             </div>
         </div>
         <div class="card-body">
@@ -33,11 +42,27 @@
                 {% endif %}
                 <div class="col-md-{% if cv.info.photo %}10{% else %}12{% endif %}">
                     <dl class="row mb-0">
-                        {% if cv.info.name %}<dt class="col-sm-2">Name</dt><dd class="col-sm-10">{{ cv.info.name }}</dd>{% endif %}
-                        {% if cv.info.email %}<dt class="col-sm-2">Email</dt><dd class="col-sm-10">{{ cv.info.email }}</dd>{% endif %}
-                        {% if cv.info.phone %}<dt class="col-sm-2">Phone</dt><dd class="col-sm-10">{{ cv.info.phone }}</dd>{% endif %}
-                        {% if cv.info.location %}<dt class="col-sm-2">Location</dt><dd class="col-sm-10">{{ cv.info.location }}</dd>{% endif %}
-                        {% if cv.info.website %}<dt class="col-sm-2">Website</dt><dd class="col-sm-10"><a href="{{ cv.info.website }}" target="_blank">{{ cv.info.website }}</a></dd>{% endif %}
+                        {% if cv.info.name %}
+                        <dt class="col-sm-2">Name</dt>
+                        <dd class="col-sm-10">{{ cv.info.name }}</dd>
+                        {% endif %}
+                        {% if cv.info.email %}
+                        <dt class="col-sm-2">Email</dt>
+                        <dd class="col-sm-10">{{ cv.info.email }}</dd>
+                        {% endif %}
+                        {% if cv.info.phone %}
+                        <dt class="col-sm-2">Phone</dt>
+                        <dd class="col-sm-10">{{ cv.info.phone }}</dd>
+                        {% endif %}
+                        {% if cv.info.location %}
+                        <dt class="col-sm-2">Location</dt>
+                        <dd class="col-sm-10">{{ cv.info.location }}</dd>
+                        {% endif %}
+                        {% if cv.info.website %}
+                        <dt class="col-sm-2">Website</dt>
+                        <dd class="col-sm-10"><a href="{{ cv.info.website }}" target="_blank">{{ cv.info.website }}</a>
+                        </dd>
+                        {% endif %}
                     </dl>
                 </div>
             </div>
@@ -49,13 +74,11 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3 class="mb-0">{{ section.title }}</h3>
             <div class="section-actions">
-                <a href="{% url 'section-edit' section.id %}"
-                   class="btn btn-sm btn-outline-secondary">
-                    Edit Section
+                <a href="{% url 'section-edit' section.id %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil"></i>
                 </a>
-                <a href="{% url 'section-delete' section.id %}" # TODO
-                   class="btn btn-sm btn-outline-danger">
-                   Remove Section
+                <a href="{% url 'section-delete' section.id %}" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i>
                 </a>
             </div>
         </div>
@@ -64,51 +87,67 @@
             <div class="entry-list">
                 {% for section_entry in section.section_entries.all|dictsort:"order" %}
                 <div class="entry-item card mb-3" data-entry-id="{{ section_entry.id }}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            {% with entry=section_entry.content_object %}
+                            {% if entry|class_name == 'EducationEntry' %}
+                            <h4 class="card-title">{{ entry.institution }}</h4>
+                            <h5 class="card-subtitle text-muted">{{ entry.area }}</h5>
+                            {% elif entry|class_name == 'ExperienceEntry' %}
+                            <h4 class="card-title">{{ entry.company }}</h4>
+                            <h5 class="card-subtitle text-muted">{{ entry.position }}</h5>
+                            {% elif entry|class_name == 'PublicationEntry' %}
+                            <h4 class="card-title">{{ entry.title }}</h4>
+                            <h5 class="card-subtitle text-muted">{{ entry.authors }}</h5>
+                            {% else %}
+                            <h4 class="card-title">{{ entry.name|default:entry.label|default:entry.title }}</h4>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                        <div class="entry-dates text-muted text-end">
+                            {% if entry.start_date or entry.end_date %}
+                            <div>
+                                {{ entry.start_date|date:"M Y"|default:"-" }}
+                                -
+                                {{ entry.end_date|date:"M Y"|default:"Present" }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="entry-actions">
+                            <a href="{% url 'entry-edit' section_entry.id %}" class="btn btn-sm btn-outline-secondary me-2">
+                                <i class="bi bi-pencil" style="font-size: 0.85rem;"></i>
+                            </a>
+                            <a href="{% url 'entry-delete' section_entry.id %}" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash" style="font-size: 0.85rem;"></i>
+                            </a>
+                        </div>
+                    </div>
+
                     <div class="card-body">
                         {% with entry=section_entry.content_object %}
-                        <div class="entry-header d-flex justify-content-between align-items-start mb-2">
-                            <div>
-                                {% if entry|class_name == 'EducationEntry' %}
-                                <h4 class="card-title">{{ entry.institution }}</h4>
-                                <h5 class="card-subtitle text-muted">{{ entry.area }}</h5>
-
-                                {% elif entry|class_name == 'ExperienceEntry' %}
-                                <h4 class="card-title">{{ entry.company }}</h4>
-                                <h5 class="card-subtitle text-muted">{{ entry.position }}</h5>
-
-                                {% elif entry|class_name == 'PublicationEntry' %}
-                                <h4 class="card-title">{{ entry.title }}</h4>
-                                <h5 class="card-subtitle text-muted">{{ entry.authors }}</h5>
-
-                                {% else %}
-                                <h4 class="card-title">{{ entry.name|default:entry.label|default:entry.title }}</h4>
-                                {% endif %}
-                            </div>
-                            <div class="entry-dates text-muted text-end">
-                                {% if entry.start_date or entry.end_date %}
-                                <div>
-                                    {{ entry.start_date|date:"M Y"|default:"-" }}
-                                    -
-                                    {{ entry.end_date|date:"M Y"|default:"Present" }}
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
                         <div class="entry-details">
                             {% if entry|class_name == 'EducationEntry' %}
-                            {% if entry.degree %}<div class="text-muted">{{ entry.degree }}</div>{% endif %}
-                            {% if entry.location %}<div class="text-muted">{{ entry.location }}</div>{% endif %}
+                            {% if entry.degree %}
+                            <div class="text-muted">{{ entry.degree }}</div>
+                            {% endif %}
+                            {% if entry.location %}
+                            <div class="text-muted">{{ entry.location }}</div>
+                            {% endif %}
 
                             {% elif entry|class_name == 'ExperienceEntry' %}
-                            {% if entry.location %}<div class="text-muted">{{ entry.location }}</div>{% endif %}
+                            {% if entry.location %}
+                            <div class="text-muted">{{ entry.location }}</div>
+                            {% endif %}
 
                             {% elif entry|class_name == 'PublicationEntry' %}
-                            {% if entry.journal %}<div class="text-muted">{{ entry.journal }}</div>{% endif %}
+                            {% if entry.journal %}
+                            <div class="text-muted">{{ entry.journal }}</div>
+                            {% endif %}
                             {% if entry.doi or entry.url %}
                             <div class="mt-2">
                                 {% if entry.doi %}<span class="badge bg-info">DOI: {{ entry.doi }}</span>{% endif %}
-                                {% if entry.url %}<a href="{{ entry.url }}" class="btn btn-sm btn-link">View Publication</a>{% endif %}
+                                {% if entry.url %}<a href="{{ entry.url }}" class="btn btn-sm btn-link">View
+                                Publication</a>{% endif %}
                             </div>
                             {% endif %}
                             {% endif %}
@@ -129,24 +168,13 @@
                         </div>
                         {% endwith %}
                     </div>
-                    <div class="card-footer bg-transparent entry-actions">
-                        <a href="{% url 'entry-edit' section_entry.id %}"
-                           class="btn btn-sm btn-outline-secondary">
-                            Edit
-                        </a>
-                        <a href="{% url 'entry-delete' section_entry.id %}"
-                           class="btn btn-sm btn-outline-danger">
-                            Delete
-                        </a>
-                    </div>
                 </div>
                 {% endfor %}
             </div>
 
             <div class="add-entry mt-3">
                 <div class="btn-group w-100">
-                    <a href="{% url 'entry-create' %}"
-                       class="btn btn-outline-primary">
+                    <a href="{% url 'entry-create' %}" class="btn btn-outline-primary">
                         + Entry
                     </a>
                 </div>
@@ -167,49 +195,53 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Enable drag-and-drop in edit mode
-    {% if '/edit/' in request.path %}
-    const container = document.querySelector('.container');
-
-    // Section sorting
-    new Sortable(container, {
-        handle: '.card-header',
-        animation: 150,
-        onUpdate: function(evt) {
-            const sections = Array.from(evt.from.children).map((section, index) => ({
-                id: section.dataset.sectionId,
-                order: index + 1
-            }));
-            updateOrder('{% url "update_section_order" %}', sections);
+    document.addEventListener('DOMContentLoaded', function () {
+        {%
+            if '/edit/' in request.path %
         }
-    });
+        const container = document.querySelector('.container');
 
-    // Entry sorting within sections
-    document.querySelectorAll('.entry-list').forEach(entriesList => {
-        new Sortable(entriesList, {
+        // Section sorting
+        new Sortable(container, {
+            handle: '.card-header',
             animation: 150,
-            onUpdate: function(evt) {
-                const entries = Array.from(evt.from.children).map((entry, index) => ({
-                    id: entry.dataset.entryId,
+            onUpdate: function (evt) {
+                const sections = Array.from(evt.from.children).map((section, index) => ({
+                    id: section.dataset.sectionId,
                     order: index + 1
                 }));
-                updateOrder('{% url "update_entry_order" %}', entries);
+                updateOrder('{% url "update_section_order" %}', sections);
             }
         });
-    });
 
-    function updateOrder(url, items) {
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({ items })
+        // Entry sorting within sections
+        document.querySelectorAll('.entry-list').forEach(entriesList => {
+            new Sortable(entriesList, {
+                animation: 150,
+                onUpdate: function (evt) {
+                    const entries = Array.from(evt.from.children).map((entry, index) => ({
+                        id: entry.dataset.entryId,
+                        order: index + 1
+                    }));
+                    updateOrder('{% url "update_entry_order" %}', entries);
+                }
+            });
         });
-    }
-    {% endif %}
-});
+
+        function updateOrder(url, items) {
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({items})
+            });
+        }
+
+        {%
+            endif %
+        }
+    });
 </script>
 {% endblock %}

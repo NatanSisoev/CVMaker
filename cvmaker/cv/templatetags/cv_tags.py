@@ -1,4 +1,3 @@
-# cv/templatetags/cv_filters.py
 from django import template
 
 register = template.Library()
@@ -21,3 +20,7 @@ def split_highlights(value):
     if value:
         return value.split(";")
     return []
+
+@register.filter
+def get_form(dictionary, key):
+    return dictionary.get(key).as_p()
