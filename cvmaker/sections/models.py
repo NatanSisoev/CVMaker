@@ -39,7 +39,7 @@ class SectionEntry(models.Model):
 
     # OTHER
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
+    object_id = models.UUIDField()
     content_object = GenericForeignKey("content_type", "object_id")
 
     class Meta:

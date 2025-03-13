@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     "widget_tweaks",
+    "crispy_forms",
 
     "accounts",
 
@@ -141,3 +142,5 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / MEDIA_URL
+
+CRISPY_TEMPLATE_PACK = "bootstrap5"

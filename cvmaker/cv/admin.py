@@ -1,7 +1,8 @@
 from django.contrib import admin
 
+from sections.models import CVSection, Section, SectionEntry
+
 from .models import CV, CVDesign, CVInfo, CVLocale, CVSettings
-from sections.models import Section, CVSection, SectionEntry
 
 # Register your models here.
 

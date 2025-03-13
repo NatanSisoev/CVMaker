@@ -1,12 +1,74 @@
 {% extends 'base.html' %}
-{% block title %}{% if form.instance.pk %}Edit Section{% else %}Add Section{% endif %}{% endblock %}
+{% load widget_tweaks %}
+{% load custom_filters %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Create{% endif %} Section{% endblock %}
+
 {% block content %}
 <div class="container">
-    <h1>{% if form.instance.pk %}Edit Section{% else %}Add Section{% endif %}</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Save</button>
-    </form>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{% if form.instance.pk %}Edit{% else %}Create{% endif %} Section</h1>
+        <a href="{% url 'section-list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">Section Configuration</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Main Section Fields -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">{{ form.title.label }}</label>
+                            {% render_field form.title class="form-control" %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">{{ form.alias.label }}</label>
+                            {% render_field form.alias class="form-control" %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Entry Selection Grid -->
+                <div class="border-top pt-4">
+                    <h5>Select Entries to Include</h5>
+                    <div class="row g-3">
+                        {% for value, label in form.entries.field.choices %}
+                        <div class="col-md-4 col-lg-3">
+                            <div class="form-check">
+                                <input type="checkbox"
+                                       name="{{ form.entries.name }}"
+                                       value="{{ value }}"
+                                       id="entry-{{ value }}"
+                                       class="form-check-input"
+                                       {% if value in form.entries.value %}checked{% endif %}>
+                                <label class="form-check-label w-100 btn btn-outline-primary"
+                                       for="entry-{{ value }}">
+                                    {{ label|title|remove_underscores }}
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i>
+                        {% if form.instance.pk %}Update{% else %}Create{% endif %} Section
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}

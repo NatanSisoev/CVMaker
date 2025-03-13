@@ -1,9 +1,9 @@
 from django import forms
-from .models import (
-    EducationEntry, ExperienceEntry, PublicationEntry,
-    NormalEntry, OneLineEntry, BulletEntry,
-    NumberedEntry, ReversedNumberedEntry, TextEntry
-)
+
+from .models import (BulletEntry, EducationEntry, ExperienceEntry, NormalEntry,
+                     NumberedEntry, OneLineEntry, PublicationEntry,
+                     ReversedNumberedEntry, TextEntry)
+
 
 class EducationEntryForm(forms.ModelForm):
     class Meta:

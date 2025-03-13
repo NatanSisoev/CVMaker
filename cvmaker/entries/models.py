@@ -12,6 +12,8 @@ class BaseEntry(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     objects = InheritanceManager()
 
+    type = "base"
+
     # TYPE-HINTING FOR METHODS
     start_date: models.DateField
     end_date: models.DateField
@@ -57,6 +59,8 @@ class EducationEntry(BaseEntry):
     summary = models.CharField(max_length=500, blank=True, help_text="Summary of the entry")
     highlights = models.CharField(max_length=500, blank=True, help_text="List of highlights separated by ;")
 
+    type = "education"
+
     def __str__(self) -> str:
         return f"[{self.institution}({self.area})]"
 
@@ -87,6 +91,8 @@ class ExperienceEntry(BaseEntry):
     summary = models.CharField(max_length=500, blank=True, help_text="Summary of the entry")
     highlights = models.CharField(max_length=500, blank=True, help_text="List of highlights separated by ;")
 
+    type = "experience"
+
     def __str__(self) -> str:
         return f"[{self.company}({self.position})]"
 
@@ -114,6 +120,8 @@ class NormalEntry(BaseEntry):
     summary = models.CharField(max_length=500, blank=True, help_text="Summary of the entry")
     highlights = models.CharField(max_length=500, blank=True, help_text="List of highlights separated by ;")
 
+    type = "normal"
+
     def __str__(self) -> str:
         return f"[{self.name}]"
 
@@ -131,6 +139,8 @@ class PublicationEntry(BaseEntry):
     # MANDATORY
     title = models.CharField(max_length=200, null=False, blank=False, help_text="The title of the publication")
     authors = models.CharField(max_length=300, null=False, blank=False, help_text="The authors (separated by commas)")
+
+    type = "publication"
 
     # OPTIONAL
     doi = models.CharField(max_length=100, blank=True, help_text="The DOI of the publication")
@@ -158,6 +168,8 @@ class OneLineEntry(BaseEntry):
     label = models.CharField(max_length=100, null=False, blank=False, help_text="The label of the entry")
     details = models.CharField(max_length=300, null=False, blank=False, help_text="The details of the entry")
 
+    type = "one-line"
+
     def __str__(self) -> str:
         return f"[{self.label}({self.details})]"
 
@@ -172,6 +184,8 @@ class BulletEntry(BaseEntry):
     # MANDATORY
     bullet = models.CharField(max_length=300, null=False, blank=False, help_text="The bullet point")
 
+    type = "bullet"
+
     def __str__(self) -> str:
         return f"[Bulleted({self.bullet})]"
 
@@ -182,6 +196,8 @@ class BulletEntry(BaseEntry):
 class NumberedEntry(BaseEntry):
     # MANDATORY
     number = models.CharField(max_length=300, null=False, blank=False, help_text="The numbered entry content")
+
+    type = "numbered"
 
     def __str__(self) -> str:
         return f"[Numbered({self.number})]"
@@ -195,6 +211,8 @@ class ReversedNumberedEntry(BaseEntry):
     reversed_number = models.CharField(max_length=300, null=False, blank=False,
                                        help_text="The reversed numbered entry content")
 
+    type = "reversed-numbered"
+
     def __str__(self) -> str:
         return f"[ReversedNumbered({self.reversed_number})]"
 
@@ -205,6 +223,8 @@ class ReversedNumberedEntry(BaseEntry):
 class TextEntry(BaseEntry):
     # MANDATORY
     text = models.TextField(null=False, blank=False, help_text="The text content for the entry")
+
+    type = "text"
 
     def __str__(self) -> str:
         return f"[Text({self.text})]"

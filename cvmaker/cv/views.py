@@ -2,7 +2,7 @@ import os
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import FileResponse, HttpResponse
-from django.shortcuts import redirect, render, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
@@ -11,11 +11,12 @@ from rendercv import data
 from rendercv.renderer import renderer
 
 from cvmaker import settings
-from entries.forms import EducationEntryForm, ExperienceEntryForm, PublicationEntryForm
+from entries.forms import (EducationEntryForm, ExperienceEntryForm,
+                           PublicationEntryForm)
 from entries.models import EducationEntry, ExperienceEntry, PublicationEntry
+
 from .forms import CVInfoForm
 from .models import CV, CVInfo
-
 
 ################################################## HOME ################################################################
 
