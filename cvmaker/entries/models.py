@@ -1,11 +1,16 @@
+import uuid
+
 from django.contrib.auth.models import User
 from django.db import models
+from model_utils.managers import InheritanceManager
 
 
-class CVEntry(models.Model):
+class BaseEntry(models.Model):
     # KEY
     user: models.ForeignKey = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name='%(class)s')
     alias: models.CharField = models.CharField(max_length=20, null=False, blank=False, help_text="Alias for the CV entry")
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    objects = InheritanceManager()
 
     # TYPE-HINTING FOR METHODS
     start_date: models.DateField
@@ -13,9 +18,6 @@ class CVEntry(models.Model):
     date: models.DateField
     summary: models.CharField
     highlights: models.CharField
-
-    class Meta:
-        abstract = True
 
     def __str__(self) -> str:
         return f"[{self.__class__.__name__}({self.alias})]"
@@ -41,7 +43,7 @@ class CVEntry(models.Model):
                 if highlight.strip()]
 
 
-class EducationEntry(CVEntry):
+class EducationEntry(BaseEntry):
     # MANDATORY
     institution = models.CharField(max_length=100, null=False, blank=False, help_text="The name of the institution")
     area = models.CharField(max_length=100, null=False, blank=False, help_text="The area of study")
@@ -72,7 +74,7 @@ class EducationEntry(CVEntry):
         return {k: v for k, v in info.items() if v is not None}
 
 
-class ExperienceEntry(CVEntry):
+class ExperienceEntry(BaseEntry):
     # MANDATORY
     company = models.CharField(max_length=100, null=False, blank=False, help_text="The name of the company")
     position = models.CharField(max_length=100, null=False, blank=False, help_text="The position")
@@ -100,7 +102,7 @@ class ExperienceEntry(CVEntry):
         return {k: v for k, v in info.items() if v is not None}
 
 
-class NormalEntry(CVEntry):
+class NormalEntry(BaseEntry):
     # MANDATORY
     name = models.CharField(max_length=100, null=False, blank=False, help_text="The name of the entry")
 
@@ -125,7 +127,7 @@ class NormalEntry(CVEntry):
         }
         return {k: v for k, v in info.items() if v is not None}
 
-class PublicationEntry(CVEntry):
+class PublicationEntry(BaseEntry):
     # MANDATORY
     title = models.CharField(max_length=200, null=False, blank=False, help_text="The title of the publication")
     authors = models.CharField(max_length=300, null=False, blank=False, help_text="The authors (separated by commas)")
@@ -151,7 +153,7 @@ class PublicationEntry(CVEntry):
         return {k: v for k, v in info.items() if v is not None}
 
 
-class OneLineEntry(CVEntry):
+class OneLineEntry(BaseEntry):
     # MANDATORY
     label = models.CharField(max_length=100, null=False, blank=False, help_text="The label of the entry")
     details = models.CharField(max_length=300, null=False, blank=False, help_text="The details of the entry")
@@ -166,7 +168,7 @@ class OneLineEntry(CVEntry):
         }
 
 
-class BulletEntry(CVEntry):
+class BulletEntry(BaseEntry):
     # MANDATORY
     bullet = models.CharField(max_length=300, null=False, blank=False, help_text="The bullet point")
 
@@ -177,7 +179,7 @@ class BulletEntry(CVEntry):
         return {'bullet': self.bullet}
 
 
-class NumberedEntry(CVEntry):
+class NumberedEntry(BaseEntry):
     # MANDATORY
     number = models.CharField(max_length=300, null=False, blank=False, help_text="The numbered entry content")
 
@@ -188,7 +190,7 @@ class NumberedEntry(CVEntry):
         return {'number': self.number}
 
 
-class ReversedNumberedEntry(CVEntry):
+class ReversedNumberedEntry(BaseEntry):
     # MANDATORY
     reversed_number = models.CharField(max_length=300, null=False, blank=False,
                                        help_text="The reversed numbered entry content")
@@ -200,7 +202,7 @@ class ReversedNumberedEntry(CVEntry):
         return {'reversed_number': self.reversed_number}
 
 
-class TextEntry(CVEntry):
+class TextEntry(BaseEntry):
     # MANDATORY
     text = models.TextField(null=False, blank=False, help_text="The text content for the entry")
 
@@ -209,4 +211,3 @@ class TextEntry(CVEntry):
 
     def serialize(self) -> dict:
         return {'text': self.text}
-

@@ -1,50 +1,88 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
-from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
+from django.views import View
+from django.views.generic import ListView, DetailView, UpdateView, DeleteView
 
-from sections.models import Section, SectionEntry
+from .forms import (
+    EducationEntryForm, ExperienceEntryForm, PublicationEntryForm,
+    NormalEntryForm, OneLineEntryForm, BulletEntryForm,
+    NumberedEntryForm, ReversedNumberedEntryForm, TextEntryForm
+)
 from .models import *
-from .forms import EducationEntryForm, ExperienceEntryForm, PublicationEntryForm
 
 
 ########################################################################################################################
 ################################################ ENTRIES ###############################################################
 ########################################################################################################################
 
+ENTRY_FORMS = {
+    'education': EducationEntryForm,
+    'experience': ExperienceEntryForm,
+    'publication': PublicationEntryForm,
+    'normal': NormalEntryForm,
+    'one_line': OneLineEntryForm,
+    'bullet': BulletEntryForm,
+    'numbered': NumberedEntryForm,
+    'reversed_numbered': ReversedNumberedEntryForm,
+    'text': TextEntryForm,
+}
+
+ENTRY_TYPES = ENTRY_FORMS.keys()
+
+class EntryBaseView(LoginRequiredMixin):
+    def get_entry(self):
+        entry = get_object_or_404(
+            BaseEntry.objects.select_subclasses(),
+            id=self.kwargs['entry_id'],
+            user=self.request.user
+        )
+        return entry
+
 ################################################# CREATE ###############################################################
 
-class EntryCreateView(LoginRequiredMixin, CreateView):
-    model = None  # Model will be determined dynamically
-    template_name = "entry_form.html"
+class EntryCreateView(View):
+    template_name = "entries/form.html"
 
-    def get_form_class(self):
-        entry_type = self.kwargs.get("entry_type")
-        return {
-            "education": EducationEntryForm,
-            "experience": ExperienceEntryForm,
-            "publication": PublicationEntryForm
-        }.get(entry_type, EducationEntryForm)  # Default to Education if not found
+    def get(self, request):
+        entry_type = request.GET.get("entry_type")
 
-    def form_valid(self, form):
-        form.instance.user = self.request.user
-        response = super().form_valid(form)
-        # Add to section
-        section = Section.objects.get(id=self.kwargs["section_id"])
-        SectionEntry.objects.create(
-            section=section,
-            content_object=self.object,
-            order=section.section_entries.count() + 1
-        )
-        return response
+        if not entry_type:  # Step 1: Select Entry Type
+            return render(request, self.template_name, {"step": 1, "entry_types": ENTRY_FORMS.keys()})
 
-    def get_success_url(self):
-        return reverse_lazy("cv-structure-edit", kwargs={"cv_id": self.kwargs["cv_id"]})
+        # Step 2: Fill in Entry Details
+        form_class = ENTRY_FORMS.get(entry_type)
+        if not form_class:
+            return redirect(reverse_lazy("entry-create"))  # Redirect if invalid type
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["cv_id"] = self.kwargs["cv_id"]
-        return context
+        form = form_class()
+        return render(request, self.template_name, {
+            "step": 2,
+            "form": form,
+            "entry_type": entry_type
+        })
+
+    def post(self, request):
+        entry_type = request.POST.get("entry_type")
+        form_class = ENTRY_FORMS.get(entry_type)
+
+        if not form_class:
+            return redirect(reverse_lazy("entry-create"))  # Redirect if invalid type
+
+        form = form_class(request.POST)
+
+        if form.is_valid():
+            entry = form.save(commit=False)
+            entry.user = request.user
+            entry.save()
+            return redirect(reverse_lazy("entry-create"))  # Redirect to create another entry
+
+        return render(request, self.template_name, {
+            "step": 2,
+            "form": form,
+            "entry_type": entry_type
+        })
 
 
 ################################################## LIST ################################################################
@@ -55,109 +93,128 @@ class EntryListView(LoginRequiredMixin, ListView):
     context_object_name = "entries"
 
     def get_queryset(self):
-        education_entries = list(EducationEntry.objects.filter(user=self.request.user))
-        experience_entries = list(ExperienceEntry.objects.filter(user=self.request.user))
-        publication_entries = list(PublicationEntry.objects.filter(user=self.request.user))
-        normal_entries = list(NormalEntry.objects.filter(user=self.request.user))
-        oneline_entries = list(OneLineEntry.objects.filter(user=self.request.user))
-        bullet_entries = list(BulletEntry.objects.filter(user=self.request.user))
-        numbered_entries = list(NumberedEntry.objects.filter(user=self.request.user))
-        reversed_numbered_entries = list(ReversedNumberedEntry.objects.filter(user=self.request.user))
-        text_entries = list(TextEntry.objects.filter(user=self.request.user))
+        # Dynamically collect entries from all entry types
+        entry_models = [
+            EducationEntry, ExperienceEntry, PublicationEntry,
+            NormalEntry, OneLineEntry, BulletEntry,
+            NumberedEntry, ReversedNumberedEntry, TextEntry
+        ]
 
-        combined_entries = (
-            education_entries
-            + experience_entries
-            + publication_entries
-            + normal_entries
-            + oneline_entries
-            + bullet_entries
-            + numbered_entries
-            + reversed_numbered_entries
-            + text_entries
-        )
-        return combined_entries
+        # Collect all entries for the current user
+        entries = []
+        for model in entry_models:
+            entries += list(model.objects.filter(user=self.request.user))
+        return entries
 
 
 ################################################## VIEW ################################################################
 
 
 class EntryDetailView(LoginRequiredMixin, DetailView):
-    model = CVEntry
-    template_name = "entry_detail.html"
-    context_object_name = "entry"  # Optional: Rename the context variable
+    template_name = "entries/detail.html"
+    context_object_name = "entry"
 
     def get_object(self, queryset=None):
-        # Retrieve the object based on the entry_id in the URL and the user
-        section_entry = SectionEntry.objects.get(id=self.kwargs["entry_id"])
-        if section_entry.content_object.user == self.request.user:
-            return section_entry.content_object
-        else:
-            raise Http404
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Add additional context if needed
-        return context
+        try:
+            return BaseEntry.objects.select_subclasses().get(
+                id=self.kwargs["entry_id"],
+                user=self.request.user
+            )
+        except BaseEntry.DoesNotExist:
+            raise Http404("Entry not found or access denied")
 
 
 ################################################## EDIT ################################################################
 
-
 class EntryUpdateView(LoginRequiredMixin, UpdateView):
-    model = CVEntry  # Use your base Entry model or a specific model
-    template_name = "entry_edit.html"
+    template_name = "entries/update.html"
 
     def get_object(self, queryset=None):
-        # Retrieve the object based on the entry_id in the URL and the user
-        section_entry = SectionEntry.objects.get(id=self.kwargs["entry_id"])
-        if section_entry.content_object.user == self.request.user:
-            return section_entry.content_object
-        else:
-            raise Http404
+        """Retrieve the entry instance and ensure the user owns it."""
+        # Get the entry ID from the URL
+        entry_id = self.kwargs["entry_id"]
+
+        # Attempt to find the entry in one of the concrete models (subclasses of BaseEntry)
+        for model in [EducationEntry, ExperienceEntry, PublicationEntry, NormalEntry,
+                      OneLineEntry, BulletEntry, NumberedEntry, ReversedNumberedEntry, TextEntry]:
+            entry = model.objects.filter(id=entry_id).first()
+            if entry:
+                # If the entry exists in this model, check if the user owns it
+                if entry.user != self.request.user:
+                    raise Http404("You do not have permission to edit this entry.")
+                return entry
+
+        # If no entry is found in any of the models, raise a 404 error
+        raise Http404("Entry not found.")
 
     def get_form_class(self):
-        entry = self.get_object()
-        return {
-            "EducationEntry": EducationEntryForm,
-            "ExperienceEntry": ExperienceEntryForm,
-            "PublicationEntry": PublicationEntryForm
-        }[entry.__class__.__name__]
+        """Return the correct form class based on the entry type."""
+        entry = self.get_object()  # Retrieve the entry object
+        form_mapping = {
+            EducationEntry: EducationEntryForm,
+            ExperienceEntry: ExperienceEntryForm,
+            PublicationEntry: PublicationEntryForm,
+            NormalEntry: NormalEntryForm,
+            BulletEntry: BulletEntryForm,
+            NumberedEntry: NumberedEntryForm,
+            ReversedNumberedEntry: ReversedNumberedEntryForm,
+            TextEntry: TextEntryForm,
+            OneLineEntry: OneLineEntryForm,
+        }
+
+        # Dynamically return the appropriate form class based on entry type
+        return form_mapping.get(type(entry), NormalEntryForm)
 
     def get_success_url(self):
-        return reverse_lazy("cv-structure-edit", kwargs={"cv_id": self.kwargs["cv_id"]})
+        """Redirect to the entry detail page upon successful update."""
+        return reverse_lazy("entry-detail", kwargs={"entry_id": self.kwargs["entry_id"]})
 
     def get_context_data(self, **kwargs):
+        """Add additional context for the template."""
         context = super().get_context_data(**kwargs)
-        context["cv_id"] = self.kwargs["cv_id"]
+        entry = self.get_object()  # Retrieve the entry object
+        context["entry"] = entry  # Add the entry object to context
+        context["entry_type"] = entry.__class__.__name__  # Set entry type
         return context
 
 
 ################################################# DELETE ###############################################################
 
-
 class EntryDeleteView(LoginRequiredMixin, DeleteView):
-    model = CVEntry  # Use your base Entry model or a specific model
-    template_name = "entry_delete.html"
+    model = BaseEntry  # Use BaseEntry as base class for all entry types
 
     def get_object(self, queryset=None):
-        # Retrieve the object based on the entry_id in the URL and the user
-        section_entry = SectionEntry.objects.get(id=self.kwargs["entry_id"])
-        if section_entry.content_object.user == self.request.user:
-            return section_entry.content_object
-        else:
-            raise Http404
+        """Retrieve the entry instance and ensure the user owns it."""
+        # Get the entry ID from the URL
+        entry_id = self.kwargs["entry_id"]
+
+        # Attempt to find the entry in one of the concrete models (subclasses of BaseEntry)
+        for model in [EducationEntry, ExperienceEntry, PublicationEntry, NormalEntry,
+                      OneLineEntry, BulletEntry, NumberedEntry, ReversedNumberedEntry, TextEntry]:
+            entry = model.objects.filter(id=entry_id).first()
+            if entry:
+                # If the entry exists in this model, check if the user owns it
+                if entry.user != self.request.user:
+                    raise Http404("You do not have permission to edit this entry.")
+                return entry
+
+        # If no entry is found in any of the models, raise a 404 error
+        raise Http404("Entry not found.")
 
     def get_success_url(self):
-        return reverse_lazy("cv-structure-edit", kwargs={"cv_id": self.kwargs["cv_id"]})
+        # Redirect to the entry list after deletion
+        return reverse_lazy("entry-list")
 
     def delete(self, request, *args, **kwargs):
-        # Delete the SectionEntry and the content_object
-        section_entry = SectionEntry.objects.get(id=self.kwargs["entry_id"])
-        content_object = section_entry.content_object
-        if content_object.user == self.request.user:
-            section_entry.delete()
-            content_object.delete()
+        # Get the entry object to delete
+        entry = self.get_object()
+        if entry.user == self.request.user:
+            try:
+                # Delete the entry
+                entry.delete()
+            except Exception as e:
+                raise Http404(f"Error occurred while deleting: {str(e)}")
+
             return super().delete(request, *args, **kwargs)
         else:
-            raise Http404
+            raise Http404("You do not have permission to delete this entry.")

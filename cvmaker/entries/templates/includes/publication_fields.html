@@ -1,0 +1,19 @@
+<dt class="col-sm-3">Title</dt>
+<dd class="col-sm-9">{{ entry.title|default:"-" }}</dd>
+
+<dt class="col-sm-3">Authors</dt>
+<dd class="col-sm-9">{{ entry.authors|default:"-" }}</dd>
+
+<dt class="col-sm-3">DOI</dt>
+<dd class="col-sm-9">{{ entry.doi|default:"-" }}</dd>
+
+<dt class="col-sm-3">URL</dt>
+<dd class="col-sm-9">
+    <a href="{{ entry.url|default:'#' }}" target="_blank">{{ entry.url|default:"-" }}</a>
+</dd>
+
+<dt class="col-sm-3">Journal</dt>
+<dd class="col-sm-9">{{ entry.journal|default:"-" }}</dd>
+
+<dt class="col-sm-3">Date</dt>
+<dd class="col-sm-9">{{ entry.date|date:"M Y"|default:"-" }}</dd>

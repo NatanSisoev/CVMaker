@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ entry_type }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mb-4">Edit {{ entry_type }}</h2>
+
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        {% for field in form %}
+        <div class="mb-3">
+            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+                <small class="form-text text-muted">{{ field.help_text }}</small>
+            {% endif %}
+            {% for error in field.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'entry-detail' entry_id=entry.id %}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

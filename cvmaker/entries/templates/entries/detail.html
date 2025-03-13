@@ -1,10 +1,103 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
 
-</body>
-</html>
+{% block title %}Entry Details - {{ entry.alias }}{% endblock %}
+
+{% block content %}
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">
+                {% if entry|class_name == 'EducationEntry' %}
+                    Education Entry - {{ entry.alias }}
+                {% elif entry|class_name == 'ExperienceEntry' %}
+                    Experience Entry - {{ entry.alias }}
+                {% elif entry|class_name == 'NormalEntry' %}
+                    Normal Entry - {{ entry.alias }}
+                {% elif entry|class_name == 'PublicationEntry' %}
+                    Publication Entry - {{ entry.alias }}
+                {% elif entry|class_name == 'OneLineEntry' %}
+                    One-Line Entry - {{ entry.alias }}
+                {% elif entry|class_name == 'BulletEntry' %}
+                    Bullet Entry - {{ entry.alias }}
+                {% elif entry|class_name == 'NumberedEntry' %}
+                    Numbered Entry - {{ entry.alias }}
+                {% elif entry|class_name == 'ReversedNumberedEntry' %}
+                    Reversed Numbered Entry - {{ entry.alias }}
+                {% elif entry|class_name == 'TextEntry' %}
+                    Text Entry - {{ entry.alias }}
+                {% else %}
+                    Entry Details
+                {% endif %}
+            </h3>
+            <div class="d-flex gap-2">
+                <a href="{% url 'entry-edit' entry.id %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ entry.id }}">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if entry %}
+                <dl class="row">
+                    {% if entry|class_name == 'EducationEntry' %}
+                        {% include 'includes/education_fields.html' %}
+                    {% elif entry|class_name == 'ExperienceEntry' %}
+                        {% include 'includes/experience_fields.html' %}
+                    {% elif entry|class_name == 'NormalEntry' %}
+                        {% include 'includes/normal_fields.html' %}
+                    {% elif entry|class_name == 'PublicationEntry' %}
+                        {% include 'includes/publication_fields.html' %}
+                    {% elif entry|class_name == 'OneLineEntry' %}
+                        {% include 'includes/oneline_fields.html' %}
+                    {% elif entry|class_name == 'BulletEntry' %}
+                        {% include 'includes/bullet_fields.html' %}
+                    {% elif entry|class_name == 'NumberedEntry' %}
+                        {% include 'includes/numbered_fields.html' %}
+                    {% elif entry|class_name == 'ReversedNumberedEntry' %}
+                        {% include 'includes/reversed_numbered_fields.html' %}
+                    {% elif entry|class_name == 'TextEntry' %}
+                        {% include 'includes/text_fields.html' %}
+                    {% else %}
+                        <p>Unknown Entry Type.</p>
+                    {% endif %}
+                </dl>
+            {% else %}
+                <p>Entry not found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+
+<div class="modal fade" id="deleteModal{{ entry.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this entry?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{% url 'entry-delete' entry_id=entry.id %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% endblock %}

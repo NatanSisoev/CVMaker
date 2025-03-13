@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -22,6 +24,7 @@ class Section(models.Model):
     user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name='cv_sections')
     title = models.CharField(max_length=50, help_text="Name of the section")
     alias = models.CharField(max_length=20, help_text="Alias for the section", default="default")
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
 
     def serialize(self) -> list:
         return [entry.content_object.serialize() for entry in self.section_entries.order_by('order')]

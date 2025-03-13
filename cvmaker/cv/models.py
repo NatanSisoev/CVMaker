@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 
 from django.contrib.auth.models import User
@@ -17,6 +18,8 @@ def months_full_names_defaults():
             "July", "August", "September", "October", "November", "December"]
 
 
+# TODO: create a generator class that accepts file upload and creates all entries, info, design, etc.
+
 ########################################################################################################################
 ########################################### LEVEL 1: CV ################################################################
 ########################################################################################################################
@@ -27,6 +30,7 @@ class CV(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cvs', default=1, null=True)
     alias = models.CharField(max_length=20, null=False, blank=False, help_text="Alias for the curriculum vitae",
                              default="CV")
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
 
     info = models.ForeignKey("CVInfo", on_delete=models.SET_NULL, null=True, blank=True, related_name='cv')
     design = models.ForeignKey("CVDesign", on_delete=models.SET_NULL, null=True, blank=True, related_name='cv')
@@ -68,6 +72,7 @@ class CVInfo(models.Model):
     # KEYS
     user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name="cv_info")
     alias = models.CharField(max_length=20, help_text="Alias for the information", default="default")
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
 
     # INFO
     name = models.CharField(max_length=20, null=True, blank=True, help_text="Your name")
@@ -79,15 +84,6 @@ class CVInfo(models.Model):
                               help_text="A URL to the individual's personal or professional website")
     social_networks = models.JSONField(null=True, blank=True,
                                        help_text="A list of social media profiles in JSON format")
-
-    # TODO: need?
-    # FILE
-    data_file = models.FileField(
-        upload_to="media/cvs/src",
-        null=True,
-        blank=True,
-        help_text="Upload YAML file with complete info"
-    )
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -131,6 +127,7 @@ class CVDesign(models.Model):
     # KEYS
     user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name='cv_designs')
     alias = models.CharField(max_length=20, help_text="Alias for the design", default="default")
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
 
     # INFO
     theme = models.CharField(max_length=100, null=False, blank=False, choices=THEME_CHOICES, help_text="The theme name")
@@ -157,6 +154,7 @@ class CVLocale(models.Model):
     # KEYS
     user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name='cv_locales')
     alias = models.CharField(max_length=20, help_text="Alias for the locale", default="default")
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
 
     # INFO
     language = models.CharField(max_length=2, null=False, blank=False, default='en',
@@ -220,6 +218,7 @@ class CVSettings(models.Model):
     # KEYS
     user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name='cv_settings')
     alias = models.CharField(max_length=20, help_text="Alias for the settings", default="default")
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
 
     # INFO
     date = models.DateField(default=timezone.now,

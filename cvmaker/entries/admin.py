@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import *
 
+admin.site.register(BaseEntry)
 admin.site.register(EducationEntry)
 admin.site.register(ExperienceEntry)
 admin.site.register(NormalEntry)
