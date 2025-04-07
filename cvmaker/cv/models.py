@@ -98,7 +98,7 @@ class CVInfo(models.Model):
         return [{"network": k, "username": v} for k, v in self.social_networks.items()]
 
     def serialize(self) -> dict:
-        if self.data_file and Path(self.data_file.path).exists():
+        if hasattr(self, "data_file") and self.data_file and Path(self.data_file.path).exists():
             return read_a_yaml_file(self.data_file.path)
 
         info = {

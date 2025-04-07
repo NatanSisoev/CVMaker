@@ -18,6 +18,7 @@ from entries.models import EducationEntry, ExperienceEntry, PublicationEntry
 from .forms import CVInfoForm
 from .models import CV, CVInfo
 
+
 ################################################## HOME ################################################################
 
 class HomePageView(View):
