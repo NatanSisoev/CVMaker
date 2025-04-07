@@ -15,9 +15,16 @@
             <a href="{% url 'cv-create' %}" class="btn btn-outline-primary btn-sm">
                 <i class="bi bi-plus"></i>
             </a>
+            <form action="{% url 'cv-upload' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="file" name="yaml_file" id="yamlUpload"
+                       accept=".yaml" hidden onchange="this.form.submit()">
+                <label for="yamlUpload" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-upload"></i>
+                </label>
+            </form>
         </div>
     </div>
-
     {% if cvs %}
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         {% for cv in cvs %}
@@ -58,8 +65,6 @@
     {% endif %}
 </div>
 
-{% endblock %}
-
 {% block extra_js %}
     {% for cv in cvs %}
     <div class="modal fade" id="deleteModal{{ cv.id }}" tabindex="-1">
@@ -70,11 +75,11 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    Are you sure you want to delete "{{ cv.alias }}"?
+                    Are you sure you want to delete this CV?
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <form action="{% url 'cv-delete' cv.id %}" method="POST">
+                    <form action="{% url 'cv-delete' cv_id=cv.id %}" method="POST">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger">Delete</button>
                     </form>
@@ -83,4 +88,6 @@
         </div>
     </div>
     {% endfor %}
+{% endblock %}
+
 {% endblock %}

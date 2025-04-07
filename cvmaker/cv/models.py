@@ -64,15 +64,105 @@ class CV(models.Model):
 
 
 ########################################################################################################################
-######################################### LEVEL 2: MODULES #############################################################
+######################################### LEVEL 2: MANAGERS ############################################################
 ########################################################################################################################
 
+class CVInfoManager(models.Manager):
+    def create_from_data(self, user, data: dict, alias: str):
+        # Keep existing method for backward compatibility
+        return self.create(
+            user=user,
+            alias=alias,
+            name=data.get("name"),
+            location=data.get("location"),
+            email=data.get("email"),
+            phone=data.get("phone"),
+            website=data.get("website"),
+            social_networks=data.get("social_networks"),
+        )
+
+    def create_from_data_model(self, user, data_model, alias: str):
+        """Create a CVInfo instance from a RenderCVDataModel"""
+        cv_data = data_model.cv.dict()
+        info = cv_data.get("sections_input", {})
+
+        return self.create_from_data(user, info, alias)
+
+
+class CVDesignManager(models.Manager):
+    def create_from_data(self, user, file, alias: str):
+        # Keep existing method for backward compatibility
+        return self.create(
+            user=user,
+            alias=alias,
+            theme="custom",
+            design_file=file
+        )
+
+    def create_from_data_model(self, user, data_model, file, alias: str):
+        """Create a CVDesign instance from a RenderCVDataModel"""
+        # If there's design data in the model, we could use it here
+        # For now, just use the file as in the original method
+        return self.create_from_data(user, file, alias)
+
+
+class CVLocaleManager(models.Manager):
+    def create_from_data(self, user, data: dict, alias: str):
+        field_defaults = {
+            'language': 'en',
+            'phone_number_format': 'national',
+            'page_numbering_template': "NAME - Page PAGE_NUMBER of TOTAL_PAGES",
+            'last_updated_date_template': "Last updated in TODAY",
+            'date_template': "MONTH_ABBREVIATION YEAR",
+            'month': 'month',
+            'months': 'months',
+            'year': 'year',
+            'years': 'years',
+            'present': 'present',
+            'to': '–',
+            'abbreviations_for_months': months_abbreviations_defaults(),
+            'full_names_of_months': months_full_names_defaults(),
+        }
+
+        for key, default in field_defaults.items():
+            data.setdefault(key, default)
+
+        return self.create(user=user, alias=alias, **data)
+
+    def create_from_data_model(self, user, data_model, alias: str):
+        """Create a CVLocale instance from a RenderCVDataModel"""
+        locale_data = data_model.locale.dict()
+        return self.create_from_data(user, locale_data, alias)
+
+
+class CVSettingsManager(models.Manager):
+    def create_from_data_model(self, user, data_model, alias: str):
+        """Create a CVSettings instance from a RenderCVDataModel"""
+        # Extract settings data if present in the model
+        settings_data = {}
+        if hasattr(data_model, 'rendercv_settings'):
+            settings_data = data_model.rendercv_settings.dict()
+
+        return self.create(
+            user=user,
+            alias=alias,
+            date=timezone.now(),  # Default to current date or extract from settings
+            bold_keywords=settings_data.get('bold_keywords', []),
+            # Add other settings as needed
+        )
+
+
+
+########################################################################################################################
+######################################### LEVEL 2: MODULES #############################################################
+########################################################################################################################
 
 class CVInfo(models.Model):
     # KEYS
     user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name="cv_info")
     alias = models.CharField(max_length=20, help_text="Alias for the information", default="default")
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    objects = CVInfoManager()
 
     # INFO
     name = models.CharField(max_length=20, null=True, blank=True, help_text="Your name")
@@ -121,13 +211,15 @@ class CVDesign(models.Model):
         ('sb2nov', 'Sb2Nov'),
         ('engineeringresumes', 'EngineeringResumes'),
         ('engineeringclassic', 'EngineeringClassic'),
-        ('moderncv', 'ModernCV')
+        ('moderncv', 'ModernCV'),
+        ('custom', 'Custom')
     ]
 
     # KEYS
     user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name='cv_designs')
     alias = models.CharField(max_length=20, help_text="Alias for the design", default="default")
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    objects = CVDesignManager()
 
     # INFO
     theme = models.CharField(max_length=100, null=False, blank=False, choices=THEME_CHOICES, help_text="The theme name")
@@ -155,6 +247,7 @@ class CVLocale(models.Model):
     user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name='cv_locales')
     alias = models.CharField(max_length=20, help_text="Alias for the locale", default="default")
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    objects = CVLocaleManager()
 
     # INFO
     language = models.CharField(max_length=2, null=False, blank=False, default='en',
@@ -219,6 +312,7 @@ class CVSettings(models.Model):
     user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name='cv_settings')
     alias = models.CharField(max_length=20, help_text="Alias for the settings", default="default")
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    objects = CVSettingsManager()
 
     # INFO
     date = models.DateField(default=timezone.now,

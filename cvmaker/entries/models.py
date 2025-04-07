@@ -1,8 +1,34 @@
 import uuid
+from unittest import case
 
 from django.contrib.auth.models import User
 from django.db import models
 from model_utils.managers import InheritanceManager
+
+
+def get_entry_model(entry_type: str):
+    match entry_type:
+        case "EducationEntry":
+            return EducationEntry
+        case "ExperienceEntry":
+            return ExperienceEntry
+        case "PublicationEntry":
+            return PublicationEntry
+        case "NormalEntry":
+            return NormalEntry
+        case "OneLineEntry":
+            return OneLineEntry
+        case "BulletEntry":
+            return BulletEntry
+        case "NumberedEntry":
+            return NumberedEntry
+        case "ReversedNumberedEntry":
+            return ReversedNumberedEntry
+        case "TextEntry":
+            return TextEntry
+        case _:
+            ValueError("Unable to determine entry model from type: {}".format(entry_type))
+
 
 
 class BaseEntry(models.Model):
