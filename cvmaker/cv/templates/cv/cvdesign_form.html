@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}CV Design Form{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>CV Design Form</h1>
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h4>Design Details</h4>
+            </div>
+            <div class="card-body">
+                {{ form.non_field_errors }}
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {% if field.name == 'design_file' %}
+                            {% render_field field class="form-control-file" %}
+                        {% else %}
+                            {% render_field field class="form-control" %}
+                        {% endif %}
+                        {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save CV Design</button>
+    </form>
+</div>
+{% endblock %}

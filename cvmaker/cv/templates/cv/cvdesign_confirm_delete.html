@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Confirm Delete CV Design - {{ cvdesign.alias }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2>Confirm Delete CV Design: {{ cvdesign.alias }}</h2>
+    <div class="alert alert-warning">
+        Are you sure you want to delete this CV Design?
+        <strong>This action cannot be undone.</strong>
+    </div>
+    <dl class="row">
+        <dt class="col-sm-3">Alias</dt>
+        <dd class="col-sm-9">{{ cvdesign.alias }}</dd>
+
+        <dt class="col-sm-3">Theme</dt>
+        <dd class="col-sm-9">{{ cvdesign.get_theme_display }}</dd>
+    </dl>
+    <form method="post">
+        {% csrf_token %}
+        <a href="{% url 'cvdesign-list' %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+    </form>
+</div>
+{% endblock %}

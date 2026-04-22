@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}CV Infos{% endblock %}
+
+{% block content %}
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">CV Infos</h2>
+        <div class="d-flex gap-2">
+            <a href="{% url 'cvinfo-create' %}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-plus"></i> Add CV Info
+            </a>
+        </div>
+    </div>
+
+    {% if cvinfos %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for info in cvinfos %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title d-flex justify-content-between">
+                        {{ info.alias }}
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'cvinfo-detail' info_id=info.id %}" class="btn btn-outline-secondary btn-sm" title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'cvinfo-edit' info_id=info.id %}" class="btn btn-outline-secondary btn-sm" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ info.id }}" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </h5>
+
+                    <p class="card-text text-muted mb-1"><strong>Name:</strong> {{ info.name|default:"N/A" }}</p>
+                    <p class="card-text text-muted mb-1"><strong>Email:</strong> {{ info.email|default:"N/A" }}</p>
+                    <p class="card-text text-muted mb-1"><strong>Phone:</strong> {{ info.phone|default:"N/A" }}</p>
+                    <p class="card-text text-muted mb-0"><strong>Location:</strong> {{ info.location|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+        <h4>No CV Info found.</h4>
+        <p>Start by adding your first CV Info.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% block extra_js %}
+{% for info in cvinfos %}
+<div class="modal fade" id="deleteModal{{ info.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ info.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel{{ info.id }}">Delete CV Info</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete CV Info "{{ info.alias }}"?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{% url 'cvinfo-delete' info_id=info.id %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+{% endblock %}

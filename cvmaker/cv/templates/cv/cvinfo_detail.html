@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}CV Info Detail - {{ cvinfo.alias }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2>CV Info Detail: {{ cvinfo.alias }}</h2>
+    <div class="card shadow p-4">
+        <dl class="row">
+            <dt class="col-sm-3">Name</dt>
+            <dd class="col-sm-9">{{ cvinfo.name|default:"-" }}</dd>
+
+            <dt class="col-sm-3">Location</dt>
+            <dd class="col-sm-9">{{ cvinfo.location|default:"-" }}</dd>
+
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">{{ cvinfo.email|default:"-" }}</dd>
+
+            <dt class="col-sm-3">Phone</dt>
+            <dd class="col-sm-9">{{ cvinfo.phone|default:"-" }}</dd>
+
+            <dt class="col-sm-3">Website</dt>
+            <dd class="col-sm-9">
+                {% if cvinfo.website %}
+                    <a href="{{ cvinfo.website }}" target="_blank">{{ cvinfo.website }}</a>
+                {% else %}
+                    -
+                {% endif %}
+            </dd>
+
+            <dt class="col-sm-3">Photo</dt>
+            <dd class="col-sm-9">
+                {% if cvinfo.photo %}
+                    <img src="{{ cvinfo.photo.url }}" alt="Photo of {{ cvinfo.name }}" class="img-thumbnail" style="max-width: 200px;">
+                {% else %}
+                    No photo uploaded.
+                {% endif %}
+            </dd>
+
+            <dt class="col-sm-3">Social Networks</dt>
+            <dd class="col-sm-9">
+                {% if cvinfo.social_networks %}
+                    <ul>
+                    {% for network, username in cvinfo.social_networks.items %}
+                        <li><strong>{{ network|capfirst }}:</strong> {{ username }}</li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    None
+                {% endif %}
+            </dd>
+        </dl>
+
+        <a href="{% url 'cvinfo-list' %}" class="btn btn-secondary">Back to List</a>
+        <a href="{% url 'cvinfo-edit' info_id=cvinfo.id %}" class="btn btn-primary">Edit</a>
+        <a href="{% url 'cvinfo-delete' info_id=cvinfo.id %}" class="btn btn-danger">Delete</a>
+    </div>
+</div>
+{% endblock %}

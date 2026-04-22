@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Confirm Delete CV Settings - {{ cvsettings.alias }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2>Confirm Delete CV Settings: {{ cvsettings.alias }}</h2>
+    <div class="alert alert-warning">
+        Are you sure you want to delete this CV Settings?
+        <strong>This action cannot be undone.</strong>
+    </div>
+    <dl class="row">
+        <dt class="col-sm-3">Date</dt>
+        <dd class="col-sm-9">{{ cvsettings.date }}</dd>
+    </dl>
+    <form method="post">
+        {% csrf_token %}
+        <a href="{% url 'cvsettings-list' %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+    </form>
+</div>
+{% endblock %}

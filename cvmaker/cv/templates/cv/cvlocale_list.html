@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}CV Locales{% endblock %}
+
+{% block content %}
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">CV Locales</h2>
+        <div class="d-flex gap-2">
+            <a href="{% url 'cvlocale-create' %}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-plus"></i> Add CV Locale
+            </a>
+        </div>
+    </div>
+
+    {% if cvlocales %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for locale in cvlocales %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title d-flex justify-content-between">
+                        {{ locale.alias }}
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'cvlocale-detail' locale_id=locale.id %}" class="btn btn-outline-secondary btn-sm" title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'cvlocale-edit' locale_id=locale.id %}" class="btn btn-outline-secondary btn-sm" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ locale.id }}" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </h5>
+
+                    <p class="card-text text-muted mb-1"><strong>Language:</strong> {{ locale.language }}</p>
+                    <p class="card-text text-muted mb-1"><strong>Phone Format:</strong> {{ locale.get_phone_number_format_display }}</p>
+
+                    {% if locale.locale_file %}
+                    <p class="card-text text-muted mb-0"><strong>Locale File:</strong> <a href="{{ locale.locale_file.url }}" target="_blank">Download</a></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+        <h4>No CV Locales found.</h4>
+        <p>Start by adding your first CV Locale.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% block extra_js %}
+{% for locale in cvlocales %}
+<div class="modal fade" id="deleteModal{{ locale.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ locale.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel{{ locale.id }}">Delete CV Locale</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete CV Locale "{{ locale.alias }}"?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{% url 'cvlocale-delete' locale_id=locale.id %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+{% endblock %}

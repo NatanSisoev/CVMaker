@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}CV Settings{% endblock %}
+
+{% block content %}
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">CV Settings</h2>
+        <div class="d-flex gap-2">
+            <a href="{% url 'cvsettings-create' %}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-plus"></i> Add CV Settings
+            </a>
+        </div>
+    </div>
+
+    {% if cvsettings %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for settings in cvsettings %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title d-flex justify-content-between">
+                        {{ settings.alias }}
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'cvsettings-detail' settings_id=settings.id %}" class="btn btn-outline-secondary btn-sm" title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'cvsettings-edit' settings_id=settings.id %}" class="btn btn-outline-secondary btn-sm" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ settings.id }}" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </h5>
+
+                    <p class="card-text text-muted mb-1"><strong>Date:</strong> {{ settings.date }}</p>
+                    <p class="card-text text-muted mb-0"><strong>Bold Keywords:</strong>
+                        {% if settings.bold_keywords %}
+                            {{ settings.bold_keywords|join:", " }}
+                        {% else %}
+                            None
+                        {% endif %}
+                    </p>
+
+                    {% if settings.settings_file %}
+                    <p class="card-text text-muted"><strong>Settings File:</strong> <a href="{{ settings.settings_file.url }}" target="_blank">Download</a></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+        <h4>No CV Settings found.</h4>
+        <p>Start by adding your first CV Settings.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% block extra_js %}
+{% for settings in cvsettings %}
+<div class="modal fade" id="deleteModal{{ settings.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ settings.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel{{ settings.id }}">Delete CV Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete CV Settings "{{ settings.alias }}"?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{% url 'cvsettings-delete' settings_id=settings.id %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+{% endblock %}

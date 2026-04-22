@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}CV Settings Detail - {{ cvsettings.alias }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2>CV Settings Detail: {{ cvsettings.alias }}</h2>
+    <div class="card shadow p-4">
+        <dl class="row">
+            <dt class="col-sm-3">Date</dt>
+            <dd class="col-sm-9">{{ cvsettings.date }}</dd>
+
+            <dt class="col-sm-3">Bold Keywords</dt>
+            <dd class="col-sm-9">
+                {% if cvsettings.bold_keywords %}
+                    <ul>
+                    {% for kw in cvsettings.bold_keywords %}
+                        <li>{{ kw }}</li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    None
+                {% endif %}
+            </dd>
+
+            <dt class="col-sm-3">Settings File</dt>
+            <dd class="col-sm-9">
+                {% if cvsettings.settings_file %}
+                    <a href="{{ cvsettings.settings_file.url }}" target="_blank">Download Settings File</a>
+                {% else %}
+                    No settings file uploaded.
+                {% endif %}
+            </dd>
+        </dl>
+
+        <a href="{% url 'cvsettings-list' %}" class="btn btn-secondary">Back to List</a>
+        <a href="{% url 'cvsettings-edit' settings_id=cvsettings.id %}" class="btn btn-primary">Edit</a>
+        <a href="{% url 'cvsettings-delete' settings_id=cvsettings.id %}" class="btn btn-danger">Delete</a>
+    </div>
+</div>
+{% endblock %}
