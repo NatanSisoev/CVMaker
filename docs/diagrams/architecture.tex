@@ -1,0 +1,133 @@
+\documentclass[tikz,border=0pt]{standalone}
+
+\pdfpagewidth=2000pt
+\pdfpageheight=1000pt
+
+% Source for cvmaker/static/img/explainer.svg (the architecture diagram on the
+% marketing homepage). To regenerate:
+%
+%   pdflatex architecture.tex
+%   pdf2svg architecture.pdf ../../cvmaker/static/img/explainer.svg
+%
+% Build artifacts (*.aux, *.log, *.pdf) should not be committed.
+
+\begin{document}
+\begin{tikzpicture}[x=1pt,y=1pt]
+  \path[use as bounding box] (0,0) rectangle (2000, 1000);
+
+  % Styles for nodes
+  \tikzset{
+    cv/.style={
+      center,
+      rectangle,
+      draw=blue!70,
+      fill=blue!10,
+      thick,
+      rounded corners,
+      minimum width=250,
+      minimum height=500,
+      font=\Huge
+    },
+    info/.style={
+      center,
+      ellipse,
+      draw=green!70,
+      fill=green!10,
+      thick,
+      minimum width=200,
+      minimum height=100,
+      font=\Huge
+    },
+    design/.style={
+      center,
+      diamond,
+      draw=purple!70,
+      fill=purple!10,
+      thick,
+      minimum width=200,
+      minimum height=100,
+      font=\Huge
+    },
+    locale/.style={
+      center,
+      trapezium,
+      trapezium left angle=70,
+      trapezium right angle=110,
+      draw=orange!70,
+      fill=orange!10,
+      thick,
+      minimum width=200,
+      minimum height=100,
+      font=\Huge
+    },
+    settings/.style={
+      center,
+      star,
+      star points=5,
+      draw=red!70,
+      fill=red!10,
+      thick,
+      minimum width=200,
+      minimum height=100,
+      font=\Huge
+    },
+    section/.style={
+      center,
+      rectangle,
+      draw=teal!70,
+      fill=teal!10,
+      thick,
+      rounded corners=2pt,
+      minimum width=150,
+      minimum height=250,
+      font=\Huge
+    },
+    entry/.style={
+      center,
+      rectangle,
+      draw=gray!70,
+      fill=gray!20,
+      thick,
+      minimum width=100,
+      minimum height=50,
+      font=\Huge
+    },
+    link/.style={<-, line width=100, thick, draw=black}
+  }
+
+  % Positions (manually placed)
+  \node[cv] (cv) at (400, 500) {CV};
+
+  \node[info] (info) at (800, 800) {Info};
+  \node[design] (design) at (800, 600) {Design};
+  \node[locale] (locale) at (800, 400) {Locale};
+  \node[settings] (settings) at (800, 200) {Settings};
+
+  \node[section] (section1) at (1200, 666) {Section 1};
+  \node[section] (section2) at (1200, 333) {Section 2};
+
+  \node[entry] (entry6) at (1600, 143) {Entry 6};
+  \node[entry] (entry5) at (1600, 286) {Entry 5};
+  \node[entry] (entry4) at (1600, 429) {Entry 4};
+  \node[entry] (entry3) at (1600, 571) {Entry 3};
+  \node[entry] (entry2) at (1600, 714) {Entry 2};
+  \node[entry] (entry1) at (1600, 857) {Entry 1};
+
+  % Arrows
+  \draw[link] (cv.east) -- (info.west);
+  \draw[link] (cv.east) -- (design.west);
+  \draw[link] (cv.east) -- (locale.west);
+  \draw[link] (cv.east) -- (settings.west);
+
+  \draw[link] (cv.east) -- (section1.south west);
+  \draw[link] (cv.east) -- (section2.north west);
+
+  \draw[link] (section1.east) -- (entry1.west);
+  \draw[link] (section1.east) -- (entry2.west);
+  \draw[link] (section1.east) -- (entry3.west);
+  \draw[link] (section2.east) -- (entry4.west);
+  \draw[link] (section2.east) -- (entry5.west);
+  \draw[link] (section2.east) -- (entry6.west);
+
+\end{tikzpicture}
+\end{document}

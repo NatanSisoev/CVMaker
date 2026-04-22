@@ -1,10 +1,140 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}{{ form.instance.alias|default:"New CV" }} - Create/Edit CV{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1>{{ form.instance.alias|default:"Create New CV" }}</h1>
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <div class="mb-4">
+            <label for="{{ form.alias.id_for_label }}" class="form-label">CV Alias</label>
+            {% render_field form.alias class="form-control" placeholder="Enter CV alias" %}
+            {% if form.alias.errors %}
+            <div class="text-danger small">{{ form.alias.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Select existing or create new CVInfo -->
+        <div class="mb-4">
+            <label for="{{ form.info.id_for_label }}" class="form-label">Personal Information (CVInfo)</label>
+            {% render_field form.info class="form-select" %}
+            <small class="form-text text-muted">
+                <a href="{% url 'cvinfo-create' %}">Create new personal info</a> if none exists.
+            </small>
+            {% if form.info.errors %}
+            <div class="text-danger small">{{ form.info.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Select existing or create new CVLocale -->
+        <div class="mb-4">
+            <label for="{{ form.locale.id_for_label }}" class="form-label">Locale</label>
+            {% render_field form.locale class="form-select" %}
+            <small class="form-text text-muted">
+                <a href="{% url 'cvlocale-create' %}">Create new locale settings</a> if none exists.
+            </small>
+            {% if form.locale.errors %}
+            <div class="text-danger small">{{ form.locale.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Select existing or create new CVSettings -->
+        <div class="mb-4">
+            <label for="{{ form.settings.id_for_label }}" class="form-label">Settings</label>
+            {% render_field form.settings class="form-select" %}
+            <small class="form-text text-muted">
+                <a href="{% url 'cvsettings-create' %}">Create new settings</a> if none exists.
+            </small>
+            {% if form.settings.errors %}
+            <div class="text-danger small">{{ form.settings.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Select existing or create new CVDesign -->
+        <div class="mb-4">
+            <label for="{{ form.design.id_for_label }}" class="form-label">Design</label>
+            {% render_field form.design class="form-select" %}
+            <small class="form-text text-muted">
+                <a href="{% url 'cvdesign-create' %}">Create new design</a> if none exists.
+            </small>
+            {% if form.design.errors %}
+            <div class="text-danger small">{{ form.design.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Sections Multiple Select -->
+        <div class="mb-4">
+            <label class="form-label">Sections to Include</label>
+            <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                {% for checkbox in form.sections %}
+                <div class="form-check">
+                    {{ checkbox.tag }}
+                    <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                        {{ checkbox.choice_label }}
+                    </label>
+                </div>
+                {% empty %}
+                <p class="text-muted">No sections available. <a href="{% url 'section-create' %}">Create a new
+                    section</a>.</p>
+                {% endfor %}
+            </div>
+            {% if form.sections.errors %}
+            <div class="text-danger small">{{ form.sections.errors }}</div>
+            {% endif %}
+        </div>
+
+        <h3>Select and Order Sections</h3>
+        <ul id="section-sortable" class="sortable-list">
+            {% for section in form.fields.sections.queryset %}
+            <li data-section-id="{{ section.id }}" class="sortable-item">
+                <input type="checkbox"
+                       name="section_ids"
+                       value="{{ section.id }}"
+                       {% if section in form.initial.sections %}checked{% endif %}>
+                {{ section.title }}
+            </li>
+            {% endfor %}
+        </ul>
+
+        <input type="hidden" name="section_order" id="section-order">
+
+
+        <button type="submit" class="btn btn-primary">Save CV</button>
+        <a href="{% url 'cv-list' %}" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+  const sortableList = document.getElementById("section-sortable");
+  const orderInput = document.getElementById("section-order");
+
+  function updateOrderField() {
+    const orderedIds = [];
+    document.querySelectorAll("#section-sortable input[type='checkbox']:checked").forEach(input => {
+      orderedIds.push(input.value);
+    });
+    orderInput.value = orderedIds.join(",");
+  }
+
+  if (sortableList) {
+    Sortable.create(sortableList, {
+      animation: 150,
+      onEnd: updateOrderField
+    });
+
+    document.addEventListener("DOMContentLoaded", updateOrderField);
+    document.querySelectorAll("#section-sortable input[type='checkbox']").forEach(input => {
+      input.addEventListener("change", updateOrderField);
+    });
+  }
+</script>
+{% endblock %}
+

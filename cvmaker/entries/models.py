@@ -1,40 +1,30 @@
 import uuid
-from unittest import case
 
 from django.contrib.auth.models import User
 from django.db import models
 from model_utils.managers import InheritanceManager
 
 
-def get_entry_model(entry_type: str):
-    match entry_type:
-        case "EducationEntry":
-            return EducationEntry
-        case "ExperienceEntry":
-            return ExperienceEntry
-        case "PublicationEntry":
-            return PublicationEntry
-        case "NormalEntry":
-            return NormalEntry
-        case "OneLineEntry":
-            return OneLineEntry
-        case "BulletEntry":
-            return BulletEntry
-        case "NumberedEntry":
-            return NumberedEntry
-        case "ReversedNumberedEntry":
-            return ReversedNumberedEntry
-        case "TextEntry":
-            return TextEntry
-        case _:
-            ValueError("Unable to determine entry model from type: {}".format(entry_type))
+_ENTRY_MODELS_BY_NAME: dict[str, type["BaseEntry"]] = {}
 
+
+def get_entry_model(entry_type: str) -> type["BaseEntry"]:
+    """Resolve an entry class name to its model. Raises on unknown types."""
+    try:
+        return _ENTRY_MODELS_BY_NAME[entry_type]
+    except KeyError as exc:
+        raise ValueError(
+            f"Unable to determine entry model from type: {entry_type!r}. "
+            f"Known types: {sorted(_ENTRY_MODELS_BY_NAME)}"
+        ) from exc
 
 
 class BaseEntry(models.Model):
     # KEY
-    user: models.ForeignKey = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, related_name='%(class)s')
-    alias: models.CharField = models.CharField(max_length=20, null=False, blank=False, help_text="Alias for the CV entry")
+    user: models.ForeignKey = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE,
+                                                related_name='%(class)s')
+    alias: models.CharField = models.CharField(max_length=20, null=False, blank=False,
+                                               help_text="Alias for the CV entry")
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     objects = InheritanceManager()
 
@@ -161,6 +151,7 @@ class NormalEntry(BaseEntry):
         }
         return {k: v for k, v in info.items() if v is not None}
 
+
 class PublicationEntry(BaseEntry):
     # MANDATORY
     title = models.CharField(max_length=200, null=False, blank=False, help_text="The title of the publication")
@@ -257,3 +248,18 @@ class TextEntry(BaseEntry):
 
     def serialize(self) -> dict:
         return {'text': self.text}
+
+
+# Registry populated after the classes above are defined. Used by
+# get_entry_model() to resolve rendercv-style type names to Django models.
+_ENTRY_MODELS_BY_NAME.update({
+    "EducationEntry": EducationEntry,
+    "ExperienceEntry": ExperienceEntry,
+    "PublicationEntry": PublicationEntry,
+    "NormalEntry": NormalEntry,
+    "OneLineEntry": OneLineEntry,
+    "BulletEntry": BulletEntry,
+    "NumberedEntry": NumberedEntry,
+    "ReversedNumberedEntry": ReversedNumberedEntry,
+    "TextEntry": TextEntry,
+})

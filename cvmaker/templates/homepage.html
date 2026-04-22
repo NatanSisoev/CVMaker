@@ -1,9 +1,8 @@
 {% extends 'base.html' %}
-
-{% block title %}CVMaker - Professional Resume Builder{% endblock %}
+{% load static %}
 
 {% block content %}
-<div class="d-flex justify-content-center">
+<div class="d-flex justify-content-center mb-3">
     <div class="text-center px-3" style="max-width: 800px;">
         <h1 class="display-1 fw-light mb-4 text-primary">Professional Resume Builder</h1>
         <div class="d-flex gap-3 justify-content-center flex-md-row flex-column">
@@ -16,29 +15,42 @@
         </div>
     </div>
 </div>
+
+<div class="bg-explainer"></div>
+
 {% endblock %}
 
 {% block extra_css %}
 <style>
-    .btn-outline-dark {
-        border-color: #1a1b1f;
-        color: #1a1b1f;
-        background: transparent;
-        border-width: 2px;
-    }
+  .btn-outline-dark {
+      border-color: #1a1b1f;
+      color: #1a1b1f;
+      background: transparent;
+      border-width: 2px;
+  }
 
-    .btn-outline-dark:hover {
-        background: rgba(26, 27, 31, 0.05);
-        color: #1a1b1f;
-        border-color: #1a1b1f;
-    }
+  .btn-outline-dark:hover {
+      background: rgba(26, 27, 31, 0.05);
+      color: #1a1b1f;
+      border-color: #1a1b1f;
+  }
 
-    @media (max-width: 768px) {
-        .btn-xl {
-            width: 100%;
-            max-width: 300px;
-            margin: 0 auto;
-        }
-    }
+  @media (max-width: 768px) {
+      .btn-xl {
+          width: 100%;
+          max-width: 300px;
+          margin: 0 auto;
+      }
+  }
+
+  .bg-explainer {
+    height: 80vh;
+    margin-top: -250px; /* No top margin */
+    margin-bottom: -500px; /* No bottom margin */
+    background-image: url('/static/img/explainer.svg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+  }
 </style>
 {% endblock %}

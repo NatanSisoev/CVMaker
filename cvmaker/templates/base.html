@@ -6,26 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}CVMaker{% endblock %}</title>
     <link rel="icon" href="{% static 'img/favicon.ico' %}">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;600&family=Inter:wght@400;500&display=swap">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;600&family=Inter:wght@400;500&display=swap">
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body class="d-flex flex-column h-100">
-    {% include 'includes/nav.html' %}
+{% include 'includes/nav.html' %}
 
-    <main class="flex-grow-1">
-        <div class="container-lg px-4 py-5">
-            <div class="mx-auto" style="max-width: 1200px;">
-                {% block breadcrumb %}{% endblock %}
-                {% block content %}{% endblock %}
-            </div>
+<main class="flex-grow-1">
+    <div class="container-lg px-4 py-5">
+        <div class="mx-auto" style="max-width: 1200px;">
+            {% block breadcrumb %}{% endblock %}
+            {% block content %}{% endblock %}
         </div>
-    </main>
+    </div>
+</main>
 
-    {% include 'includes/footer.html' %}
+{% include 'includes/footer.html' %}
 
-    <script src="{% static 'js/jquery-3.7.1.min.js' %}" defer></script>
-    <script src="{% static 'js/bootstrap.bundle.min.js' %}" defer></script>
+<script src="{% static 'js/jquery-3.7.1.min.js' %}" defer></script>
+<script src="{% static 'js/bootstrap.bundle.min.js' %}" defer></script>
+
+{% block extra_scripts %}{% endblock %}
 </body>
 </html>

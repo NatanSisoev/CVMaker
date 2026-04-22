@@ -1,26 +1,25 @@
 import os
+import uuid
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+import yaml
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import FileResponse, HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, render
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
-                                  UpdateView)
-import yaml
-
+from django.views.generic import CreateView, UpdateView
+from django.views.generic import (DeleteView, DetailView, ListView)
 from rendercv import data
-from rendercv.data import read_input_file, RenderCVDataModel
 from rendercv.renderer import renderer
 
 from cvmaker import settings
 from entries.forms import (EducationEntryForm, ExperienceEntryForm,
                            PublicationEntryForm)
-from entries.models import EducationEntry, ExperienceEntry, PublicationEntry, get_entry_model
-from sections.models import Section, SectionEntry, CVSection, SectionManager
-
-from .forms import CVInfoForm
-from .models import CV, CVInfo, CVDesign, CVLocale, CVSettings
+from entries.models import EducationEntry, ExperienceEntry, PublicationEntry
+from sections.models import SectionManager, Section, CVSection
+from .forms import CVInfoForm, CVDesignForm, CVLocaleForm, CVSettingsForm, CVForm
+from .models import CVInfo, CVDesign, CVLocale, CVSettings, CV
 
 
 ################################################## HOME ################################################################
@@ -57,20 +56,34 @@ class CVListView(LoginRequiredMixin, ListView):
 
 ################################################# CREATE ###############################################################
 
-
 class CVCreateView(CreateView):
     model = CV
-    fields = ['alias', 'info', 'design', 'locale', 'settings']
-    template_name = 'cv_form.html'
+    form_class = CVForm
+    template_name = 'cv/form.html'
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['sections'].queryset = Section.objects.filter(user=self.request.user)
+        return form
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        response = super().form_valid(form)
+        self.object = form.save(commit=False)
+        self.object.save()
 
-        # Check which button was clicked
-        if 'add_sections' in self.request.POST:
-            return redirect('cv-section-order', pk=self.object.id)
-        return redirect('cv-detail', pk=self.object.id)
+        # Clear existing M2M relations (if update; for create it's safe too)
+        self.object.sections.clear()
+
+        # Add sections with order in the through model
+        section_ids = self.request.POST.get('section_order', '')
+        section_ids = [uuid.UUID(id_str) for id_str in section_ids.split(',') if id_str]
+        sections = Section.objects.filter(id__in=section_ids)
+        self.object.sections.clear()
+
+        for order, section in enumerate(section_ids, 1):
+            CVSection.objects.create(cv=self.object, section_id=section, order=order)
+
+        return redirect('cv-detail', cv_id=self.object.id)
 
 
 ################################################# UPLOAD ###############################################################
@@ -78,6 +91,7 @@ class CVCreateView(CreateView):
 
 class CVUploadView(LoginRequiredMixin, View):
     """Handle YAML file uploads and convert them to CV instances"""
+
     # TODO: finish
 
     def post(self, request, *args, **kwargs):
@@ -112,7 +126,7 @@ class CVUploadView(LoginRequiredMixin, View):
         # Create main CV pieces using their custom managers
         # Each manager extracts what it needs from the data_model
         cv_info = CVInfo.objects.create_from_data_model(user, data_model, alias=filename)
-        #cv_design = CVDesign.objects.create_from_data_model(user, data_model, file, alias=filename)
+        # cv_design = CVDesign.objects.create_from_data_model(user, data_model, file, alias=filename)
         cv_design = CVDesign.objects.all()[0]
         cv_locale = CVLocale.objects.create_from_data_model(user, data_model, alias=filename)
         cv_settings = CVSettings.objects.create_from_data_model(user, data_model, alias=filename)
@@ -150,11 +164,16 @@ class CVDetailView(DetailView):
 
 class CVUpdateView(LoginRequiredMixin, UpdateView):
     model = CV
-    template_name = 'cv/edit.html'
-    fields = ['alias', 'design', 'locale']
+    template_name = 'cv/form.html'
+    form_class = CVForm
 
     def get_queryset(self):
         return super().get_queryset().filter(user=self.request.user)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def get_success_url(self):
         return reverse_lazy('cv-detail', kwargs={'cv_id': self.object.id})
@@ -204,7 +223,64 @@ class CVUpdateView(LoginRequiredMixin, UpdateView):
 
         return context
 
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+
+        # Bind related forms manually
+        cv_info, _ = CVInfo.objects.get_or_create(cv=self.object)
+        cv_info_form = CVInfoForm(self.request.POST, self.request.FILES, instance=cv_info)
+
+        # Bind other forms similarly if needed...
+
+        if form.is_valid() and cv_info_form.is_valid():
+            # Also validate other related forms if needed here
+
+            return self.forms_valid(form, cv_info_form)
+        else:
+            return self.forms_invalid(form, cv_info_form)
+
+    def forms_valid(self, form, cv_info_form):
+        self.object = form.save()
+
+        # TODO: CVInfo gets deleted on cv edit
+
+        # Save related forms after main form saved
+        cv_info_form.save()
+
+        # Save sections (your logic)
+        self.object.sections.clear()
+        section_ids = self.request.POST.get('section_order', '')
+        section_ids = [uuid.UUID(id_str) for id_str in section_ids.split(',') if id_str]
+        for order, section_id in enumerate(section_ids, 1):
+            CVSection.objects.create(cv=self.object, section_id=section_id, order=order)
+
+        # Save other related forms here if any
+
+        return redirect(self.get_success_url())
+
+    def forms_invalid(self, form, cv_info_form):
+        context = self.get_context_data(form=form)
+        context['cv_info_form'] = cv_info_form
+        # Add other forms to context too
+        return self.render_to_response(context)
+
     def form_valid(self, form):
+        response = super().form_valid(form)
+
+        # Clear existing CVSection relations
+        self.object.sections.clear()
+
+        # Add selected sections back with new order
+        section_ids = self.request.POST.get('section_order', '')
+        section_ids = [uuid.UUID(id_str) for id_str in section_ids.split(',') if id_str]
+        sections = Section.objects.filter(id__in=section_ids)
+        self.object.sections.clear()
+
+        for order, section in enumerate(section_ids, 1):
+            CVSection.objects.create(cv=self.object, section_id=section, order=order)
+
+        # Handle CVInfo and entry forms
         context = self.get_context_data()
         cv_info_form = context['cv_info_form']
         education_forms = context['education_forms']
@@ -215,11 +291,11 @@ class CVUpdateView(LoginRequiredMixin, UpdateView):
             cv_info_form.save()
 
         for form_dict in [education_forms, experience_forms, publication_forms]:
-            for form in form_dict.values():
-                if form.is_valid():
-                    form.save()
+            for entry_form in form_dict.values():
+                if entry_form.is_valid():
+                    entry_form.save()
 
-        return super().form_valid(form)
+        return response
 
 
 ################################################# DELETE ###############################################################
@@ -234,6 +310,7 @@ class CVDeleteView(DeleteView):
     def get_success_url(self):
         return reverse_lazy("cv-list")
 
+
 ################################################ PREVIEW ###############################################################
 
 def preview_cv(request, cv_id):
@@ -246,7 +323,6 @@ def preview_cv(request, cv_id):
 def download_cv(request, cv_id):
     # TODO: cv.photo location
     cv = CV.objects.get(id=cv_id, user=request.user)
-    print(f">>>>>>>>>>>>>>>>>>>>{cv.design=}")
     data_model = data.validate_input_dictionary_and_return_the_data_model(cv.serialize())
 
     render_command_settings: data.models.RenderCommandSettings = data_model.rendercv_settings.render_command
@@ -264,3 +340,201 @@ def download_cv(request, cv_id):
         return FileResponse(open(pdf_file_path_in_output_folder, "rb"), content_type="application/pdf")
     else:
         return HttpResponse("File not found", status=404)
+
+
+################################################ MODULES ###############################################################
+
+
+class UserIsOwnerMixin(UserPassesTestMixin):
+    def test_func(self):
+        obj = self.get_object()
+        return obj.user == self.request.user
+
+
+# Helper Mixin to assign user & alias automatically
+class AssignUserAndAliasMixin:
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        if not form.instance.alias:
+            form.instance.alias = "default"
+        return super().form_valid(form)
+
+
+# CVInfo Views
+class CVInfoCreateView(AssignUserAndAliasMixin, CreateView):
+    model = CVInfo
+    form_class = CVInfoForm
+    template_name = 'cv/cvinfo_form.html'
+    pk_url_kwarg = 'info_id'
+
+    def get_success_url(self):
+        return reverse_lazy('cvinfo-list')
+
+
+class CVInfoUpdateView(AssignUserAndAliasMixin, UpdateView):
+    model = CVInfo
+    form_class = CVInfoForm
+    template_name = 'cv/cvinfo_form.html'
+    pk_url_kwarg = 'info_id'
+
+    def get_success_url(self):
+        return reverse_lazy('cvinfo-list')
+
+
+class CVInfoListView(LoginRequiredMixin, ListView):
+    model = CVInfo
+    template_name = 'cv/cvinfo_list.html'  # your list template
+    context_object_name = 'cvinfos'
+    pk_url_kwarg = 'info_id'
+
+    def get_queryset(self):
+        return CVInfo.objects.filter(user=self.request.user)
+
+
+class CVInfoDetailView(LoginRequiredMixin, UserIsOwnerMixin, DetailView):
+    model = CVInfo
+    template_name = 'cv/cvinfo_detail.html'
+    context_object_name = 'cvinfo'
+    pk_url_kwarg = 'info_id'
+
+
+class CVInfoDeleteView(LoginRequiredMixin, UserIsOwnerMixin, DeleteView):
+    model = CVInfo
+    template_name = 'cv/cvinfo_confirm_delete.html'
+    success_url = reverse_lazy('cvinfo-list')
+    pk_url_kwarg = 'info_id'
+
+
+# CVDesign Views
+class CVDesignCreateView(AssignUserAndAliasMixin, CreateView):
+    model = CVDesign
+    form_class = CVDesignForm
+    template_name = 'cv/cvdesign_form.html'
+    pk_url_kwarg = 'design_id'
+
+    def get_success_url(self):
+        return reverse_lazy('cvdesign-list')
+
+
+class CVDesignUpdateView(AssignUserAndAliasMixin, UpdateView):
+    model = CVDesign
+    form_class = CVDesignForm
+    template_name = 'cv/cvdesign_form.html'
+    pk_url_kwarg = 'design_id'
+
+    def get_success_url(self):
+        return reverse_lazy('cvdesign-list')
+
+
+class CVDesignListView(LoginRequiredMixin, ListView):
+    model = CVDesign
+    template_name = 'cv/cvdesign_list.html'
+    context_object_name = 'cvdesigns'
+    pk_url_kwarg = 'design_id'
+
+    def get_queryset(self):
+        return CVDesign.objects.filter(user=self.request.user)
+
+
+class CVDesignDetailView(LoginRequiredMixin, UserIsOwnerMixin, DetailView):
+    model = CVDesign
+    template_name = 'cv/cvdesign_detail.html'
+    context_object_name = 'cvdesign'
+    pk_url_kwarg = 'design_id'
+
+
+class CVDesignDeleteView(LoginRequiredMixin, UserIsOwnerMixin, DeleteView):
+    model = CVDesign
+    template_name = 'cv/cvdesign_confirm_delete.html'
+    success_url = reverse_lazy('cvdesign-list')
+    pk_url_kwarg = 'design_id'
+
+
+# CVLocale Views
+class CVLocaleCreateView(AssignUserAndAliasMixin, CreateView):
+    model = CVLocale
+    form_class = CVLocaleForm
+    template_name = 'cv/cvlocale_form.html'
+    pk_url_kwarg = 'locale_id'
+
+    def get_success_url(self):
+        return reverse_lazy('cvlocale-list')
+
+
+class CVLocaleUpdateView(AssignUserAndAliasMixin, UpdateView):
+    model = CVLocale
+    form_class = CVLocaleForm
+    template_name = 'cv/cvlocale_form.html'
+    pk_url_kwarg = 'locale_id'
+
+    def get_success_url(self):
+        return reverse_lazy('cvlocale-list')
+
+
+class CVLocaleListView(LoginRequiredMixin, ListView):
+    model = CVLocale
+    template_name = 'cv/cvlocale_list.html'
+    context_object_name = 'cvlocales'
+    pk_url_kwarg = 'locale_id'
+
+    def get_queryset(self):
+        return CVLocale.objects.filter(user=self.request.user)
+
+
+class CVLocaleDetailView(LoginRequiredMixin, UserIsOwnerMixin, DetailView):
+    model = CVLocale
+    template_name = 'cv/cvlocale_detail.html'
+    context_object_name = 'cvlocale'
+    pk_url_kwarg = 'locale_id'
+
+
+class CVLocaleDeleteView(LoginRequiredMixin, UserIsOwnerMixin, DeleteView):
+    model = CVLocale
+    template_name = 'cv/cvlocale_confirm_delete.html'
+    success_url = reverse_lazy('cvlocale-list')
+    pk_url_kwarg = 'locale_id'
+
+
+# CVSettings Views
+class CVSettingsCreateView(AssignUserAndAliasMixin, CreateView):
+    model = CVSettings
+    form_class = CVSettingsForm
+    template_name = 'cv/cvsettings_form.html'
+    pk_url_kwarg = 'settings_id'
+
+    def get_success_url(self):
+        return reverse_lazy('cvsettings-list')
+
+
+class CVSettingsUpdateView(AssignUserAndAliasMixin, UpdateView):
+    model = CVSettings
+    form_class = CVSettingsForm
+    template_name = 'cv/cvsettings_form.html'
+    pk_url_kwarg = 'settings_id'
+
+    def get_success_url(self):
+        return reverse_lazy('cvsettings-list')
+
+
+class CVSettingsListView(LoginRequiredMixin, ListView):
+    model = CVSettings
+    template_name = 'cv/cvsettings_list.html'
+    context_object_name = 'cvsettings'
+    pk_url_kwarg = 'settings_id'
+
+    def get_queryset(self):
+        return CVSettings.objects.filter(user=self.request.user)
+
+
+class CVSettingsDetailView(LoginRequiredMixin, UserIsOwnerMixin, DetailView):
+    model = CVSettings
+    template_name = 'cv/cvsettings_detail.html'
+    context_object_name = 'cvsettings'
+    pk_url_kwarg = 'settings_id'
+
+
+class CVSettingsDeleteView(LoginRequiredMixin, UserIsOwnerMixin, DeleteView):
+    model = CVSettings
+    template_name = 'cv/cvsettings_confirm_delete.html'
+    success_url = reverse_lazy('cvsettings-list')
+    pk_url_kwarg = 'settings_id'

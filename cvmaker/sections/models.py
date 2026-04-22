@@ -4,8 +4,50 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
-from entries.models import get_entry_model
+from entries.models import (
+    BaseEntry,
+    BulletEntry,
+    EducationEntry,
+    ExperienceEntry,
+    NormalEntry,
+    NumberedEntry,
+    OneLineEntry,
+    PublicationEntry,
+    ReversedNumberedEntry,
+    TextEntry,
+    get_entry_model,
+)
+
+# Models whose deletion should cascade to section_entries via the GenericForeignKey.
+# (Phase 2 replaces this GFK with a real FK to BaseEntry and removes the signal.)
+_ENTRY_MODELS = (
+    BaseEntry,
+    BulletEntry,
+    EducationEntry,
+    ExperienceEntry,
+    NormalEntry,
+    NumberedEntry,
+    OneLineEntry,
+    PublicationEntry,
+    ReversedNumberedEntry,
+    TextEntry,
+)
+
+
+def _delete_dangling_section_entries(sender, instance, **kwargs):
+    content_type = ContentType.objects.get_for_model(sender)
+    SectionEntry.objects.filter(content_type=content_type, object_id=instance.pk).delete()
+
+
+for _model in _ENTRY_MODELS:
+    pre_delete.connect(
+        _delete_dangling_section_entries,
+        sender=_model,
+        dispatch_uid=f"delete_section_entries_for_{_model.__name__}",
+    )
 
 
 class CVSection(models.Model):

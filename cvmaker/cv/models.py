@@ -1,3 +1,4 @@
+import pprint
 import uuid
 from pathlib import Path
 
@@ -55,12 +56,18 @@ class CV(models.Model):
                 cv["sections"] = {}
             cv["sections"][section.title] = section.serialize()
 
-        return {
+        final = {  # TODO: change from sections inside CVInfo to inside CV
             'cv': cv if cv else None,
             'design': self.design.serialize() if self.design else None,
             'locale': self.locale.serialize() if self.locale else None,
             'rendercv_settings': self.settings.serialize() if self.settings else None
         }
+
+        # TODO: (not here) sections cant have more than one type of entry??
+
+        pprint.pprint(final)
+
+        return final
 
 
 ########################################################################################################################
