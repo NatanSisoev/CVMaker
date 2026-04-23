@@ -1,0 +1,153 @@
+# CVMaker CI
+#
+# Runs on every push to main and every pull request. Gates merges via the
+# branch-protection rule: lint + typecheck + test + build must all be green.
+#
+# Jobs:
+#   lint       — ruff + djlint
+#   typecheck  — mypy with django-stubs
+#   test       — pytest against a Postgres service container; coverage to Codecov
+#   build      — docker build for the web image (no push; push happens from
+#                a separate release workflow once we wire Phase 8)
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  UV_VERSION: "0.5.14"
+
+jobs:
+  # ------------------------------------------------------------------
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install deps
+        run: uv sync --frozen
+
+      - name: Ruff (lint)
+        run: uv run ruff check --output-format=github .
+
+      - name: Ruff (format check)
+        run: uv run ruff format --check .
+
+      - name: djlint (templates)
+        run: uv run djlint templates --check
+
+  # ------------------------------------------------------------------
+  typecheck:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install deps
+        run: uv sync --frozen
+
+      - name: mypy
+        run: uv run mypy src apps
+        continue-on-error: true   # strictness will tighten over time; don't block merges yet
+
+  # ------------------------------------------------------------------
+  test:
+    runs-on: ubuntu-24.04
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: cvmaker_test
+          POSTGRES_USER: cvmaker
+          POSTGRES_PASSWORD: cvmaker-ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cvmaker -d cvmaker_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DJANGO_SETTINGS_MODULE: cvmaker.settings.test
+      DJANGO_SECRET_KEY: ci-key-do-not-use-in-prod
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_NAME: cvmaker_test
+      DB_USER: cvmaker
+      DB_PASSWORD: cvmaker-ci
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install deps
+        run: uv sync --frozen
+
+      - name: Django system check
+        run: uv run python manage.py check
+
+      - name: pytest
+        run: uv run pytest --cov --cov-report=xml --cov-report=term
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # ------------------------------------------------------------------
+  build:
+    runs-on: ubuntu-24.04
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build web image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/web.Dockerfile
+          push: false
+          tags: cvmaker-web:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

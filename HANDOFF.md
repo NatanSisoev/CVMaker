@@ -1,103 +1,126 @@
-# Phase 0 handoff
+# Phase 1 handoff
 
-Everything Claude could do from the sandbox is done. Three things need your
-hand on a Windows terminal before the checkpoint is real.
+All of Phase 1 (sub-phases 1.1 – 1.6) is staged in the repo. One PowerShell
+script applies every git operation, app move, and DB reset locally.
 
-## 1. Physically delete the dead directories
+## What's already in the repo
 
-These live on your Windows filesystem and the sandbox can't touch them. From
-the repo root:
+**Phase 1.1 — layout + uv**
+- `pyproject.toml` + uv-managed deps (dev group has ruff, mypy, pytest, etc.)
+- `src/cvmaker/` project package with split settings (`base/dev/prod/test`)
+- `src/cvmaker/{urls,wsgi,asgi}.py` wired to the split settings
+- `manage.py` at repo root (points `DJANGO_SETTINGS_MODULE` at `cvmaker.settings.dev`)
+- `apps/core/` with `TimestampedModel`, `UUIDModel`, `UUIDTimestampedModel`
 
-```powershell
-# PowerShell
-Remove-Item -Recurse -Force .\auxil, .\out, .\desktop.ini, .\cvmaker.tex, .\.idea
-```
+**Phase 1.2 — dev tooling**
+- `.pre-commit-config.yaml` (ruff + djlint + django-upgrade + mypy)
+- `Makefile` (dev/test/lint/fmt/typecheck/ci/up/down, every target via `uv run`)
+- `.editorconfig`
 
-(`.idea/` is optional — keep it if you still use PyCharm; it's now gitignored
-either way. `cvmaker.tex` already lives at `docs/diagrams/architecture.tex`
-with the `];` typos fixed, so the copy at the repo root is redundant.)
+**Phase 1.3 — docker**
+- `docker/web.Dockerfile` + `docker/worker.Dockerfile` (multi-stage, Typst baked in)
+- `docker/entrypoint.sh` (wait-for-db, opt-in migrations, prod collectstatic)
+- `compose.yaml` (web + worker + postgres 16 + redis 7 + minio)
+- `.dockerignore`
 
-Then clean up any `__pycache__` directories that the sandbox also couldn't
-touch:
+**Phase 1.4 — CI**
+- `.github/workflows/ci.yml` — lint / typecheck / test against Postgres
+  service container / docker build with GHA cache
 
-```powershell
-git clean -fdX     # deletes gitignored files; safe because .gitignore now
-                   # excludes all __pycache__ and .pyc artifacts
-```
+**Phase 1.5 — custom User**
+- `cvmaker/accounts/models.py` rewritten with custom `User(AbstractUser)` +
+  `UserManager` (email identifier, `display_name`, `preferred_language`)
+- `cvmaker/accounts/{forms,views,admin}.py` migrated to `get_user_model()` /
+  `UserAdmin` subclass
+- Every `FK(User, ...)` in `cv/entries/sections` rewritten to
+  `FK(settings.AUTH_USER_MODEL, ...)`
 
-## 2. Install the new requirements
+**Phase 1.6 — tests**
+- `tests/{unit,integration,e2e}/` tree
+- `tests/factories.py` (UserFactory, CVFactory, SectionFactory, every Entry subtype)
+- `tests/conftest.py` (user, admin_client, cv, section, entry fixtures)
+- Unit tests for the User model and entry `serialize()` contracts
+- Integration smoke tests (URL reversal, signup + login, admin, public stubs)
 
-The `requirements.txt` has been rewritten (UTF-8 now) and `django-environ` was
-added. Re-sync your venv:
+**ADRs**
+- `docs/adr/0001-project-structure.md`
+- `docs/adr/0004-custom-user-model.md`
 
-```powershell
-.\.venv\Scripts\activate
-pip install -r requirements.txt
-```
+## What you need to do
 
-## 3. Create your `.env`
-
-`.env.example` is the source of truth for variables. Copy it and fill in your
-own values:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Generate a fresh `DJANGO_SECRET_KEY`:
-
-```powershell
-python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-```
-
-Paste the output into `.env`. Set `DB_*` to match your local Postgres.
-
-The sandbox wrote a throwaway `.env` too — it's gitignored, so it won't hit
-the repo either way, but replace it with real values.
-
-## 4. Verify
+One script, one run, from the repo root on your Windows machine.
 
 ```powershell
-cd cvmaker
-python manage.py check
-python manage.py runserver
+cd C:\Users\natan\CVMaker
+.\scripts\phase1_migrate.ps1
 ```
 
-You should see "System check identified no issues" and the dev server on
-<http://localhost:8000>. Hit `/about/`, `/help/`, `/contact/`, `/status/`,
-`/templates/`, `/import/`, `/accounts/profile/` — all of them now return a
-friendly "Coming soon" page instead of crashing.
+The script is verbose and fails loudly. It will:
 
-## 5. Commit and tag
+1. Preflight — clean tree on `main`, `.env` present, `python`/`psql` on PATH.
+2. Install `uv` if you don't have it (Astral's official installer).
+3. `git mv cvmaker/{accounts,cv,entries,sections}` → `apps/`.
+4. `git mv cvmaker/{templates,static,media}` → repo root.
+5. `git rm -rf cvmaker/cvmaker` and `git rm cvmaker/manage.py` (old package).
+6. Delete every `0*_*.py` migration under `apps/` (all reference `auth.User`,
+   being replaced).
+7. Remove the now-empty `cvmaker/` directory.
+8. `uv sync` — resolve from `pyproject.toml`, populate `.venv/`.
+9. `dropdb cvmaker` + `createdb cvmaker` — clean slate for the custom User.
+10. `uv run python manage.py makemigrations accounts core cv entries sections`.
+11. `uv run python manage.py migrate`.
+12. `uv run python manage.py check` — must be green.
+13. `git add -A`, show `git status --short`, wait for you to press Enter,
+    then commit with a full Phase 1.1 + 1.5 message.
 
-When you're satisfied:
+If anything fails the script exits with a red `[FAIL]` line and tells you
+what went wrong. Safe to re-run only if it died before the final commit.
+
+## After the script commits
 
 ```powershell
-git add -A
-git status     # sanity-check what's staged
-git commit -m "Phase 0: triage — UTF-8 encoding, secrets to env, fix URL stubs, narrow pre_delete signal"
-git tag v0.0.0-pre-refactor
-git push origin main --tags
+git log --stat -1              # eyeball the diff
+git push origin main
+uv run pre-commit install      # install the git hooks
+uv run python manage.py createsuperuser
+uv run python manage.py runserver
 ```
 
-You can always `git diff v0.0.0-pre-refactor` to see what the refactor has
-changed since.
+Hit <http://localhost:8000>, log into `/admin/` with the superuser, confirm
+the site still renders.
 
-## What changed in this phase
+Then run the local gate once to smoke-test the tooling end-to-end:
 
-- `requirements.txt` — rewritten UTF-8, dead deps removed
-- `.gitignore` — rewritten UTF-8, comprehensive
-- `.env.example` — new; `.env` — new (local only, gitignored)
-- `cvmaker/cvmaker/settings.py` — secrets from env, security headers, `STORAGES` dict
-- `cvmaker/cvmaker/urls.py` — lambda → `TemplateView` placeholders
-- `cvmaker/accounts/urls.py` — same for `profile`
-- `cvmaker/templates/placeholder.html` — new; shared "coming soon" page
-- `cvmaker/cv/views.py` — two URL-name typos fixed
-- `cvmaker/entries/models.py` — `get_entry_model` raises on unknown; registry
-- `cvmaker/sections/models.py` — `pre_delete` narrowed to 10 entry senders
-- `docs/diagrams/architecture.tex` — relocated from root, `];` typos fixed
-- `README.md` — rewritten with accurate setup for macOS/Linux and Windows
-- `docs/CURRENT_STATE.md`, `docs/DESIGN.md`, `ROADMAP.md`, `HANDOFF.md` — new
-- 48 stale `.pyc` files untracked from the git index
+```powershell
+uv run pytest                  # should be green
+uv run ruff check .            # zero warnings expected
+uv run ruff format --check .   # no formatting diffs
+```
 
-Next session starts **Phase 1.1 — project layout + uv migration**.
+First push to GitHub triggers CI (`.github/workflows/ci.yml`) — lint,
+typecheck, test against a real Postgres service container, and a docker build.
+Enable branch protection on `main` after the first green run so the gate
+is enforced on every PR.
+
+## Known leftovers
+
+- `_test_perm` — empty file I dropped during a sandbox permission probe. Safe
+  to delete: `Remove-Item .\_test_perm`.
+- `requirements.txt` — kept as a fallback until CI is uv-first (Phase 1.4).
+  Regenerate with `uv export --no-hashes > requirements.txt` when deps change.
+
+## What's next
+
+Phase 1 closes when CI goes green and branch protection is on. After that:
+
+- Phase 2.1 — replace the `GenericForeignKey` on `SectionEntry` with a real FK
+  to `BaseEntry`, drop the project-wide `pre_delete` signal. Write ADR-0005.
+- Phase 2.2 — per-entry translations (`canonical_language` +
+  `translations` JSONField, with `entry.serialize(language="es")` doing the
+  merge). Write ADR-0006.
+- Phase 2.3 — move logic out of views into per-app `services.py` modules.
+- Phase 2.4 — `CVInfo.save()` → `.clean()`, drop `default=1` on `CV.user`,
+  tidy imports.
+
+`ROADMAP.md` has the authoritative checklist; each item is small enough to
+fit in one session.

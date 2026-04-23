@@ -1,0 +1,62 @@
+# Pre-commit hooks. Install with: pre-commit install
+# Run on demand with:           pre-commit run --all-files
+#
+# Keep this file small. Anything complicated belongs in pyproject.toml
+# so the same config governs CI, editors, and this file.
+
+default_language_version:
+  python: python3.12
+
+repos:
+  # ----- generic hygiene -----
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.svg$
+      - id: end-of-file-fixer
+        exclude: \.svg$
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: detect-private-key
+
+  # ----- Ruff: lint + format (replaces black, isort, flake8, pyupgrade) -----
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # ----- Django template lint -----
+  - repo: https://github.com/djlint/djLint
+    rev: v1.36.3
+    hooks:
+      - id: djlint-reformat-django
+      - id: djlint-django
+
+  # ----- Django-specific upgrades -----
+  - repo: https://github.com/adamchainz/django-upgrade
+    rev: 1.22.2
+    hooks:
+      - id: django-upgrade
+        args: [--target-version, "5.1"]
+
+  # ----- Types (informational; doesn't block commit) -----
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - django-stubs[compatible-mypy]
+          - django-environ
+        args: [--config-file=pyproject.toml]
+        # mypy is strict; flip to stages=[manual] if it gets in the way.
+        pass_filenames: false
+        files: ^(src|apps)/

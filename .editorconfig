@@ -1,0 +1,27 @@
+# EditorConfig — https://editorconfig.org
+# Single source of truth for whitespace across every editor and CI.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{js,ts,jsx,tsx,json,yaml,yml,css,scss,html,svg}]
+indent_size = 2
+
+[*.{md,markdown}]
+trim_trailing_whitespace = false  # preserve markdown line breaks
+
+[Makefile]
+indent_style = tab
+
+[*.{ps1,psm1}]
+end_of_line = crlf  # PowerShell is happier with CRLF
+
+[*.bat]
+end_of_line = crlf

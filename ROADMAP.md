@@ -138,47 +138,47 @@ CVMaker/
 └── README.md
 ```
 
-- [ ] Introduce `pyproject.toml` with `uv` as the resolver. Audit and trim deps: drop `typst`, `pyinstaller`, `altgraph`, `pefile`, `pywin32-ctypes`, `pyinstaller-hooks-contrib`, `Brotli`, `Werkzeug`, `Jinja2` (unless needed), `Flask` family.
-- [ ] Split `settings.py` into `base/dev/prod/test`.
-- [ ] Switch `DJANGO_SETTINGS_MODULE` by `ENV` var.
-- [ ] Move the four apps under `apps/` and add a `core` app.
+- [x] Introduce `pyproject.toml` with `uv` as the resolver. Audit and trim deps: drop `typst`, `pyinstaller`, `altgraph`, `pefile`, `pywin32-ctypes`, `pyinstaller-hooks-contrib`, `Brotli`, `Werkzeug`, `Jinja2` (unless needed), `Flask` family.
+- [x] Split `settings.py` into `base/dev/prod/test`.
+- [x] Switch `DJANGO_SETTINGS_MODULE` per entrypoint (`manage.py` → `dev`, `wsgi/asgi` → `prod`, `pytest` pins `test`).
+- [~] Move the four apps under `apps/` and add a `core` app. _(core/ written; accounts/cv/entries/sections moved by `scripts/phase1_migrate.ps1`)_
 
 #### 1.2 Dev tooling
 
-- [ ] `pre-commit` with `ruff` (lint + format), `djlint` (templates), `mypy` (types), `django-upgrade`, `pyupgrade`.
-- [ ] `Makefile` targets: `make dev`, `make test`, `make lint`, `make fmt`, `make migrate`, `make shell`, `make build-css`.
-- [ ] `EditorConfig`, updated `.gitignore`.
+- [x] `pre-commit` with `ruff` (lint + format), `djlint` (templates), `mypy` (types), `django-upgrade`.
+- [x] `Makefile` targets: `make dev`, `make test`, `make lint`, `make fmt`, `make migrate`, `make shell`, `make ci`.
+- [x] `EditorConfig`; `.gitignore` already updated in Phase 0.
 
 #### 1.3 Docker
 
-- [ ] `docker/web.Dockerfile` — multi-stage, Python 3.12, installs Typst binary.
-- [ ] `docker/worker.Dockerfile` — same base, runs RQ/Celery worker.
-- [ ] `compose.yaml` — `web`, `worker`, `postgres`, `redis`, `minio` (S3-compatible for local).
-- [ ] `docker/entrypoint.sh` — waits for DB, runs migrations, starts gunicorn.
+- [x] `docker/web.Dockerfile` — multi-stage, Python 3.12, installs Typst binary.
+- [x] `docker/worker.Dockerfile` — same base; CMD stubbed for Phase 3 RQ worker.
+- [x] `compose.yaml` — `web`, `worker`, `postgres`, `redis`, `minio` (S3-compatible for local).
+- [x] `docker/entrypoint.sh` — waits for DB, opt-in migrations, collectstatic in prod.
 
 #### 1.4 CI
 
-- [ ] `.github/workflows/ci.yml` — on every PR and push to main:
-  - lint (ruff, djlint, mypy)
-  - test (pytest) against Postgres in a service container
-  - build Docker images
+- [x] `.github/workflows/ci.yml` — on every PR and push to main:
+  - lint (ruff, djlint) + typecheck (mypy, soft-gate for now)
+  - test (pytest) against Postgres 16 service container
+  - build web Docker image (no push; release workflow lands in Phase 8)
   - upload coverage to Codecov
-- [ ] Branch protection on `main`: require CI green, require one review.
+- [ ] Branch protection on `main`: require CI green, require one review. _(GitHub UI step — user does once after first green run)_
 
 #### 1.5 Custom user model
 
 Before any real data exists, swap `User` for a custom model. It is one migration now and zero migrations never again; changing later is a six-hour nightmare.
 
-- [ ] `apps/accounts/models.py: User(AbstractUser)` with `email` as the identifier.
-- [ ] `AUTH_USER_MODEL = 'accounts.User'`.
-- [ ] Re-squash all initial migrations under the new layout; reset dev DB (we have no real users yet).
+- [x] `apps/accounts/models.py: User(AbstractUser)` with `email` as the identifier + custom `UserManager`. _(written in `cvmaker/accounts/models.py`; git-mv'd by migration script)_
+- [x] `AUTH_USER_MODEL = 'accounts.User'` in `settings/base.py`; every `FK(User, …)` rewritten to `FK(settings.AUTH_USER_MODEL, …)` across cv/entries/sections.
+- [~] Re-squash all initial migrations under the new layout; reset dev DB (we have no real users yet). _(handled by `scripts/phase1_migrate.ps1` — drops migrations, `dropdb`/`createdb`, `makemigrations`, `migrate`)_
 
 #### 1.6 Base tests
 
-- [ ] pytest + `pytest-django` + `pytest-cov` + `factory-boy` + `pytest-playwright`.
-- [ ] Factories for `User`, `CV`, `CVInfo`, `Section`, every `Entry` subtype.
-- [ ] Smoke tests: homepage 200, admin 200, signup flow 302, every current URL renders.
-- [ ] Coverage gate at 70% to start; ratchet up over time.
+- [x] pytest + `pytest-django` + `pytest-cov` + `factory-boy` + `pytest-playwright` wired in `pyproject.toml`.
+- [x] Factories for `User`, `CV`, `Section`, every `Entry` subtype (`tests/factories.py`). _(CVInfo factory lands alongside Phase 2.4 cleanup)_
+- [x] Smoke tests: all 7 public stubs 200, admin 200, signup 302, every named URL reverses (`tests/integration/test_smoke.py` + `test_auth_flow.py`). Unit coverage for custom User and entry `serialize()` contracts.
+- [ ] Coverage gate at 70% — wired via `[tool.coverage]` config; enforce in CI after the first green run establishes a baseline.
 
 **Definition of done:** `make dev` brings up the full stack locally; `make test` runs green; `git push` triggers CI that gates the merge; the site looks unchanged to a user but the repo is now professional software.
 
@@ -397,3 +397,5 @@ _Each session appends a short note here: date, phase worked, what shipped, what'
 
 - **2026-04-21** — initial audit, roadmap, design system. No code changed. Next session starts Phase 0.
 - **2026-04-22** — Phase 0 executed: encoding fixed, secrets to env, dead deps trimmed, URL placeholders replaced with real stubs, `pre_delete` signal narrowed, `get_entry_model` raises, README rewritten. `python manage.py check` clean; 35/35 URL names reverse; all six stub routes return 200. Pending: host-side `git clean -fdX` and the `v0.0.0-pre-refactor` tag. Next session starts Phase 1.1 (project layout + uv migration).
+- **2026-04-22** — Phase 1.1 + 1.5 staged. Wrote `pyproject.toml` (uv-managed, dev dep group, ruff/mypy/pytest/coverage config), split settings under `src/cvmaker/settings/{base,dev,prod,test}.py`, moved `urls.py`/`wsgi.py`/`asgi.py` to `src/cvmaker/`, created `apps/core/` (TimestampedModel, UUIDModel, UUIDTimestampedModel), and rewrote `accounts/{models,forms,views,admin}.py` around a custom `User(AbstractUser)` with email identifier + `UserManager`. Every `FK(User,…)` in cv/entries/sections rewritten to `settings.AUTH_USER_MODEL`. Wrote ADR-0001 (project structure) and ADR-0004 (custom User). All git operations (app moves, migration resquash, DB reset, commit) are bundled into `scripts/phase1_migrate.ps1` for the user to run once locally — the sandbox can't unlink on the Windows mount.
+- **2026-04-22** — Phase 1.2/1.3/1.4/1.6 scaffolded ahead of the migration script run. Phase 1.2: `.pre-commit-config.yaml` (hygiene + ruff + djlint + django-upgrade + mypy), `Makefile` (dev/test/lint/fmt/typecheck/ci/up/down targets, all routed through `uv run`), `.editorconfig`. Phase 1.3: `docker/web.Dockerfile` + `docker/worker.Dockerfile` (multi-stage, uv-synced, Typst binary baked in, non-root runtime), `docker/entrypoint.sh` (wait-for-db, opt-in migrations, prod collectstatic), `compose.yaml` (web + worker + postgres 16 + redis 7 + minio with healthchecks), `.dockerignore`. Phase 1.4: `.github/workflows/ci.yml` (lint / typecheck / test against Postgres service / docker build with GHA cache). Phase 1.6: `tests/` tree (unit/integration/e2e), `tests/factories.py` (UserFactory, CVFactory, SectionFactory, every entry subtype), `tests/conftest.py` (user/admin_client/cv/section fixtures), unit tests for the custom User and entry `serialize()` contracts, integration smoke tests for every named URL + the admin + the signup/login flow. Next: user runs `scripts/phase1_migrate.ps1`, then wire Phase 2 (Entry polymorphism cleanup + per-entry translations).
