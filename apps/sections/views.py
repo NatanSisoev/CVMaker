@@ -1,3 +1,17 @@
+"""
+Class-based views for the Section CRUD surface.
+
+Phase 2.1: ``create_section_entries`` no longer parses
+``content_type_id::object_id`` keys; the form now hands us plain
+``BaseEntry`` UUIDs.
+
+Phase 2.3 will collapse the duplicate ``create_section_entries`` between
+``SectionCreateView`` and ``SectionUpdateView`` into a single
+``apps/sections/services.py`` helper.
+"""
+
+from __future__ import annotations
+
 import uuid
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -26,27 +40,31 @@ class SectionListView(SectionBaseView, ListView):
     context_object_name = "sections"
 
 
-class SectionCreateView(SectionBaseView, CreateView):
+class _SectionEntryWriter:
+    """Mixin: write SectionEntry rows for a list of BaseEntry UUIDs.
+
+    Saves duplicating the same loop in Create + Update. Phase 2.3 lifts
+    this into ``services.reorder_entries`` once the service module exists.
+    """
+
+    def _write_section_entries(self, entry_ids: list[str]) -> None:
+        for order, entry_id in enumerate(entry_ids):
+            self.object.section_entries.create(
+                entry_id=uuid.UUID(entry_id),
+                order=order,
+            )
+
+
+class SectionCreateView(SectionBaseView, _SectionEntryWriter, CreateView):
     form_class = SectionForm
     template_name = "sections/form.html"
 
     def form_valid(self, form):
-        # Save main section first
         form.instance.user = self.request.user
         response = super().form_valid(form)
-
-        # Create section entries with order
         if form.cleaned_data.get("entries"):
-            self.create_section_entries(form.cleaned_data["entries"])
-
+            self._write_section_entries(form.cleaned_data["entries"])
         return response
-
-    def create_section_entries(self, entries):
-        for order, entry_key in enumerate(entries):
-            ct_id, object_id = entry_key.split("::")
-            self.object.section_entries.create(
-                content_type_id=int(ct_id), object_id=uuid.UUID(object_id), order=order
-            )
 
     def get_success_url(self):
         return reverse_lazy("section-list")
@@ -57,27 +75,18 @@ class SectionCreateView(SectionBaseView, CreateView):
         return kwargs
 
 
-class SectionUpdateView(SectionBaseView, UpdateView):
+class SectionUpdateView(SectionBaseView, _SectionEntryWriter, UpdateView):
     form_class = SectionForm
     template_name = "sections/form.html"
 
     def form_valid(self, form):
-        # First save the main form
         response = super().form_valid(form)
-
-        # Clear existing entries and create new ones
+        # Replace, don't merge -- the form already represents the desired
+        # final ordering of entries, including removals.
         self.object.section_entries.all().delete()
         if form.cleaned_data.get("entries"):
-            self.create_section_entries(form.cleaned_data["entries"])
-
+            self._write_section_entries(form.cleaned_data["entries"])
         return response
-
-    def create_section_entries(self, entries):
-        for order, entry_key in enumerate(entries):
-            ct_id, object_id = entry_key.split("::")
-            self.object.section_entries.create(
-                content_type_id=int(ct_id), object_id=uuid.UUID(object_id), order=order
-            )
 
     def get_success_url(self):
         return reverse_lazy("section-detail", kwargs={"section_id": self.object.pk})

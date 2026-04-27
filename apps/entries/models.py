@@ -96,7 +96,7 @@ class EducationEntry(BaseEntry):
     def __str__(self) -> str:
         return f"[{self.institution}({self.area})]"
 
-    def serialize(self) -> dict:
+    def serialize(self, language: str | None = None) -> dict:
         info = {
             "institution": self.institution,
             "area": self.area,
@@ -134,7 +134,7 @@ class ExperienceEntry(BaseEntry):
     def __str__(self) -> str:
         return f"[{self.company}({self.position})]"
 
-    def serialize(self) -> dict:
+    def serialize(self, language: str | None = None) -> dict:
         info = {
             "company": self.company,
             "position": self.position,
@@ -169,7 +169,7 @@ class NormalEntry(BaseEntry):
     def __str__(self) -> str:
         return f"[{self.name}]"
 
-    def serialize(self) -> dict:
+    def serialize(self, language: str | None = None) -> dict:
         info = {
             "name": self.name,
             "location": self.location if self.location else None,
@@ -204,7 +204,7 @@ class PublicationEntry(BaseEntry):
     def __str__(self) -> str:
         return f"[{self.title}]"
 
-    def serialize(self) -> dict:
+    def serialize(self, language: str | None = None) -> dict:
         info = {
             "title": self.title,
             "authors": self.authors,
@@ -230,7 +230,7 @@ class OneLineEntry(BaseEntry):
     def __str__(self) -> str:
         return f"[{self.label}({self.details})]"
 
-    def serialize(self) -> dict:
+    def serialize(self, language: str | None = None) -> dict:
         return {"label": self.label, "details": self.details}
 
 
@@ -243,7 +243,7 @@ class BulletEntry(BaseEntry):
     def __str__(self) -> str:
         return f"[Bulleted({self.bullet})]"
 
-    def serialize(self) -> dict:
+    def serialize(self, language: str | None = None) -> dict:
         return {"bullet": self.bullet}
 
 
@@ -258,7 +258,7 @@ class NumberedEntry(BaseEntry):
     def __str__(self) -> str:
         return f"[Numbered({self.number})]"
 
-    def serialize(self) -> dict:
+    def serialize(self, language: str | None = None) -> dict:
         return {"number": self.number}
 
 
@@ -273,7 +273,7 @@ class ReversedNumberedEntry(BaseEntry):
     def __str__(self) -> str:
         return f"[ReversedNumbered({self.reversed_number})]"
 
-    def serialize(self) -> dict:
+    def serialize(self, language: str | None = None) -> dict:
         return {"reversed_number": self.reversed_number}
 
 
@@ -286,7 +286,7 @@ class TextEntry(BaseEntry):
     def __str__(self) -> str:
         return f"[Text({self.text})]"
 
-    def serialize(self) -> dict:
+    def serialize(self, language: str | None = None) -> dict:
         return {"text": self.text}
 
 

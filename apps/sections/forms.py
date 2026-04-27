@@ -1,9 +1,48 @@
+"""
+Forms for the sections app.
+
+Phase 2.1 (ADR-0005) replaces the ``content_type::object_id`` choice values
+with plain ``BaseEntry.id`` UUIDs -- now that ``SectionEntry.entry`` is a
+real FK to ``BaseEntry``, we don't need the content type to disambiguate.
+
+The choice list is still built per-subclass so labels read naturally
+("educationentry: alias-foo"); subclass resolution at save time happens
+automatically via MTI (the ``BaseEntry`` row is the parent of the
+subclass row, sharing its primary key).
+"""
+
+from __future__ import annotations
+
 import uuid
 
 from django import forms
-from django.contrib.contenttypes.models import ContentType
+
+from entries.models import (
+    BulletEntry,
+    EducationEntry,
+    ExperienceEntry,
+    NormalEntry,
+    NumberedEntry,
+    OneLineEntry,
+    PublicationEntry,
+    ReversedNumberedEntry,
+    TextEntry,
+)
 
 from .models import Section, SectionEntry
+
+# Subclasses we offer in the entry picker. Order = display order in the form.
+_ENTRY_SUBCLASSES = (
+    EducationEntry,
+    ExperienceEntry,
+    PublicationEntry,
+    NormalEntry,
+    OneLineEntry,
+    BulletEntry,
+    NumberedEntry,
+    ReversedNumberedEntry,
+    TextEntry,
+)
 
 
 class SectionForm(forms.ModelForm):
@@ -21,38 +60,22 @@ class SectionForm(forms.ModelForm):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
 
-        # Get all entry types that can be linked to sections
-        entry_models = ContentType.objects.filter(
-            app_label="entries",
-            model__in=[
-                "educationentry",
-                "experienceentry",
-                "publicationentry",
-                "normalentry",
-                "onelineentry",
-                "bulletentry",
-                "numberedentry",
-                "reversednumberedentry",
-                "textentry",
-            ],
-        )
-
-        # Build choices list: (content_type_id-object_id, entry_title)
-        choices = []
-        for ct in entry_models:
-            model_class = ct.model_class()
-            for entry in model_class.objects.filter(user=self.user):
-                value = f"{ct.id}::{entry.id}"
-                label = f"{ct.name}: {entry.alias}"
-                choices.append((value, label))
+        # Build (entry-uuid, label) choices grouped by subclass.
+        choices: list[tuple[str, str]] = []
+        for model_cls in _ENTRY_SUBCLASSES:
+            for entry in model_cls.objects.filter(user=self.user):
+                # The label includes the subclass name so "Education: foo"
+                # and "Experience: foo" are distinguishable in the form.
+                kind = model_cls.__name__.replace("Entry", "").lower()
+                choices.append((str(entry.id), f"{kind}: {entry.alias}"))
 
         self.fields["entries"].choices = choices
 
-        # Set initial values when editing
+        # Pre-select on edit. ``entry_id`` on SectionEntry already carries
+        # the BaseEntry UUID -- no content-type lookup needed.
         if self.instance.pk:
-            current_entries = self.instance.section_entries.values_list("content_type", "object_id")
-            initial = [f"{ct}::{oid}" for ct, oid in current_entries]
-            self.fields["entries"].initial = initial
+            current_ids = self.instance.section_entries.values_list("entry_id", flat=True)
+            self.fields["entries"].initial = [str(eid) for eid in current_ids]
 
     def save(self, commit=True):
         section = super().save(commit=False)
@@ -63,17 +86,14 @@ class SectionForm(forms.ModelForm):
         return section
 
     def save_m2m(self):
-        # Clear existing entries
+        # Reset and re-add. Cheap because each user has at most a few
+        # entries per section; Phase 4 swaps this for an HTMX reorder UI.
         self.instance.section_entries.all().delete()
 
-        # Create new entries with order
-        entries = self.cleaned_data.get("entries", [])
-        for order, entry_key in enumerate(entries):
-            ct_id, object_id = entry_key.split("-")
-
+        entry_ids = self.cleaned_data.get("entries", [])
+        for order, entry_id in enumerate(entry_ids):
             SectionEntry.objects.create(
                 section=self.instance,
-                content_type_id=int(ct_id),
-                object_id=uuid.UUID(object_id),
+                entry_id=uuid.UUID(entry_id),
                 order=order,
             )

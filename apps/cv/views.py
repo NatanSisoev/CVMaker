@@ -191,38 +191,50 @@ class CVUpdateView(LoginRequiredMixin, UpdateView):
         else:
             context["cv_info_form"] = CVInfoForm(instance=cv_info)
 
+        # Phase 2.1 (ADR-0005): SectionEntry.entry is now a real FK to
+        # BaseEntry. Promote to the concrete subclass via select_subclasses
+        # so the isinstance dispatch + ModelForm binding still works.
+        # Phase 2.3 lifts this branchy dispatch into a service that maps
+        # subclass -> form_class, dropping the if/elif tower entirely.
+        from entries.models import BaseEntry  # local import to avoid cv→entries cycle
+
         education_forms = {}
         experience_forms = {}
         publication_forms = {}
 
         for section in cv.sections.all():
-            for section_entry in section.section_entries.all():
-                if isinstance(section_entry.content_object, EducationEntry):
+            section_entries = list(section.section_entries.all())
+            entry_ids = [se.entry_id for se in section_entries]
+            promoted = {
+                e.pk: e for e in BaseEntry.objects.filter(pk__in=entry_ids).select_subclasses()
+            }
+
+            for section_entry in section_entries:
+                real_entry = promoted.get(section_entry.entry_id)
+                if isinstance(real_entry, EducationEntry):
                     if self.request.POST:
                         education_forms[section_entry.id] = EducationEntryForm(
-                            self.request.POST, instance=section_entry.content_object
+                            self.request.POST, instance=real_entry
                         )
                     else:
-                        education_forms[section_entry.id] = EducationEntryForm(
-                            instance=section_entry.content_object
-                        )
-                elif isinstance(section_entry.content_object, ExperienceEntry):
+                        education_forms[section_entry.id] = EducationEntryForm(instance=real_entry)
+                elif isinstance(real_entry, ExperienceEntry):
                     if self.request.POST:
                         experience_forms[section_entry.id] = ExperienceEntryForm(
-                            self.request.POST, instance=section_entry.content_object
+                            self.request.POST, instance=real_entry
                         )
                     else:
                         experience_forms[section_entry.id] = ExperienceEntryForm(
-                            instance=section_entry.content_object
+                            instance=real_entry
                         )
-                elif isinstance(section_entry.content_object, PublicationEntry):
+                elif isinstance(real_entry, PublicationEntry):
                     if self.request.POST:
                         publication_forms[section_entry.id] = PublicationEntryForm(
-                            self.request.POST, instance=section_entry.content_object
+                            self.request.POST, instance=real_entry
                         )
                     else:
                         publication_forms[section_entry.id] = PublicationEntryForm(
-                            instance=section_entry.content_object
+                            instance=real_entry
                         )
 
         context["education_forms"] = education_forms
