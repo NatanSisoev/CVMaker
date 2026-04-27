@@ -71,11 +71,16 @@ class CV(models.Model):
     modified_date = models.DateTimeField(auto_now=True)
 
     def serialize(self) -> dict:
+        # Phase 2.2: pull the active language from CVLocale and thread it
+        # through to every entry's serializer. ``None`` falls back to each
+        # entry's canonical_language (no translation lookup).
+        language = getattr(self.locale, "language", None) if self.locale else None
+
         cv = self.info.serialize() if self.info else None
         for section in self.sections.all():
             if "sections" not in cv:
                 cv["sections"] = {}
-            cv["sections"][section.title] = section.serialize()
+            cv["sections"][section.title] = section.serialize(language=language)
 
         final = {  # TODO: change from sections inside CVInfo to inside CV
             "cv": cv if cv else None,
