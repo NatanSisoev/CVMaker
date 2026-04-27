@@ -4,9 +4,10 @@ Development settings.
 Turn on DEBUG, wire in debug-toolbar, loosen a few knobs. Default loader
 used by ``manage.py`` when ``DJANGO_SETTINGS_MODULE`` is unset.
 """
+
 from __future__ import annotations
 
-from .base import *  # noqa: F401,F403
+from .base import *  # noqa: F403
 from .base import INSTALLED_APPS, MIDDLEWARE, env  # type: ignore[attr-defined]
 
 # ----------------------------------------------------------------------
@@ -40,9 +41,11 @@ MIDDLEWARE = [
 
 INTERNAL_IPS = ["127.0.0.1", "::1"]
 
+
 # Make the toolbar play nicely with Docker (`host.docker.internal`).
-def _show_toolbar(request):  # noqa: D401
+def _show_toolbar(request):
     return DEBUG
+
 
 DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": "cvmaker.settings.dev._show_toolbar"}
 

@@ -5,6 +5,7 @@ Environment-specific overrides live in ``dev.py``, ``prod.py``, and ``test.py``.
 Anything here should be the same in every environment; anything that differs
 belongs in the env-specific module.
 """
+
 from __future__ import annotations
 
 import sys
@@ -70,13 +71,13 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    "core",            # shared mixins / base models (apps/core)
-    "accounts",        # custom User (apps/accounts)
-    "cv",              # CV aggregate + Info / Design / Locale / Settings
+    "core",  # shared mixins / base models (apps/core)
+    "accounts",  # custom User (apps/accounts)
+    "cv",  # CV aggregate + Info / Design / Locale / Settings
     # Template tags in cv/templatetags/ are auto-discovered because `cv`
     # itself is installed -- no separate entry needed.
-    "sections",        # ordered collections of entries
-    "entries",         # polymorphic entry types
+    "sections",  # ordered collections of entries
+    "entries",  # polymorphic entry types
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -202,10 +203,10 @@ DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="CVMaker <noreply@
 # Misc
 # ----------------------------------------------------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-CRISPY_TEMPLATE_PACK = "bootstrap5"                  # Phase 4 replaces with cotton
+CRISPY_TEMPLATE_PACK = "bootstrap5"  # Phase 4 replaces with cotton
 
 # Size limits
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024        # 5 MiB — photos for CVs
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5 MiB — photos for CVs
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 
 # ----------------------------------------------------------------------

@@ -5,7 +5,6 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.signals import pre_delete
-from django.dispatch import receiver
 
 from entries.models import (
     BaseEntry,
@@ -59,25 +58,32 @@ class CVSection(models.Model):
     order = models.PositiveIntegerField()
 
     class Meta:
-        ordering = ['order']
-        unique_together = ('cv', 'section')
+        ordering = ["order"]
+        unique_together = ("cv", "section")
 
 
 class Section(models.Model):
     # KEYS
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=False, blank=False,
-                             on_delete=models.CASCADE, related_name='cv_sections')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=False,
+        blank=False,
+        on_delete=models.CASCADE,
+        related_name="cv_sections",
+    )
     title = models.CharField(max_length=50, help_text="Name of the section")
     alias = models.CharField(max_length=20, help_text="Alias for the section", default="default")
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
 
     def serialize(self) -> list:
-        return [entry.content_object.serialize() for entry in self.section_entries.order_by('order')]
+        return [
+            entry.content_object.serialize() for entry in self.section_entries.order_by("order")
+        ]
 
 
 class SectionEntry(models.Model):
     # KEYS
-    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name='section_entries')
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name="section_entries")
 
     # INFO
     order = models.PositiveIntegerField()
@@ -88,10 +94,11 @@ class SectionEntry(models.Model):
     content_object = GenericForeignKey("content_type", "object_id")
 
     class Meta:
-        ordering = ['order']
+        ordering = ["order"]
 
     def serialize(self) -> dict:
         return self.content_object.serialize()
+
 
 class SectionManager:
     """Helper class to create sections and their entries from a RenderCVDataModel"""
@@ -104,7 +111,7 @@ class SectionManager:
 
     def create_all_sections(self):
         """Create all sections from the data model"""
-        if not hasattr(self.data_model.cv, 'sections'):
+        if not hasattr(self.data_model.cv, "sections"):
             return
 
         section_order = 1
@@ -115,11 +122,7 @@ class SectionManager:
     def _create_section(self, section_data, order):
         """Create a single section and its entries"""
         # Create Section object
-        section = Section.objects.create(
-            user=self.user,
-            title=section_data.title,
-            alias=self.alias
-        )
+        section = Section.objects.create(user=self.user, title=section_data.title, alias=self.alias)
 
         # Create relation between CV and section
         CVSection.objects.create(cv=self.cv, section=section, order=order)
@@ -129,7 +132,7 @@ class SectionManager:
 
     def _create_entries(self, section, section_data):
         """Create entries for a section"""
-        if not hasattr(section_data, 'entries') or not section_data.entries:
+        if not hasattr(section_data, "entries") or not section_data.entries:
             return
 
         entry_type = get_entry_model(section_data.entry_type)
@@ -142,9 +145,7 @@ class SectionManager:
 
             # Create relation between section and entry
             SectionEntry.objects.create(
-                section=section,
-                order=entry_order,
-                content_object=entry_instance
+                section=section, order=entry_order, content_object=entry_instance
             )
 
             entry_order += 1

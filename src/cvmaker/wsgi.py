@@ -4,6 +4,7 @@ WSGI config for cvmaker.
 Exposes the WSGI callable as a module-level variable named ``application``.
 Gunicorn loads this in production.
 """
+
 from __future__ import annotations
 
 import os

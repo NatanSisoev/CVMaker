@@ -45,6 +45,7 @@ Usage from the repo root::
 
     uv run python scripts/fix_rendercv_imports.py
 """
+
 from __future__ import annotations
 
 import re
@@ -58,17 +59,36 @@ MODELS_TARGET = Path("apps/cv/models.py")
 
 MODELS_OLD_IMPORT_1 = "from rendercv.data import read_a_yaml_file"
 MODELS_OLD_IMPORT_2 = "from rendercv.data.models.curriculum_vitae import available_social_networks"
-MODELS_NEW_IMPORT_2 = "from rendercv.schema.models.cv.social_network import available_social_networks"
+MODELS_NEW_IMPORT_2 = (
+    "from rendercv.schema.models.cv.social_network import available_social_networks"
+)
 
-MODELS_HELPER = '''
+# Sentinel pair used to detect + replace the helper block on a re-run and to
+# cleanly relocate it out of the import section (the earlier version of this
+# script spliced it mid-imports, triggering ruff E402 on the rendercv import
+# two lines below). Appending at EOF works because all call sites are inside
+# method bodies — Python resolves ``_read_yaml_file`` at call time.
+MODELS_SHIM_MARKER = (
+    "# --- rendercv 2.x models-yaml shim (Phase 1, see scripts/fix_rendercv_imports.py) ---"
+)
+MODELS_SHIM_END_MARKER = "# --- end rendercv 2.x models-yaml shim ---"
+
+MODELS_SHIM = (
+    MODELS_SHIM_MARKER
+    + """
+# rendercv 2.x removed ``read_a_yaml_file`` entirely (callers now pass YAML
+# text rather than a path). This local helper restores the old signature for
+# the four call sites in CVInfo/CVDesign/CVLocale/CVSettings until Phase 3
+# rewrites the integration against the public API.
 import yaml as _yaml
 
 
 def _read_yaml_file(path):
-    """Drop-in replacement for rendercv 1.x's read_a_yaml_file."""
     with open(path, encoding="utf-8") as _f:
         return _yaml.safe_load(_f)
-'''
+"""
+    + MODELS_SHIM_END_MARKER
+)
 
 # ---------------------------------------------------------------------------
 # views.py patches
@@ -80,14 +100,18 @@ VIEWS_OLD_IMPORT_RENDERER = "from rendercv.renderer import renderer"
 
 # Sentinel pair used to detect and replace the block on a re-run. Kept as
 # bare strings so the outer VIEWS_STOPGAP can be a plain (non-f) string.
-VIEWS_STOPGAP_MARKER = "# --- rendercv 2.x stopgap (Phase 1, see scripts/fix_rendercv_imports.py) ---"
+VIEWS_STOPGAP_MARKER = (
+    "# --- rendercv 2.x stopgap (Phase 1, see scripts/fix_rendercv_imports.py) ---"
+)
 VIEWS_STOPGAP_END_MARKER = "# --- end rendercv 2.x stopgap ---"
 
 # The shim is appended at EOF rather than spliced into the import block:
 # Python resolves ``data`` and ``renderer`` inside view methods at call time,
 # not at module-parse time, so binding them at the bottom of the module is
 # sufficient and sidesteps any entanglement with multi-line bracketed imports.
-VIEWS_STOPGAP = VIEWS_STOPGAP_MARKER + """
+VIEWS_STOPGAP = (
+    VIEWS_STOPGAP_MARKER
+    + """
 # rendercv 2.x removed the ``data`` module and reorganized ``renderer``.
 # The views in this file were written against the 1.x private-ish API and
 # will be rewritten in Phase 3 when PDF rendering is wired up for real.
@@ -112,23 +136,108 @@ class _RendercvUnavailable:
 
 data = _RendercvUnavailable("data")
 renderer = _RendercvUnavailable("renderer")
-""" + VIEWS_STOPGAP_END_MARKER
+"""
+    + VIEWS_STOPGAP_END_MARKER
+)
+
+
+def _remove_shim_block(src: str, start_marker: str, end_marker: str, eol: str) -> tuple[str, bool]:
+    """Delete a marker-delimited block and the blank lines that wrap it.
+
+    Returns ``(new_src, was_removed)``.
+    """
+    lines = src.split(eol)
+    start_idx = end_idx = None
+    for i, line in enumerate(lines):
+        if start_idx is None and start_marker in line:
+            start_idx = i
+        elif start_idx is not None and end_marker in line:
+            end_idx = i
+            break
+    if start_idx is None or end_idx is None:
+        return src, False
+    while start_idx > 0 and lines[start_idx - 1].strip() == "":
+        start_idx -= 1
+    while end_idx < len(lines) - 1 and lines[end_idx + 1].strip() == "":
+        end_idx += 1
+    del lines[start_idx : end_idx + 1]
+    return eol.join(lines), True
+
+
+def _remove_legacy_yaml_helper(src: str, eol: str) -> tuple[str, bool]:
+    """Remove the un-markered helper block an earlier script revision emitted.
+
+    The old block looks like::
+
+        import yaml as _yaml
+
+
+        def _read_yaml_file(path):
+            \"\"\"Drop-in replacement for rendercv 1.x's read_a_yaml_file.\"\"\"
+            with open(path, encoding="utf-8") as _f:
+                return _yaml.safe_load(_f)
+
+    We recognize it by those exact lines and drop the whole block plus
+    any adjacent blank lines.
+    """
+    signature = [
+        "import yaml as _yaml",
+        "",
+        "",
+        "def _read_yaml_file(path):",
+        '    """Drop-in replacement for rendercv 1.x\'s read_a_yaml_file."""',
+        '    with open(path, encoding="utf-8") as _f:',
+        "        return _yaml.safe_load(_f)",
+    ]
+    lines = src.split(eol)
+    for i in range(len(lines) - len(signature) + 1):
+        window = lines[i : i + len(signature)]
+        if window == signature:
+            start_idx = i
+            end_idx = i + len(signature) - 1
+            while start_idx > 0 and lines[start_idx - 1].strip() == "":
+                start_idx -= 1
+            while end_idx < len(lines) - 1 and lines[end_idx + 1].strip() == "":
+                end_idx += 1
+            del lines[start_idx : end_idx + 1]
+            return eol.join(lines), True
+    return src, False
 
 
 def _patch_models(src: str) -> tuple[str, list[str]]:
-    """Return (new_src, messages)."""
+    """Return (new_src, messages).
+
+    Strategy (parallel to ``_patch_views``):
+      1. Remove any previously-injected shim block (marker-delimited or the
+         legacy un-markered form from the very first script revision) along
+         with adjacent blank lines.
+      2. Strip ``from rendercv.data import read_a_yaml_file`` if still there.
+      3. Swap ``available_social_networks`` to its rendercv 2.x path.
+      4. Rewrite every ``read_a_yaml_file(`` call site to ``_read_yaml_file(``.
+      5. Append a fresh shim at EOF — safe because all call sites are inside
+         method bodies, so Python resolves the name at call time.
+    """
     msgs: list[str] = []
+    eol = "\r\n" if "\r\n" in src else "\n"
 
-    # 1. Replace read_a_yaml_file import with local helper.
+    # 1a. Strip a previously-markered shim.
+    src, removed_markered = _remove_shim_block(src, MODELS_SHIM_MARKER, MODELS_SHIM_END_MARKER, eol)
+    if removed_markered:
+        msgs.append("  info:    removed existing (markered) shim block")
+
+    # 1b. Strip a legacy un-markered shim (emitted by the first script revision).
+    src, removed_legacy = _remove_legacy_yaml_helper(src, eol)
+    if removed_legacy:
+        msgs.append("  info:    removed legacy un-markered yaml helper block")
+
+    # 2. Strip the rendercv 1.x import if present.
     if MODELS_OLD_IMPORT_1 in src:
-        src = src.replace(MODELS_OLD_IMPORT_1, MODELS_HELPER.strip())
-        msgs.append("  patched: import of read_a_yaml_file replaced with local helper")
-    elif "_read_yaml_file" in src:
-        msgs.append("  skip:    local helper already present")
-    else:
-        msgs.append("  note:    neither old import nor helper found -- review manually")
+        pattern = re.compile(r"^" + re.escape(MODELS_OLD_IMPORT_1) + r"\s*\r?\n", re.MULTILINE)
+        src, n = pattern.subn("", src, count=1)
+        if n:
+            msgs.append("  patched: removed rendercv 1.x read_a_yaml_file import line")
 
-    # 2. Swap social_networks import path.
+    # 3. Swap social_networks import path.
     if MODELS_OLD_IMPORT_2 in src:
         src = src.replace(MODELS_OLD_IMPORT_2, MODELS_NEW_IMPORT_2)
         msgs.append("  patched: available_social_networks import path updated for rendercv 2.x")
@@ -137,13 +246,17 @@ def _patch_models(src: str) -> tuple[str, list[str]]:
     else:
         msgs.append("  note:    social_networks import not found -- review manually")
 
-    # 3. Swap every call site.
+    # 4. Rewrite call sites.
     call_count = len(re.findall(r"\bread_a_yaml_file\(", src))
     if call_count:
         src = re.sub(r"\bread_a_yaml_file\(", "_read_yaml_file(", src)
         msgs.append(f"  patched: {call_count} call(s) to read_a_yaml_file -> _read_yaml_file")
     else:
-        msgs.append("  skip:    no read_a_yaml_file call sites found")
+        msgs.append("  skip:    no read_a_yaml_file call sites to rewrite")
+
+    # 5. Append shim at EOF.
+    src = src.rstrip() + eol + eol + eol + MODELS_SHIM.strip() + eol
+    msgs.append("  patched: appended rendercv 2.x yaml shim at EOF")
 
     return src, msgs
 
@@ -181,7 +294,7 @@ def _patch_views(src: str) -> tuple[str, list[str]]:
             start_idx -= 1
         while end_idx < len(lines) - 1 and lines[end_idx + 1].strip() == "":
             end_idx += 1
-        del lines[start_idx:end_idx + 1]
+        del lines[start_idx : end_idx + 1]
         src = eol.join(lines)
         msgs.append("  info:    removed existing stopgap shim")
 

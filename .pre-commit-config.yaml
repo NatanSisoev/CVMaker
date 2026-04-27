@@ -5,7 +5,11 @@
 # so the same config governs CI, editors, and this file.
 
 default_language_version:
-  python: python3.12
+  # Match the project's runtime (uv-managed CPython 3.13). If you don't have
+  # python3.13 on PATH yet, run `uv python install 3.13` then make sure
+  # `~/.local/bin` (Linux/macOS) or `%LOCALAPPDATA%\uv\python\...` (Windows)
+  # is on PATH -- pre-commit asks `virtualenv` to find this interpreter.
+  python: python3.13
 
 repos:
   # ----- generic hygiene -----
@@ -27,8 +31,11 @@ repos:
       - id: detect-private-key
 
   # ----- Ruff: lint + format (replaces black, isort, flake8, pyupgrade) -----
+  # Keep this rev close to whatever `uv` is resolving for the dev group; older
+  # mirrors don't know newer rules (e.g. RUF059), and the hook errors out with
+  # "Unknown rule selector" if pyproject.toml references one it doesn't have.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.4
+    rev: v0.9.10
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
@@ -56,7 +63,10 @@ repos:
         additional_dependencies:
           - django-stubs[compatible-mypy]
           - django-environ
-        args: [--config-file=pyproject.toml]
-        # mypy is strict; flip to stages=[manual] if it gets in the way.
+        # `pass_filenames: false` means we have to tell mypy WHAT to check via
+        # args; the `files:` filter on its own would be ignored. We hard-pin
+        # `src` + `apps` so the same set is type-checked locally and in CI.
+        args: [--config-file=pyproject.toml, src, apps]
         pass_filenames: false
-        files: ^(src|apps)/
+        # mypy is strict; flip to stages=[manual] if it gets in the way.
+        stages: [manual]

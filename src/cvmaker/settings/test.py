@@ -5,9 +5,20 @@ SQLite in-memory for speed, migrations disabled for speed, password hasher
 replaced with the cheapest option for speed. These settings exist solely to
 make pytest runs fast and hermetic.
 """
+
 from __future__ import annotations
 
-from .base import *  # noqa: F401,F403
+from .base import *  # noqa: F403
+from .base import MIDDLEWARE  # type: ignore[attr-defined]
+
+# ----------------------------------------------------------------------
+# Middleware — drop whitenoise in tests
+# ----------------------------------------------------------------------
+# Whitenoise warns at startup if STATIC_ROOT doesn't exist on disk. In
+# tests we don't run collectstatic, so the directory legitimately isn't
+# there. Strip the middleware -- static serving isn't part of what these
+# tests assert on.
+MIDDLEWARE = [m for m in MIDDLEWARE if "whitenoise" not in m.lower()]
 
 # ----------------------------------------------------------------------
 # Core
@@ -26,9 +37,10 @@ DATABASES = {
     },
 }
 
+
 # ----------------------------------------------------------------------
 # Disable migrations in tests — creates tables from models directly.
-# ~3–5x faster startup for the test suite.
+# ~3-5x faster startup for the test suite.
 # ----------------------------------------------------------------------
 class _DisableMigrations:
     def __contains__(self, item: str) -> bool:

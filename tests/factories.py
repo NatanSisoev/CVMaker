@@ -72,14 +72,21 @@ class SectionFactory(DjangoModelFactory):
 # ---------------------------------------------------------------------------
 # entries
 # ---------------------------------------------------------------------------
-class _BaseEntryFactoryMixin:
+# NOTE: factory-boy's metaclass only scans declarations from base classes
+# that are themselves Factories, so this MUST inherit from DjangoModelFactory
+# (with Meta.abstract = True) -- a plain mixin class would silently lose
+# `user` and `alias`, and entry rows would hit a NOT NULL on user_id.
+class _BaseEntryFactory(DjangoModelFactory):
     """Shared defaults for every entry factory."""
+
+    class Meta:
+        abstract = True
 
     user = factory.SubFactory(UserFactory)
     alias = factory.Sequence(lambda n: f"entry-{n}")
 
 
-class EducationEntryFactory(_BaseEntryFactoryMixin, DjangoModelFactory):
+class EducationEntryFactory(_BaseEntryFactory):
     class Meta:
         model = "entries.EducationEntry"
 
@@ -89,7 +96,7 @@ class EducationEntryFactory(_BaseEntryFactoryMixin, DjangoModelFactory):
     location = factory.Faker("city")
 
 
-class ExperienceEntryFactory(_BaseEntryFactoryMixin, DjangoModelFactory):
+class ExperienceEntryFactory(_BaseEntryFactory):
     class Meta:
         model = "entries.ExperienceEntry"
 
@@ -98,14 +105,14 @@ class ExperienceEntryFactory(_BaseEntryFactoryMixin, DjangoModelFactory):
     location = factory.Faker("city")
 
 
-class NormalEntryFactory(_BaseEntryFactoryMixin, DjangoModelFactory):
+class NormalEntryFactory(_BaseEntryFactory):
     class Meta:
         model = "entries.NormalEntry"
 
     name = factory.Faker("catch_phrase")
 
 
-class PublicationEntryFactory(_BaseEntryFactoryMixin, DjangoModelFactory):
+class PublicationEntryFactory(_BaseEntryFactory):
     class Meta:
         model = "entries.PublicationEntry"
 
@@ -113,7 +120,7 @@ class PublicationEntryFactory(_BaseEntryFactoryMixin, DjangoModelFactory):
     authors = factory.Faker("name")
 
 
-class OneLineEntryFactory(_BaseEntryFactoryMixin, DjangoModelFactory):
+class OneLineEntryFactory(_BaseEntryFactory):
     class Meta:
         model = "entries.OneLineEntry"
 
@@ -121,28 +128,28 @@ class OneLineEntryFactory(_BaseEntryFactoryMixin, DjangoModelFactory):
     details = factory.Faker("sentence")
 
 
-class BulletEntryFactory(_BaseEntryFactoryMixin, DjangoModelFactory):
+class BulletEntryFactory(_BaseEntryFactory):
     class Meta:
         model = "entries.BulletEntry"
 
     bullet = factory.Faker("sentence")
 
 
-class NumberedEntryFactory(_BaseEntryFactoryMixin, DjangoModelFactory):
+class NumberedEntryFactory(_BaseEntryFactory):
     class Meta:
         model = "entries.NumberedEntry"
 
     number = factory.Faker("sentence")
 
 
-class ReversedNumberedEntryFactory(_BaseEntryFactoryMixin, DjangoModelFactory):
+class ReversedNumberedEntryFactory(_BaseEntryFactory):
     class Meta:
         model = "entries.ReversedNumberedEntry"
 
     reversed_number = factory.Faker("sentence")
 
 
-class TextEntryFactory(_BaseEntryFactoryMixin, DjangoModelFactory):
+class TextEntryFactory(_BaseEntryFactory):
     class Meta:
         model = "entries.TextEntry"
 

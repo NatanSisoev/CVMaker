@@ -4,6 +4,7 @@ Shared model mixins.
 Every app-level model should inherit from one of these. Keeps the timestamp
 and UUID PK conventions consistent across the codebase.
 """
+
 from __future__ import annotations
 
 import uuid

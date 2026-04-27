@@ -5,6 +5,7 @@ Apps mount their own urlpatterns under path prefixes. The handful of
 ``_placeholder`` routes exist because the nav + footer link to them; real
 content arrives in Phase 6.
 """
+
 from __future__ import annotations
 
 from django.conf import settings
@@ -26,25 +27,23 @@ def _placeholder(page_title: str, page_description: str | None = None):
 
 urlpatterns: list[URLPattern | URLResolver] = [
     path("", HomePageView.as_view(), name="homepage"),
-
     path("admin/", admin.site.urls),
-
     # Domain apps
     path("cv/", include("cv.urls")),
     path("section/", include("sections.urls")),
     path("entry/", include("entries.urls")),
-
     # Auth (allauth replaces these in Phase 6)
     path("accounts/", include("accounts.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
-
     # Placeholder routes — linked from nav/footer, real content in Phase 6
-    path("templates/", _placeholder(
-        "Templates", "A gallery of ready-made CV templates you can start from."
-    ), name="templates"),
-    path("import/", _placeholder(
-        "Import", "Import from YAML, PDF, or LinkedIn URL."
-    ), name="import"),
+    path(
+        "templates/",
+        _placeholder("Templates", "A gallery of ready-made CV templates you can start from."),
+        name="templates",
+    ),
+    path(
+        "import/", _placeholder("Import", "Import from YAML, PDF, or LinkedIn URL."), name="import"
+    ),
     path("help/", _placeholder("Help"), name="help"),
     path("contact/", _placeholder("Contact"), name="contact"),
     path("status/", _placeholder("Status"), name="status"),
@@ -57,6 +56,7 @@ if settings.DEBUG:
     # Debug toolbar
     try:
         import debug_toolbar
+
         urlpatterns.insert(0, path("__debug__/", include(debug_toolbar.urls)))
     except ImportError:
         pass

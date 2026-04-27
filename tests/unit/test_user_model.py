@@ -46,9 +46,7 @@ def test_create_superuser_flags():
 
 
 def test_email_normalized_to_domain_lowercase():
-    user = User.objects.create_user(
-        email="Alice@Example.COM", username="alice", password="x"
-    )
+    user = User.objects.create_user(email="Alice@Example.COM", username="alice", password="x")
     # BaseUserManager.normalize_email lowercases the domain, not the local part.
     assert user.email.endswith("@example.com")
 

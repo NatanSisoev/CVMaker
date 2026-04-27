@@ -55,24 +55,34 @@ def test_admin_index_authed(admin_client):
 # ---------------------------------------------------------------------------
 # URL reversal — every named route must reverse without raising.
 # ---------------------------------------------------------------------------
-def _named_patterns(patterns):
+def _named_patterns(patterns, namespace=None):
+    """Walk the URL tree, yielding fully-qualified pattern names.
+
+    Namespaced routes (e.g. ``admin:auth_user_changelist``) need the prefix or
+    ``reverse()`` won't find them. Namespaces can nest, so we accumulate them
+    as we descend into ``URLResolver`` nodes.
+    """
     for p in patterns:
         if isinstance(p, URLPattern) and p.name:
-            yield p
+            yield f"{namespace}:{p.name}" if namespace else p.name
         elif isinstance(p, URLResolver):
-            yield from _named_patterns(p.url_patterns)
+            if p.namespace:
+                sub_ns = f"{namespace}:{p.namespace}" if namespace else p.namespace
+            else:
+                sub_ns = namespace
+            yield from _named_patterns(p.url_patterns, namespace=sub_ns)
 
 
 def test_every_named_url_reverses():
     """Catches typos like `cvdesgin-list` at test time, not runtime."""
     resolver = get_resolver()
     failures = []
-    for pattern in _named_patterns(resolver.url_patterns):
+    for full_name in _named_patterns(resolver.url_patterns):
         try:
-            reverse(pattern.name)
-        except Exception as exc:  # noqa: BLE001 — pytest reports all failures together
+            reverse(full_name)
+        except Exception as exc:  # pytest reports all failures together
             # Some routes require URL kwargs; skip those — they're validated per-view.
             if "NoReverseMatch" in exc.__class__.__name__ and "argument" in str(exc):
                 continue
-            failures.append((pattern.name, str(exc)))
+            failures.append((full_name, str(exc)))
     assert not failures, f"Unreversible URLs: {failures}"

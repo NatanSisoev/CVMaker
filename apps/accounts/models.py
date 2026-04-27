@@ -6,7 +6,10 @@ Uses ``email`` as the login identifier (``USERNAME_FIELD``). Keeps
 of the email. Swapped in now, pre-launch, because adding a custom user model
 after data exists is a multi-day migration.
 """
+
 from __future__ import annotations
+
+from typing import ClassVar
 
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
@@ -18,7 +21,7 @@ class UserManager(BaseUserManager["User"]):
 
     use_in_migrations = True
 
-    def _create_user(self, email: str, password: str | None, **extra_fields) -> "User":
+    def _create_user(self, email: str, password: str | None, **extra_fields) -> User:
         if not email:
             raise ValueError("An email address is required to create a user.")
         email = self.normalize_email(email)
@@ -31,12 +34,12 @@ class UserManager(BaseUserManager["User"]):
         user.save(using=self._db)
         return user
 
-    def create_user(self, email: str, password: str | None = None, **extra_fields) -> "User":
+    def create_user(self, email: str, password: str | None = None, **extra_fields) -> User:
         extra_fields.setdefault("is_staff", False)
         extra_fields.setdefault("is_superuser", False)
         return self._create_user(email, password, **extra_fields)
 
-    def create_superuser(self, email: str, password: str | None = None, **extra_fields) -> "User":
+    def create_superuser(self, email: str, password: str | None = None, **extra_fields) -> User:
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         if extra_fields.get("is_staff") is not True:
@@ -78,7 +81,7 @@ class User(AbstractUser):
     objects = UserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["username"]      # asked by createsuperuser after email
+    REQUIRED_FIELDS: ClassVar[list[str]] = ["username"]  # asked by createsuperuser after email
 
     class Meta:
         verbose_name = _("user")

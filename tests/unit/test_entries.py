@@ -85,8 +85,6 @@ def test_publication_serialize_drops_blanks():
 
 
 def test_highlights_parsed_by_semicolon():
-    entry = EducationEntryFactory(
-        highlights="led thing one; led thing two; ; led thing three"
-    )
+    entry = EducationEntryFactory(highlights="led thing one; led thing two; ; led thing three")
     payload = entry.serialize()
     assert payload["highlights"] == ["led thing one", "led thing two", "led thing three"]

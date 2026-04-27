@@ -1,4 +1,5 @@
 """Account-related views. Phase 6 swaps this for allauth."""
+
 from __future__ import annotations
 
 from django.urls import reverse_lazy

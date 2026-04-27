@@ -4,6 +4,7 @@ Auth forms.
 Uses ``get_user_model()`` rather than importing ``User`` directly so the
 forms stay correct if ``AUTH_USER_MODEL`` ever changes again.
 """
+
 from __future__ import annotations
 
 from django import forms
@@ -16,7 +17,9 @@ User = get_user_model()
 class SignUpForm(UserCreationForm):
     """Email-first signup. Username is hidden and defaulted on save."""
 
-    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={"autocomplete": "email"}))
+    email = forms.EmailField(
+        required=True, widget=forms.EmailInput(attrs={"autocomplete": "email"})
+    )
 
     class Meta:
         model = User

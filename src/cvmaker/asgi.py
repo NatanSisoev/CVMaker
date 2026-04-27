@@ -4,6 +4,7 @@ ASGI config for cvmaker.
 Exposes the ASGI callable as a module-level variable named ``application``.
 Uvicorn loads this in production for async + HTMX support.
 """
+
 from __future__ import annotations
 
 import os

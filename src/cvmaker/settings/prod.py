@@ -6,10 +6,11 @@ compressed-manifest static storage are required. Anything production needs
 but dev doesn't (Sentry, real email provider, S3) is wired up here and
 gated on its env var being present.
 """
+
 from __future__ import annotations
 
-from .base import *  # noqa: F401,F403
-from .base import env  # type: ignore[attr-defined]
+from .base import *  # noqa: F403
+from .base import LOGGING, env  # type: ignore[attr-defined]
 
 # ----------------------------------------------------------------------
 # Core — strict
@@ -19,9 +20,7 @@ DEBUG = False
 # Prod must always have an explicit ALLOWED_HOSTS — the default "[]" on
 # base triggers a clean ImproperlyConfigured when someone forgets.
 if not env("DJANGO_ALLOWED_HOSTS"):
-    raise RuntimeError(
-        "DJANGO_ALLOWED_HOSTS must be set in production (comma-separated list)."
-    )
+    raise RuntimeError("DJANGO_ALLOWED_HOSTS must be set in production (comma-separated list).")
 
 # ----------------------------------------------------------------------
 # Security headers
@@ -59,11 +58,10 @@ EMAIL_BACKEND = env(
 # ----------------------------------------------------------------------
 # Logging — JSON for log aggregators
 # ----------------------------------------------------------------------
-LOGGING["formatters"]["json"] = {  # type: ignore[name-defined]
+LOGGING["formatters"]["json"] = {
     "()": "logging.Formatter",
     "format": (
-        '{"time":"%(asctime)s","level":"%(levelname)s",'
-        '"logger":"%(name)s","msg":%(message)r}'
+        '{"time":"%(asctime)s","level":"%(levelname)s","logger":"%(name)s","msg":%(message)r}'
     ),
 }
-LOGGING["handlers"]["console"]["formatter"] = "json"  # type: ignore[name-defined]
+LOGGING["handlers"]["console"]["formatter"] = "json"

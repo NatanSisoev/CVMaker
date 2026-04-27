@@ -4,10 +4,17 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import DeleteView, DetailView, ListView, UpdateView
 
-from .forms import (BulletEntryForm, EducationEntryForm, ExperienceEntryForm,
-                    NormalEntryForm, NumberedEntryForm, OneLineEntryForm,
-                    PublicationEntryForm, ReversedNumberedEntryForm,
-                    TextEntryForm)
+from .forms import (
+    BulletEntryForm,
+    EducationEntryForm,
+    ExperienceEntryForm,
+    NormalEntryForm,
+    NumberedEntryForm,
+    OneLineEntryForm,
+    PublicationEntryForm,
+    ReversedNumberedEntryForm,
+    TextEntryForm,
+)
 from .models import *
 
 ########################################################################################################################
@@ -15,18 +22,19 @@ from .models import *
 ########################################################################################################################
 
 ENTRY_FORMS = {
-    'education': EducationEntryForm,
-    'experience': ExperienceEntryForm,
-    'publication': PublicationEntryForm,
-    'normal': NormalEntryForm,
-    'one-line': OneLineEntryForm,
-    'bullet': BulletEntryForm,
-    'numbered': NumberedEntryForm,
-    'reversed-numbered': ReversedNumberedEntryForm,
-    'text': TextEntryForm,
+    "education": EducationEntryForm,
+    "experience": ExperienceEntryForm,
+    "publication": PublicationEntryForm,
+    "normal": NormalEntryForm,
+    "one-line": OneLineEntryForm,
+    "bullet": BulletEntryForm,
+    "numbered": NumberedEntryForm,
+    "reversed-numbered": ReversedNumberedEntryForm,
+    "text": TextEntryForm,
 }
 
 ENTRY_TYPES = ENTRY_FORMS.keys()
+
 
 class EntryBaseView(LoginRequiredMixin):
     model = BaseEntry
@@ -34,12 +42,14 @@ class EntryBaseView(LoginRequiredMixin):
     def get_object(self, queryset=None):
         entry = get_object_or_404(
             BaseEntry.objects.select_subclasses(),
-            id=self.kwargs['entry_id'],
-            user=self.request.user
+            id=self.kwargs["entry_id"],
+            user=self.request.user,
         )
         return entry
 
+
 ################################################# CREATE ###############################################################
+
 
 class EntryCreateView(EntryBaseView, View):
     template_name = "entries/form.html"
@@ -56,11 +66,9 @@ class EntryCreateView(EntryBaseView, View):
             return redirect(reverse_lazy("entry-create"))  # Redirect if invalid type
 
         form = form_class()
-        return render(request, self.template_name, {
-            "step": 2,
-            "form": form,
-            "entry_type": entry_type
-        })
+        return render(
+            request, self.template_name, {"step": 2, "form": form, "entry_type": entry_type}
+        )
 
     def post(self, request):
         entry_type = request.POST.get("entry_type")
@@ -77,11 +85,9 @@ class EntryCreateView(EntryBaseView, View):
             entry.save()
             return redirect(reverse_lazy("entry-create"))  # Redirect to create another entry
 
-        return render(request, self.template_name, {
-            "step": 2,
-            "form": form,
-            "entry_type": entry_type
-        })
+        return render(
+            request, self.template_name, {"step": 2, "form": form, "entry_type": entry_type}
+        )
 
 
 ################################################## LIST ################################################################
@@ -102,7 +108,9 @@ class EntryDetailView(EntryBaseView, DetailView):
     template_name = "entries/detail.html"
     context_object_name = "entry"
 
+
 ################################################## EDIT ################################################################
+
 
 class EntryUpdateView(EntryBaseView, UpdateView):
     template_name = "entries/update.html"
@@ -124,6 +132,7 @@ class EntryUpdateView(EntryBaseView, UpdateView):
 
 
 ################################################# DELETE ###############################################################
+
 
 class EntryDeleteView(EntryBaseView, DeleteView):
     def get_success_url(self):

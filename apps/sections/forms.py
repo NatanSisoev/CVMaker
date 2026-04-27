@@ -10,25 +10,31 @@ class SectionForm(forms.ModelForm):
     entries = forms.MultipleChoiceField(
         required=False,
         widget=forms.CheckboxSelectMultiple,
-        help_text="Select entries to include in this section"
+        help_text="Select entries to include in this section",
     )
 
     class Meta:
         model = Section
-        fields = ['title', 'alias']
+        fields = ["title", "alias"]
 
     def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
+        self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
 
         # Get all entry types that can be linked to sections
         entry_models = ContentType.objects.filter(
-            app_label='entries',
+            app_label="entries",
             model__in=[
-                'educationentry', 'experienceentry', 'publicationentry',
-                'normalentry', 'onelineentry', 'bulletentry',
-                'numberedentry', 'reversednumberedentry', 'textentry'
-            ]
+                "educationentry",
+                "experienceentry",
+                "publicationentry",
+                "normalentry",
+                "onelineentry",
+                "bulletentry",
+                "numberedentry",
+                "reversednumberedentry",
+                "textentry",
+            ],
         )
 
         # Build choices list: (content_type_id-object_id, entry_title)
@@ -40,15 +46,13 @@ class SectionForm(forms.ModelForm):
                 label = f"{ct.name}: {entry.alias}"
                 choices.append((value, label))
 
-        self.fields['entries'].choices = choices
+        self.fields["entries"].choices = choices
 
         # Set initial values when editing
         if self.instance.pk:
-            current_entries = self.instance.section_entries.values_list(
-                'content_type', 'object_id'
-            )
+            current_entries = self.instance.section_entries.values_list("content_type", "object_id")
             initial = [f"{ct}::{oid}" for ct, oid in current_entries]
-            self.fields['entries'].initial = initial
+            self.fields["entries"].initial = initial
 
     def save(self, commit=True):
         section = super().save(commit=False)
@@ -63,13 +67,13 @@ class SectionForm(forms.ModelForm):
         self.instance.section_entries.all().delete()
 
         # Create new entries with order
-        entries = self.cleaned_data.get('entries', [])
+        entries = self.cleaned_data.get("entries", [])
         for order, entry_key in enumerate(entries):
-            ct_id, object_id = entry_key.split('-')
+            ct_id, object_id = entry_key.split("-")
 
             SectionEntry.objects.create(
                 section=self.instance,
                 content_type_id=int(ct_id),
                 object_id=uuid.UUID(object_id),
-                order=order
+                order=order,
             )
