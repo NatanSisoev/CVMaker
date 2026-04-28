@@ -2,6 +2,7 @@ import os
 import uuid
 
 import yaml
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -9,7 +10,6 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-from cvmaker import settings
 from entries.forms import EducationEntryForm, ExperienceEntryForm, PublicationEntryForm
 from entries.models import EducationEntry, ExperienceEntry, PublicationEntry
 from sections.models import CVSection, Section

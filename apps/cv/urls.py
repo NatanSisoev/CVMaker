@@ -1,6 +1,35 @@
 from django.urls import path
 
-from .views import *
+from .views import (
+    CVCreateView,
+    CVDeleteView,
+    CVDesignCreateView,
+    CVDesignDeleteView,
+    CVDesignDetailView,
+    CVDesignListView,
+    CVDesignUpdateView,
+    CVDetailView,
+    CVInfoCreateView,
+    CVInfoDeleteView,
+    CVInfoDetailView,
+    CVInfoListView,
+    CVInfoUpdateView,
+    CVListView,
+    CVLocaleCreateView,
+    CVLocaleDeleteView,
+    CVLocaleDetailView,
+    CVLocaleListView,
+    CVLocaleUpdateView,
+    CVSettingsCreateView,
+    CVSettingsDeleteView,
+    CVSettingsDetailView,
+    CVSettingsListView,
+    CVSettingsUpdateView,
+    CVUpdateView,
+    CVUploadView,
+    download_cv,
+    preview_cv,
+)
 
 urlpatterns = [
     path("", CVListView.as_view(), name="cv-list"),

@@ -224,12 +224,30 @@ class CVInfo(models.Model):
         null=True, blank=True, help_text="A list of social media profiles in JSON format"
     )
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if self.social_networks:
-            for social_network in self.social_networks:
-                if social_network not in available_social_networks:
-                    raise ValidationError("Network currently unavailable")
+    def clean(self) -> None:
+        """Validate ``social_networks`` against the rendercv allow-list.
+
+        Phase 2.4: moved from ``save()``, where it ran *after* the row
+        had already been written -- a partial-write hazard if validation
+        raised. Forms call ``full_clean()`` which calls this method
+        before save, so admin/form submissions hit the check at the
+        right time.
+        """
+        super().clean()
+        if not self.social_networks:
+            return
+        unsupported = [
+            network for network in self.social_networks if network not in available_social_networks
+        ]
+        if unsupported:
+            raise ValidationError(
+                {
+                    "social_networks": (
+                        f"Unsupported social network(s): {sorted(unsupported)}. "
+                        f"Supported: {sorted(available_social_networks)}"
+                    )
+                }
+            )
 
     def _format_social_networks(self):
         if not self.social_networks:
