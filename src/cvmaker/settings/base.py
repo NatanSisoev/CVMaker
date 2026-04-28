@@ -78,6 +78,7 @@ LOCAL_APPS = [
     # itself is installed -- no separate entry needed.
     "sections",  # ordered collections of entries
     "entries",  # polymorphic entry types
+    "rendering",  # Render model + RQ pipeline (Phase 3)
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

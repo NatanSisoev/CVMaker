@@ -32,6 +32,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("cv/", include("cv.urls")),
     path("section/", include("sections.urls")),
     path("entry/", include("entries.urls")),
+    path("", include("rendering.urls", namespace="rendering")),
     # Auth (allauth replaces these in Phase 6)
     path("accounts/", include("accounts.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
