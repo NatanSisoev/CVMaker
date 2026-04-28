@@ -12,7 +12,8 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 from cvmaker import settings
 from entries.forms import EducationEntryForm, ExperienceEntryForm, PublicationEntryForm
 from entries.models import EducationEntry, ExperienceEntry, PublicationEntry
-from sections.models import CVSection, Section, SectionManager
+from sections.models import CVSection, Section
+from sections.services import import_sections_from_data_model
 
 from .forms import CVDesignForm, CVForm, CVInfoForm, CVLocaleForm, CVSettingsForm
 from .models import CV, CVDesign, CVInfo, CVLocale, CVSettings
@@ -138,9 +139,8 @@ class CVUploadView(LoginRequiredMixin, View):
             settings=cv_settings,
         )
 
-        # Process sections using a SectionManager
-        section_manager = SectionManager(user, cv, data_model, filename)
-        section_manager.create_all_sections()
+        # Process sections via the import service.
+        import_sections_from_data_model(user=user, cv=cv, data_model=data_model, alias=filename)
 
         return cv
 
