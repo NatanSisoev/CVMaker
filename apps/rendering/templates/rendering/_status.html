@@ -1,0 +1,57 @@
+{% comment %}
+HTMX-driven polling fragment for a Render.
+
+Self-polls via ``hx-get`` while the render is in flight. On terminal
+state, the fragment swaps once more and the next response has no
+``hx-trigger``, so polling stops. The CSS animation on .render-spinner
+is in static/css/rendering.css (lands with Phase 4's frontend rewrite;
+for now Bootstrap's spinner is fine).
+{% endcomment %}
+<div id="render-status-{{ render.id }}"
+     class="render-status p-3 border rounded"
+     {% if not render.is_terminal %}hx-get="{% url 'rendering:status' render_id=render.id %}"
+     hx-trigger="every 500ms"
+     hx-swap="outerHTML"{% endif %}>
+
+  {% if render.status == 'queued' %}
+    <div class="d-flex align-items-center gap-2">
+      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+      <span>Queued — waiting for a worker to pick it up.</span>
+    </div>
+
+  {% elif render.status == 'running' %}
+    <div class="d-flex align-items-center gap-2">
+      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+      <span>Rendering — Typst is composing your PDF…</span>
+    </div>
+
+  {% elif render.status == 'done' %}
+    <div class="d-flex align-items-center justify-content-between gap-3">
+      <div>
+        <strong>Done.</strong>
+        <small class="text-muted">Completed {{ render.completed_at|date:"H:i:s" }}.</small>
+      </div>
+      <a href="{% url 'rendering:pdf' render_id=render.id %}"
+         class="btn btn-primary btn-sm">
+        Download PDF
+      </a>
+    </div>
+
+  {% elif render.status == 'failed' %}
+    <div class="alert alert-danger mb-0">
+      <strong>Render failed.</strong>
+      <pre class="mb-0 mt-2 small text-wrap">{{ render.error|default:"No error details available." }}</pre>
+      <form method="post"
+            action="{% url 'rendering:enqueue' cv_id=render.cv_id %}"
+            class="mt-2"
+            hx-post="{% url 'rendering:enqueue' cv_id=render.cv_id %}"
+            hx-target="#render-status-{{ render.id }}"
+            hx-swap="outerHTML">
+        {% csrf_token %}
+        <input type="hidden" name="language" value="{{ render.language }}">
+        <input type="hidden" name="style" value="{{ render.style }}">
+        <button type="submit" class="btn btn-outline-danger btn-sm">Retry</button>
+      </form>
+    </div>
+  {% endif %}
+</div>
