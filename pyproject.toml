@@ -54,6 +54,13 @@ dependencies = [
     # Required by Django's ImageField (apps/cv/models.py: CVInfo.photo).
     # Django's system check hints but doesn't install it for us.
     "pillow>=11,<12",
+
+    # --- Background work / rendering pipeline (Phase 3) ---
+    # RQ over Redis for the Typst render queue. ADR-0007 covers why RQ
+    # over Celery: smaller surface, no broker-side scheduling logic
+    # needed at this scale, fits in our existing Redis instance.
+    "django-rq>=3.0,<4",
+    "rq>=2.0,<3",
 ]
 
 # -------------------------------------------------------------------

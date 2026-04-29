@@ -9,11 +9,27 @@ from __future__ import annotations
 
 import pytest
 
+from rendering import services as rendering_services
+from rendering import tasks as rendering_tasks
 from rendering.models import RenderStatus
 from rendering.services import compute_payload_hash, enqueue_render, fetch_render
+from rendering.tasks import render_cv
 from tests.factories import CVFactory, UserFactory
 
 pytestmark = pytest.mark.django_db
+
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+@pytest.fixture(autouse=True)
+def _no_dispatch(monkeypatch):
+    """Stub the RQ dispatch so enqueue tests don't synchronously run the
+    task -- the stub _render_payload_to_pdf raises until the real
+    rendercv 2.x integration lands. Tests that explicitly want to
+    exercise render_cv invoke it directly.
+    """
+    monkeypatch.setattr(rendering_services, "_dispatch_render_job", lambda render: None)
 
 
 # ---------------------------------------------------------------------------
@@ -191,3 +207,93 @@ class TestIsTerminal:
         render = enqueue_render(cv)
         render.status = RenderStatus.FAILED
         assert render.is_terminal
+
+
+# ---------------------------------------------------------------------------
+# render_cv -- the worker entry point
+# ---------------------------------------------------------------------------
+class TestRenderCv:
+    def test_writes_pdf_and_marks_done(self, monkeypatch):
+        cv = CVFactory()
+        render = enqueue_render(cv)
+
+        # Stand in for the real Typst subprocess.
+        monkeypatch.setattr(
+            rendering_tasks,
+            "_render_payload_to_pdf",
+            lambda payload, style="": b"%PDF-1.4 fake from test",
+        )
+
+        render_cv(render.id)
+
+        render.refresh_from_db()
+        assert render.status == RenderStatus.DONE
+        assert render.completed_at is not None
+        assert render.pdf_file  # FieldFile truthy when .name is set
+        assert render.error == ""
+
+    def test_marks_failed_on_render_error_with_user_readable_message(self, monkeypatch):
+        cv = CVFactory()
+        render = enqueue_render(cv)
+
+        def raise_render_error(payload, style=""):
+            raise rendering_tasks._RenderError("Template 'foo' not found. Did you mean 'bar'?")
+
+        monkeypatch.setattr(rendering_tasks, "_render_payload_to_pdf", raise_render_error)
+
+        render_cv(render.id)
+
+        render.refresh_from_db()
+        assert render.status == RenderStatus.FAILED
+        assert render.completed_at is not None
+        assert "Template 'foo' not found" in render.error
+        assert not render.pdf_file
+
+    def test_unexpected_exception_stores_generic_message_and_reraises(self, monkeypatch):
+        """Genuine bugs should reach RQ's failure dashboard but the
+        user shouldn't see internals."""
+        cv = CVFactory()
+        render = enqueue_render(cv)
+
+        def boom(payload, style=""):
+            raise RuntimeError("internal bug: division by zero")
+
+        monkeypatch.setattr(rendering_tasks, "_render_payload_to_pdf", boom)
+
+        with pytest.raises(RuntimeError, match="division by zero"):
+            render_cv(render.id)
+
+        render.refresh_from_db()
+        assert render.status == RenderStatus.FAILED
+        assert "unexpected error" in render.error.lower()
+        # No internal text leaked.
+        assert "division by zero" not in render.error
+
+    def test_skips_already_terminal_render(self, monkeypatch):
+        cv = CVFactory()
+        render = enqueue_render(cv)
+        render.status = RenderStatus.DONE
+        render.save()
+
+        called = []
+        monkeypatch.setattr(
+            rendering_tasks,
+            "_render_payload_to_pdf",
+            lambda payload, style="": called.append(1) or b"x",
+        )
+
+        render_cv(render.id)
+        assert called == []
+
+    def test_missing_render_id_is_a_noop(self, monkeypatch):
+        """Worker race: row was deleted between enqueue and pickup."""
+        called = []
+        monkeypatch.setattr(
+            rendering_tasks,
+            "_render_payload_to_pdf",
+            lambda payload, style="": called.append(1) or b"x",
+        )
+
+        # Should not raise.
+        render_cv("00000000-0000-0000-0000-000000000000")
+        assert called == []

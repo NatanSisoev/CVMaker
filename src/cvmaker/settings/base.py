@@ -68,6 +68,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "widget_tweaks",
     "crispy_forms",
+    "django_rq",  # Render queue (Phase 3)
 ]
 
 LOCAL_APPS = [
@@ -205,6 +206,24 @@ DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="CVMaker <noreply@
 # ----------------------------------------------------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CRISPY_TEMPLATE_PACK = "bootstrap5"  # Phase 4 replaces with cotton
+
+# ----------------------------------------------------------------------
+# Render queue (Phase 3 / ADR-0007)
+# RQ over Redis. The "render" queue is dedicated to PDF rendering jobs;
+# "default" is reserved for ad-hoc background work in later phases.
+# ----------------------------------------------------------------------
+RQ_QUEUES = {
+    "default": {
+        "URL": env("REDIS_URL", default="redis://redis:6379/0"),
+        "DEFAULT_TIMEOUT": 60,  # seconds; overridden per-job for rendercv
+    },
+    "render": {
+        "URL": env("REDIS_URL", default="redis://redis:6379/0"),
+        # Hard ceiling for a single render -- ADR-0007 caps Typst at 30s,
+        # so the queue-side timeout adds 5s slack for orchestration.
+        "DEFAULT_TIMEOUT": 35,
+    },
+}
 
 # Size limits
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5 MiB — photos for CVs

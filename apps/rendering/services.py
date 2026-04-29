@@ -137,10 +137,9 @@ def enqueue_render(
     if cached is not None and cached.pdf_file:
         return cached
 
-    # 3. Cache miss. Create a fresh queued row. Phase 3.3 wires
-    #    ``django_rq.enqueue('rendering.tasks.render_cv', render.id)``
-    #    here; until then the row sits in 'queued' until a worker (or
-    #    a test fixture) progresses it.
+    # 3. Cache miss. Create a fresh queued row, then dispatch the RQ
+    #    job. In tests RQ_QUEUES["render"]["ASYNC"] = False so the job
+    #    runs inline and the Render is updated synchronously.
     render = Render.objects.create(
         cv=cv,
         language=language,
@@ -149,7 +148,21 @@ def enqueue_render(
         status=RenderStatus.QUEUED,
         requested_by=requested_by,
     )
+    _dispatch_render_job(render)
     return render
+
+
+def _dispatch_render_job(render: Render) -> None:
+    """Enqueue ``rendering.tasks.render_cv`` for this Render.
+
+    Imported lazily so importing ``rendering.services`` doesn't pull
+    ``django_rq`` (and therefore Redis) at module load time -- Django's
+    ``manage.py check`` would crash without a reachable Redis otherwise.
+    """
+    import django_rq
+
+    queue = django_rq.get_queue("render")
+    queue.enqueue("rendering.tasks.render_cv", render.id)
 
 
 # ---------------------------------------------------------------------------

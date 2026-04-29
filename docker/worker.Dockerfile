@@ -61,5 +61,7 @@ COPY --from=builder --chown=app:app /app /app
 
 USER app
 
-# Phase 3 replaces this with: rq worker --url $REDIS_URL renders
-CMD ["python", "manage.py", "shell", "-c", "print('worker image ready; Phase 3 wires the actual queue consumer')"]
+# Phase 3.3: consume the "render" queue. ``django_rq`` reads RQ_QUEUES
+# from Django settings and connects with the configured Redis URL.
+# A single worker per container -- compose can scale with `--scale worker=N`.
+CMD ["python", "manage.py", "rqworker", "render"]

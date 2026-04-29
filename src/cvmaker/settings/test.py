@@ -69,8 +69,19 @@ CACHES = {
     "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
 }
 
-# Deterministic static storage for tests
+# Deterministic, ephemeral storage for tests. InMemoryStorage (Django
+# 4.2+) keeps uploaded files in process memory only -- no MEDIA_ROOT
+# pollution between runs, no per-test cleanup boilerplate.
 STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
+
+# ----------------------------------------------------------------------
+# RQ -- run jobs synchronously in the test process. ASYNC=False makes
+# enqueue() execute the function immediately and return a finished Job,
+# so tests can assert on the Render state change without standing up a
+# real worker + Redis.
+# ----------------------------------------------------------------------
+for _q in RQ_QUEUES.values():  # noqa: F405 — RQ_QUEUES comes from base via *
+    _q["ASYNC"] = False
