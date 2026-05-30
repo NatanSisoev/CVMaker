@@ -107,10 +107,31 @@ All dev tools live in `pyproject.toml` under `[dependency-groups].dev` and
 
 Override with `DJANGO_SETTINGS_MODULE=cvmaker.settings.prod uv run python manage.py <cmd>`.
 
+## Object storage
+
+Rendered PDFs (and any user uploads in later phases) live in S3-compatible
+object storage:
+
+- **Local dev with `compose up`**: a MinIO container is provisioned automatically;
+  `AWS_S3_ENDPOINT_URL`, credentials, and bucket name come from the compose
+  service environment. The bucket `cvmaker-local` is created on first boot
+  by the entrypoint.
+- **Bare `runserver` (no compose)**: `AWS_S3_ENDPOINT_URL` is unset, so the
+  default storage falls back to the local filesystem (under `media/`).
+- **Production**: set `AWS_STORAGE_BUCKET_NAME`, `AWS_S3_REGION_NAME`,
+  `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` in the deploy environment.
+  `prod.py` raises at boot if the bucket name is missing — fail loud, not
+  silent-write-to-disk.
+
+Signed-URL expiry on render output is 1 hour (`AWS_QUERYSTRING_EXPIRE`); a
+leaked URL is briefly useful but not durable.
+
 ## Development notes
 
-- **PDF rendering** happens in the request thread today. Phase 3 moves it to a
-  queue — don't be surprised if downloads stall on cold starts.
+- **PDF rendering** is queued (Phase 3) — POST `/renders/cv/<cv_id>/` enqueues
+  a render and returns either a 302 to the cached PDF or a 202 with the HTMX
+  polling fragment. The worker container picks up jobs from the `render`
+  queue. Spin up the worker locally with `docker compose up worker`.
 - **Frontend** is still Bootstrap 5 + crispy-forms. Phase 4 replaces it with
   Tailwind + HTMX + Alpine; see `docs/DESIGN.md`.
 - **`requirements.txt`** is a fallback for people without uv. Regenerate with

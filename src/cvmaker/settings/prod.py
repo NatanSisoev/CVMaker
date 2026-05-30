@@ -10,7 +10,12 @@ gated on its env var being present.
 from __future__ import annotations
 
 from .base import *  # noqa: F403
-from .base import LOGGING, env  # type: ignore[attr-defined]
+from .base import (  # type: ignore[attr-defined]
+    AWS_STORAGE_BUCKET_NAME,
+    LOGGING,
+    _s3_storage_options,
+    env,
+)
 
 # ----------------------------------------------------------------------
 # Core — strict
@@ -35,6 +40,28 @@ SECURE_HSTS_PRELOAD = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
+
+# ----------------------------------------------------------------------
+# Object storage — S3 is mandatory in prod (Phase 3.5)
+# ----------------------------------------------------------------------
+if not AWS_STORAGE_BUCKET_NAME:
+    raise RuntimeError(
+        "AWS_STORAGE_BUCKET_NAME must be set in production "
+        "(rendered PDFs and user uploads need somewhere to live)."
+    )
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": _s3_storage_options(),
+    },
+    "staticfiles": {
+        # Whitenoise still serves /static/ directly off the web container's
+        # disk; we don't push collected static to S3 because the cache
+        # behaviour and CSP story are simpler this way.
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # ----------------------------------------------------------------------
 # Cache — Redis

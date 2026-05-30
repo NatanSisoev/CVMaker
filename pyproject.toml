@@ -61,6 +61,13 @@ dependencies = [
     # needed at this scale, fits in our existing Redis instance.
     "django-rq>=3.0,<4",
     "rq>=2.0,<3",
+
+    # --- Object storage (Phase 3.5) ---
+    # Rendered PDFs land on S3 in prod, MinIO in dev (compose). The
+    # bucket name + endpoint URL come from AWS_* env vars; see the
+    # ``Object storage`` section of the README.
+    "django-storages[s3]>=1.14,<2",
+    "boto3>=1.35,<2",
 ]
 
 # -------------------------------------------------------------------

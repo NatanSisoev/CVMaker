@@ -192,6 +192,51 @@ STORAGES = {
 }
 
 # ----------------------------------------------------------------------
+# Object storage (S3 / MinIO) — Phase 3.5
+# ----------------------------------------------------------------------
+# Rendered PDFs (and any user uploads in later phases) live in S3-
+# compatible object storage. ``dev.py`` flips the default storage to
+# MinIO when ``AWS_S3_ENDPOINT_URL`` is set, ``prod.py`` flips it to
+# real S3 unconditionally. Test uses InMemoryStorage (settings/test.py).
+#
+# All AWS_* env vars are read here so dev.py and prod.py can share the
+# same option block without re-reading the environment.
+AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", default="")
+AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="us-east-1")
+AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default="")
+AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID", default="")
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY", default="")
+AWS_DEFAULT_ACL = env("AWS_DEFAULT_ACL", default="private")
+AWS_QUERYSTRING_AUTH = True
+# 1 hour signed URL expiry on rendered PDFs -- long enough for a user
+# to download, short enough that a leaked URL is briefly useful.
+AWS_QUERYSTRING_EXPIRE = 3600
+
+
+def _s3_storage_options() -> dict:
+    """Shared options dict for the S3-backed default storage.
+
+    Lives here so dev.py and prod.py both consume the same configuration
+    surface; the only difference between dev and prod is the endpoint
+    URL (MinIO vs real S3).
+    """
+    options = {
+        "bucket_name": AWS_STORAGE_BUCKET_NAME,
+        "region_name": AWS_S3_REGION_NAME,
+        "default_acl": AWS_DEFAULT_ACL,
+        "querystring_auth": AWS_QUERYSTRING_AUTH,
+        "querystring_expire": AWS_QUERYSTRING_EXPIRE,
+        "file_overwrite": False,  # never silently clobber an existing PDF
+    }
+    if AWS_S3_ENDPOINT_URL:
+        options["endpoint_url"] = AWS_S3_ENDPOINT_URL
+    if AWS_ACCESS_KEY_ID:
+        options["access_key"] = AWS_ACCESS_KEY_ID
+        options["secret_key"] = AWS_SECRET_ACCESS_KEY
+    return options
+
+
+# ----------------------------------------------------------------------
 # Email
 # dev.py defaults to the console backend; prod.py flips to SMTP/anymail.
 # ----------------------------------------------------------------------
