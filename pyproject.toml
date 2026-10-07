@@ -39,9 +39,10 @@ dependencies = [
     "uvicorn[standard]>=0.34,<1",         # ASGI for async + HTMX
     "whitenoise>=6.9,<7",                 # static serving (Phase 8 may move to CDN)
 
-    # --- Rendering: rendercv drives Typst via subprocess ---
-    "rendercv>=2.2,<3",
-    "rendercv-fonts>=0.4,<1",
+    # --- Rendering: rendercv 2.x compiles Typst in-process via typst-py ---
+    # The `full` extra is what pulls in `typst` (needed by renderer.pdf_png).
+    "rendercv[full]>=2.8,<3",
+    "rendercv-fonts>=0.5,<1",
 
     # --- YAML parsing ---
     # Used directly in apps/cv/models.py as a stand-in for rendercv 1.x's

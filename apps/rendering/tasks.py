@@ -127,34 +127,78 @@ class _RenderError(RuntimeError):
     """
 
 
+def _to_rendercv_2x(payload: dict, style: str = "") -> dict:
+    """Adapt our payload to rendercv 2.x's top-level keys.
+
+    rendercv 1.x called the settings block ``rendercv_settings``; 2.x calls it
+    ``settings``. Blocks that are None (CV without design/locale/settings) are
+    dropped so rendercv falls back to its defaults. ``style`` overrides the
+    design theme for this render without touching the stored CVDesign.
+    """
+    data = {k: v for k, v in payload.items() if v is not None}
+    if "rendercv_settings" in data:
+        data.setdefault("settings", data.pop("rendercv_settings"))
+    if style:
+        data["design"] = {**data.get("design", {}), "theme": style}
+    return data
+
+
+def _validation_message(exc) -> str:
+    """Flatten rendercv validation errors into one readable string."""
+    lines = []
+    for err in exc.validation_errors:
+        where = " -> ".join(str(part) for part in (err.schema_location or ()))
+        lines.append(f"{where}: {err.message}" if where else err.message)
+    return "The CV data is not valid for rendering:\n" + "\n".join(lines)
+
+
 def _render_payload_to_pdf(payload: dict, style: str = "") -> bytes:
     """Hand a render payload to rendercv 2.x, return PDF bytes.
 
-    Phase 3.3 ships the orchestration; the actual rendercv invocation
-    is stubbed -- the real call lands once the rendercv 2.x API surface
-    is pinned (the package is in flux around the renderer module
-    rename, see ``scripts/fix_rendercv_imports.py``). Tests mock this
-    function entirely so they don't depend on the integration shape.
+    rendercv 2.x is file-oriented, so the payload is written as YAML into a
+    scratch directory that is deleted afterwards. Only Typst + PDF are
+    generated. Typst compiles in-process (``typst-py``); the hard time cap is
+    the RQ queue timeout (35s), which kills the work-horse if compilation
+    stalls.
     """
-    # TODO(phase-3.3-followup): replace with the real rendercv 2.x call
-    #   once the API stabilizes. Sketch:
-    #
-    #     from rendercv.api import (
-    #         create_a_typst_file_and_render_a_pdf_from_it,
-    #     )
-    #     pdf_path = create_a_typst_file_and_render_a_pdf_from_it(
-    #         input_dictionary=payload,
-    #         output_directory=<scratch dir>,
-    #         timeout=TYPST_TIMEOUT_SECONDS,
-    #     )
-    #     return Path(pdf_path).read_bytes()
-    #
-    # Subprocess sandboxing: rendercv 2.x already invokes Typst via
-    # subprocess.run with shell=False. Container-level limits (memory,
-    # network policy, non-root user) provide the rest of the sandbox;
-    # see the docker/worker.Dockerfile + compose.yaml.
-    raise _RenderError(
-        "Rendering is not wired to rendercv yet -- Phase 3.3 follow-up. "
-        "This Render row was created and queued correctly, but the worker "
-        "stub has no real PDF generator behind it."
-    )
+    import pathlib
+    import tempfile
+
+    import jinja2
+    import yaml
+    from rendercv.exception import RenderCVUserError, RenderCVUserValidationError
+    from rendercv.renderer.pdf_png import generate_pdf
+    from rendercv.renderer.typst import generate_typst
+    from rendercv.schema.rendercv_model_builder import build_rendercv_dictionary_and_model
+
+    data = _to_rendercv_2x(payload, style)
+    if not data.get("cv"):
+        raise _RenderError("This CV has no personal information yet. Add some and try again.")
+
+    with tempfile.TemporaryDirectory(prefix="cvmaker-render-") as tmp:
+        scratch = pathlib.Path(tmp)
+        input_path = scratch / "cv.yaml"
+        main_yaml = yaml.safe_dump(data, allow_unicode=True, sort_keys=False)
+        input_path.write_text(main_yaml, encoding="utf-8")
+        try:
+            _, model = build_rendercv_dictionary_and_model(
+                main_yaml,
+                input_file_path=input_path,
+                output_folder=scratch,
+                pdf_path=scratch / "cv.pdf",
+                typst_path=scratch / "cv.typ",
+                dont_generate_png=True,
+                dont_generate_html=True,
+                dont_generate_markdown=True,
+            )
+            typst_path = generate_typst(model)
+            pdf_path = generate_pdf(model, typst_path)
+        except RenderCVUserValidationError as exc:
+            raise _RenderError(_validation_message(exc)) from exc
+        except RenderCVUserError as exc:
+            raise _RenderError(exc.message or "rendercv rejected this CV.") from exc
+        except jinja2.TemplateSyntaxError as exc:
+            raise _RenderError(f"The theme template is broken: {exc}") from exc
+        if pdf_path is None or not pathlib.Path(pdf_path).exists():
+            raise _RenderError("Typst finished without producing a PDF.")
+        return pathlib.Path(pdf_path).read_bytes()

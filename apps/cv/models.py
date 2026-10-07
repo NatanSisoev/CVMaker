@@ -1,4 +1,3 @@
-import pprint
 import uuid
 from pathlib import Path
 
@@ -76,7 +75,7 @@ class CV(models.Model):
         # entry's canonical_language (no translation lookup).
         language = getattr(self.locale, "language", None) if self.locale else None
 
-        cv = self.info.serialize() if self.info else None
+        cv = self.info.serialize() if self.info else {}
         for section in self.sections.all():
             if "sections" not in cv:
                 cv["sections"] = {}
@@ -90,8 +89,6 @@ class CV(models.Model):
         }
 
         # TODO: (not here) sections cant have more than one type of entry??
-
-        pprint.pprint(final)
 
         return final
 
