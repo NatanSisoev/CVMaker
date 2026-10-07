@@ -241,3 +241,23 @@ def test_editor_is_owner_only(client, cv, other_user):
 def test_editor_requires_login(client, cv):
     resp = client.get(reverse("cv-editor", args=[cv.id]))
     assert resp.status_code == 302 and "login" in resp.url
+
+
+def test_editor_shows_language_chips_with_completeness(client, user, cv):
+    from sections.models import CVSection, SectionEntry
+    from tests.factories import BulletEntryFactory, SectionFactory
+
+    section = SectionFactory(user=user)
+    entry = BulletEntryFactory(user=user, translations={"es": {"bullet": "hola"}})
+    other = BulletEntryFactory(user=user)
+    for order, e in enumerate((entry, other)):
+        SectionEntry.objects.create(section=section, entry=e, order=order)
+    CVSection.objects.create(cv=cv, section=section, order=0)
+    client.force_login(user)
+
+    body = client.get(reverse("cv-editor", args=[cv.id])).content.decode()
+
+    assert 'title="1 of 2 entries translated"' in body  # es
+    assert 'title="2 of 2 entries translated"' in body  # en (canonical)
+    assert "partially translated" in body
+    assert "$refs.lang.value = 'es'" in body

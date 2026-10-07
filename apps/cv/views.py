@@ -15,7 +15,7 @@ from sections.services import import_sections_from_data_model
 
 from .forms import CVDesignForm, CVForm, CVInfoForm, CVLocaleForm, CVSettingsForm
 from .models import CV, CVDesign, CVInfo, CVLocale, CVSettings
-from .services import available_languages
+from .services import language_status
 
 ################################################## HOME ################################################################
 
@@ -209,7 +209,7 @@ class CVEditorView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         cv = self.object
-        context["languages"] = available_languages(cv)
+        context["language_status"] = language_status(cv)
         context["styles"] = [c for c in CVDesign.THEME_CHOICES if c[0] != "custom"]
         context["current_style"] = cv.design.theme if cv.design_id else "classic"
         context["sections"] = cv.sections.prefetch_related("section_entries__entry").order_by(

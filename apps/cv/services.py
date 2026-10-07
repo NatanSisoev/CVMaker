@@ -129,23 +129,48 @@ def _copy_or_none(instance, model_class):
     return fresh
 
 
-def available_languages(cv: CV) -> list[str]:
-    """ISO 639-1 codes the CV can be rendered in, active locale first.
+def language_status(cv: CV) -> list[dict]:
+    """Per-language translation completeness for the entries in ``cv``.
 
-    Union of the locale's language, every entry's canonical language, and every
-    translation key on the entries in the CV's sections. Entries missing a
-    translation fall back to canonical at render time (ADR-0006), so every code
-    listed is renderable, just not necessarily fully translated.
+    Returns ``[{"code", "done", "total"}, ...]``, active locale first, then
+    alphabetical. Codes are the union of the locale's language, every entry's
+    canonical language, and every translation key (all renderable: missing
+    translations fall back to canonical at render time, ADR-0006).
+
+    An entry counts as done for a language when it is the entry's canonical
+    language, or when the translation bag has a key for every translatable
+    field whose canonical value is non-empty (an explicit "" is an intentional
+    translation, matching ``BaseEntry.get_field``).
     """
     from entries.models import BaseEntry
 
-    found: set[str] = set()
-    entries = BaseEntry.objects.filter(section_entries__section__cvsection__cv=cv).distinct()
+    entries = list(
+        BaseEntry.objects.filter(section_entries__section__cvsection__cv=cv)
+        .distinct()
+        .select_subclasses()
+    )
+    codes: set[str] = set()
     for entry in entries:
-        found.add(entry.canonical_language)
-        found.update(entry.translations or {})
-
+        codes.add(entry.canonical_language)
+        codes.update(entry.translations or {})
     active = cv.locale.language if cv.locale_id else None
     if active:
-        found.add(active)
-    return sorted(found, key=lambda code: (code != active, code))
+        codes.add(active)
+
+    def done_in(entry, code: str) -> bool:
+        if entry.canonical_language == code:
+            return True
+        bag = (entry.translations or {}).get(code)
+        if not isinstance(bag, dict):
+            return False
+        return all(field in bag for field in entry.TRANSLATABLE_FIELDS if getattr(entry, field, ""))
+
+    return [
+        {"code": code, "done": sum(done_in(e, code) for e in entries), "total": len(entries)}
+        for code in sorted(codes, key=lambda c: (c != active, c))
+    ]
+
+
+def available_languages(cv: CV) -> list[str]:
+    """ISO 639-1 codes the CV can be rendered in, active locale first."""
+    return [status["code"] for status in language_status(cv)]

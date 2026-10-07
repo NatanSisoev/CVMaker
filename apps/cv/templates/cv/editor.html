@@ -24,9 +24,9 @@
     <input type="hidden" name="preview" value="1">
     <h1 class="mr-auto font-display text-2xl text-text">{{ cv.alias }}</h1>
 
-    <c-select name="language" label="Language" id="editor-language">
-      {% for code in languages %}
-        <option value="{{ code }}"{% if forloop.first %} selected{% endif %}>{{ code|upper }}</option>
+    <c-select name="language" label="Language" id="editor-language" x-ref="lang">
+      {% for status in language_status %}
+        <option value="{{ status.code }}"{% if forloop.first %} selected{% endif %}>{{ status.code|upper }}</option>
       {% empty %}
         <option value="">Default</option>
       {% endfor %}
@@ -40,6 +40,15 @@
 
     <c-button type="submit" variant="primary">Render preview</c-button>
     <c-button href="{% url 'cv-edit' cv.id %}" variant="secondary">CV settings</c-button>
+
+    {% if language_status %}
+      <div class="flex w-full flex-wrap items-center gap-2" aria-label="Translation status">
+        {% for status in language_status %}
+          <c-language-chip code="{{ status.code }}" done="{{ status.done }}" total="{{ status.total }}"
+                           x-on:click="$refs.lang.value = '{{ status.code }}'" />
+        {% endfor %}
+      </div>
+    {% endif %}
   </form>
 
   <div x-ref="wrap"
