@@ -7,6 +7,7 @@ from django.views import View
 from django.views.generic import DeleteView, DetailView, ListView, UpdateView
 
 from .forms import (
+    LANGUAGE_CODE_RE,
     BulletEntryForm,
     EducationEntryForm,
     ExperienceEntryForm,
@@ -16,6 +17,7 @@ from .forms import (
     PublicationEntryForm,
     ReversedNumberedEntryForm,
     TextEntryForm,
+    TranslationForm,
 )
 from .models import *
 
@@ -162,6 +164,54 @@ class EntryInlineEditView(EntryBaseView, View):
             return self._render(request, entry, form)
         entry = form.save()
         return self._render(request, entry, ENTRY_FORMS[entry.type](instance=entry), saved=True)
+
+
+class EntryTranslateView(EntryBaseView, View):
+    """HTMX fragment: edit one language's translation beside the canonical text.
+
+    ``?lang=xx`` on GET, ``lang`` in the body on POST. The canonical language
+    and malformed codes get an inline message rather than a 4xx, so the
+    fragment always swaps.
+    """
+
+    template_name = "entries/_translate_form.html"
+
+    def _language(self, raw, entry):
+        code = (raw or "").strip().lower()
+        if not LANGUAGE_CODE_RE.match(code):
+            return code, "Use a 2-letter ISO 639-1 code, e.g. es or fr."
+        if code == entry.canonical_language:
+            return code, f"{code.upper()} is the original language of this entry; edit it above."
+        return code, None
+
+    def _render(self, request, entry, code, form=None, error=None, saved=False):
+        response = render(
+            request,
+            self.template_name,
+            {"entry": entry, "language": code, "form": form, "error": error},
+        )
+        if saved:
+            response["HX-Trigger"] = json.dumps(
+                {"toast": {"message": f"Saved {code.upper()} translation.", "variant": "success"}}
+            )
+        return response
+
+    def get(self, request, entry_id):
+        entry = self.get_object()
+        code, error = self._language(request.GET.get("lang"), entry)
+        form = None if error else TranslationForm(entry, code)
+        return self._render(request, entry, code, form, error)
+
+    def post(self, request, entry_id):
+        entry = self.get_object()
+        code, error = self._language(request.POST.get("lang"), entry)
+        if error:
+            return self._render(request, entry, code, error=error)
+        form = TranslationForm(entry, code, request.POST)
+        if not form.is_valid():
+            return self._render(request, entry, code, form)
+        entry = form.save()
+        return self._render(request, entry, code, TranslationForm(entry, code), saved=True)
 
 
 ################################################# DELETE ###############################################################

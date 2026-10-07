@@ -1,0 +1,34 @@
+{# One language's translation, side by side with the canonical text (HTMX fragment). #}
+<div id="translate-{{ entry.id }}" class="cv-form mt-3">
+  {% if error %}
+    <p class="text-sm text-danger" role="alert">{{ error }}</p>
+  {% else %}
+    <form hx-post="{% url 'entry-translate' entry_id=entry.id %}"
+          hx-target="#translate-{{ entry.id }}"
+          hx-swap="outerHTML"
+          hx-disabled-elt="find button[type=submit]">
+      <input type="hidden" name="lang" value="{{ language }}">
+      <div class="mb-2 hidden grid-cols-2 gap-4 text-xs font-medium uppercase tracking-wide text-text-muted sm:grid">
+        <span>{{ entry.canonical_language|upper }} (original)</span>
+        <span>{{ language|upper }}</span>
+      </div>
+      <div class="flex flex-col gap-4">
+        {% for field, canonical in form.rows %}
+          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4">
+            <div>
+              <p class="text-sm font-medium text-text">{{ field.label }}</p>
+              <p class="mt-1 whitespace-pre-line text-sm text-text-muted">{{ canonical|default:"—" }}</p>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="{{ field.id_for_label }}" class="sr-only">{{ field.label }} ({{ language|upper }})</label>
+              {{ field }}
+              {% for err in field.errors %}<p class="text-xs text-danger">{{ err }}</p>{% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="mt-3 text-xs text-text-muted">Leave a field blank to fall back to the original text.</p>
+      <div class="mt-3"><c-button type="submit" variant="primary" size="sm">Save {{ language|upper }}</c-button></div>
+    </form>
+  {% endif %}
+</div>
