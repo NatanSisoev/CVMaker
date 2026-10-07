@@ -97,3 +97,12 @@ Alpine.directive('sortable', (el, { expression }) => {
 });
 
 Alpine.start();
+
+// Replay server-side Django messages (see base.html) as toasts.
+const LEVEL_TO_VARIANT = { success: 'success', error: 'error' };
+document.querySelectorAll('#flash span').forEach((node) => {
+  const level = (node.dataset.level || '').split(' ').find((tag) => tag in LEVEL_TO_VARIANT);
+  window.dispatchEvent(new CustomEvent('toast', {
+    detail: { message: node.textContent, variant: LEVEL_TO_VARIANT[level] || 'info' },
+  }));
+});

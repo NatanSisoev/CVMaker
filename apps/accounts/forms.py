@@ -7,6 +7,9 @@ forms stay correct if ``AUTH_USER_MODEL`` ever changes again.
 
 from __future__ import annotations
 
+import re
+from typing import ClassVar
+
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
@@ -33,3 +36,36 @@ class SignUpForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+_LANGUAGE_TAG_RE = re.compile(r"^[a-z]{2}(-[A-Z]{2})?$")
+
+
+class ProfileForm(forms.ModelForm):
+    """The editable part of the account: name, email, preferred language."""
+
+    class Meta:
+        model = User
+        fields = ("display_name", "email", "preferred_language")
+        widgets: ClassVar[dict[str, forms.Widget]] = {
+            "email": forms.EmailInput(attrs={"autocomplete": "email"}),
+            "preferred_language": forms.TextInput(attrs={"maxlength": 5, "placeholder": "en"}),
+        }
+
+    def clean_email(self) -> str:
+        email = User.objects.normalize_email(self.cleaned_data["email"])
+        # The DB constraint is case-sensitive; addresses aren't, so check iexact.
+        taken = User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists()
+        if taken:
+            raise forms.ValidationError("Another account already uses this email address.")
+        return email
+
+    def clean_preferred_language(self) -> str:
+        tag = (self.cleaned_data.get("preferred_language") or "").strip()
+        if not tag:
+            return "en"
+        parts = tag.replace("_", "-").split("-")
+        tag = "-".join([parts[0].lower(), *(p.upper() for p in parts[1:])])
+        if not _LANGUAGE_TAG_RE.match(tag):
+            raise forms.ValidationError("Use a language code like en, es or pt-BR.")
+        return tag

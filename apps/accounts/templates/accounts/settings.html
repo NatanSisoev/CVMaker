@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-2xl px-4 py-12">
+  <h1 class="font-display text-3xl text-text mb-8">Settings</h1>
+
+  <form method="post" novalidate class="cv-form mb-8">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="profile">
+    <c-card>
+      <c-slot name="header">Profile</c-slot>
+      {% include 'includes/form_fields.html' with form=profile_form %}
+      <div class="mt-6"><c-button type="submit" variant="primary">Save profile</c-button></div>
+    </c-card>
+  </form>
+
+  <form method="post" novalidate class="cv-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="password">
+    <c-card>
+      <c-slot name="header">Password</c-slot>
+      {% include 'includes/form_fields.html' with form=password_form %}
+      <div class="mt-6"><c-button type="submit" variant="primary">Change password</c-button></div>
+    </c-card>
+  </form>
+
+  <p class="mt-8 text-sm text-text-muted">
+    Account deletion and data export arrive with the GDPR work in Phase 6.
+  </p>
+</section>
+{% endblock %}
