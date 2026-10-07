@@ -1,42 +1,30 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}CV Settings Detail - {{ cvsettings.alias }}{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <h2>CV Settings Detail: {{ cvsettings.alias }}</h2>
-    <div class="card shadow p-4">
-        <dl class="row">
-            <dt class="col-sm-3">Date</dt>
-            <dd class="col-sm-9">{{ cvsettings.date }}</dd>
-
-            <dt class="col-sm-3">Bold Keywords</dt>
-            <dd class="col-sm-9">
-                {% if cvsettings.bold_keywords %}
-                    <ul>
-                    {% for kw in cvsettings.bold_keywords %}
-                        <li>{{ kw }}</li>
-                    {% endfor %}
-                    </ul>
-                {% else %}
-                    None
-                {% endif %}
-            </dd>
-
-            <dt class="col-sm-3">Settings File</dt>
-            <dd class="col-sm-9">
-                {% if cvsettings.settings_file %}
-                    <a href="{{ cvsettings.settings_file.url }}" target="_blank">Download Settings File</a>
-                {% else %}
-                    No settings file uploaded.
-                {% endif %}
-            </dd>
-        </dl>
-
-        <a href="{% url 'cvsettings-list' %}" class="btn btn-secondary">Back to List</a>
-        <a href="{% url 'cvsettings-edit' settings_id=cvsettings.id %}" class="btn btn-primary">Edit</a>
-        <a href="{% url 'cvsettings-delete' settings_id=cvsettings.id %}" class="btn btn-danger">Delete</a>
+<section class="mx-auto max-w-3xl px-4 py-12">
+  <h1 class="font-display text-3xl text-text mb-6">CV Settings: {{ cvsettings.alias }}</h1>
+  <c-card>
+    <dl class="divide-y divide-border">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Date</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvsettings.date }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Bold Keywords</dt>
+          <dd class="sm:col-span-2 text-text-muted">{% if cvsettings.bold_keywords %}<ul class="list-disc pl-5">{% for item in cvsettings.bold_keywords %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}-{% endif %}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Settings File</dt>
+          <dd class="sm:col-span-2 text-text-muted">{% if cvsettings.settings_file %}<a class="text-accent underline" href="{{ cvsettings.settings_file.url }}" target="_blank">Download</a>{% else %}-{% endif %}</dd>
+        </div>
+    </dl>
+    <div class="mt-6 flex items-center gap-2">
+      <c-button href="{% url 'cvsettings-list' %}" variant="ghost">Back to List</c-button>
+      <c-button href="{% url 'cvsettings-edit' settings_id=cvsettings.id %}" variant="primary">Edit</c-button>
+      <c-button href="{% url 'cvsettings-delete' settings_id=cvsettings.id %}" variant="danger">Delete</c-button>
     </div>
-</div>
+  </c-card>
+</section>
 {% endblock %}

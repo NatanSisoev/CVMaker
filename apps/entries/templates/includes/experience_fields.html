@@ -1,30 +1,30 @@
 {% load custom_filters %}
 
-<dt class="col-sm-3">Company</dt>
-<dd class="col-sm-9">{{ entry.company|default:"-" }}</dd>
+<dt class="font-medium text-text">Company</dt>
+<dd class="sm:col-span-2 text-text-muted">{{ entry.company|default:"-" }}</dd>
 
-<dt class="col-sm-3">Position</dt>
-<dd class="col-sm-9">{{ entry.position|default:"-" }}</dd>
+<dt class="font-medium text-text">Position</dt>
+<dd class="sm:col-span-2 text-text-muted">{{ entry.position|default:"-" }}</dd>
 
-<dt class="col-sm-3">Location</dt>
-<dd class="col-sm-9">{{ entry.location|default:"-" }}</dd>
+<dt class="font-medium text-text">Location</dt>
+<dd class="sm:col-span-2 text-text-muted">{{ entry.location|default:"-" }}</dd>
 
-<dt class="col-sm-3">Start Date</dt>
-<dd class="col-sm-9">{{ entry.start_date|date:"M Y"|default:"-" }}</dd>
+<dt class="font-medium text-text">Start Date</dt>
+<dd class="sm:col-span-2 text-text-muted">{{ entry.start_date|date:"M Y"|default:"-" }}</dd>
 
-<dt class="col-sm-3">End Date</dt>
-<dd class="col-sm-9">{{ entry.end_date|date:"M Y"|default:"-" }}</dd>
+<dt class="font-medium text-text">End Date</dt>
+<dd class="sm:col-span-2 text-text-muted">{{ entry.end_date|date:"M Y"|default:"-" }}</dd>
 
-<dt class="col-sm-3">Date</dt>
-<dd class="col-sm-9">{{ entry.date|date:"M Y"|default:"-" }}</dd>
+<dt class="font-medium text-text">Date</dt>
+<dd class="sm:col-span-2 text-text-muted">{{ entry.date|date:"M Y"|default:"-" }}</dd>
 
-<dt class="col-sm-3">Summary</dt>
-<dd class="col-sm-9">{{ entry.summary|default:"-" }}</dd>
+<dt class="font-medium text-text">Summary</dt>
+<dd class="sm:col-span-2 text-text-muted">{{ entry.summary|default:"-" }}</dd>
 
-<dt class="col-sm-3">Highlights</dt>
-<dd class="col-sm-9">
+<dt class="font-medium text-text">Highlights</dt>
+<dd class="sm:col-span-2 text-text-muted">
     {% if entry.highlights %}
-    <ul>
+    <ul class="list-disc pl-5">
         {% for highlight in entry.highlights|split_highlights %}
         <li>{{ highlight }}</li>
         {% endfor %}

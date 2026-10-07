@@ -1,0 +1,45 @@
+{# IconButton -- a square button hosting just an icon (or a single glyph).
+
+   Props:
+     label    accessible label (REQUIRED -- the icon has no text content)
+     size     "sm" | "md" | "lg"   default "md"
+     variant  same as <c-button>   default "ghost"
+     href     if set, renders <a>
+
+   Slot: icon (SVG inline, or a unicode glyph)
+#}
+<c-vars size="md" variant="ghost" />
+
+{% if href %}
+<a href="{{ href }}"
+   aria-label="{{ label }}"
+   title="{{ label }}"
+   class="inline-flex items-center justify-center rounded-md transition focus:outline-none
+          {% if size == 'sm' %}h-8 w-8 text-sm
+          {% elif size == 'lg' %}h-12 w-12 text-lg
+          {% else %}h-10 w-10 text-base{% endif %}
+          {% if variant == 'primary' %}bg-accent text-accent-ink hover:opacity-90 focus-visible:shadow-focus
+          {% elif variant == 'secondary' %}bg-surface-2 text-text border border-border hover:bg-surface focus-visible:shadow-focus
+          {% elif variant == 'danger' %}bg-danger text-accent-ink hover:opacity-90 focus-visible:shadow-focus
+          {% else %}text-text hover:bg-surface-2 focus-visible:shadow-focus
+          {% endif %} {{ attrs.class|default:'' }}"
+   {{ attrs }}>
+  {{ slot }}
+</a>
+{% else %}
+<button type="button"
+        aria-label="{{ label }}"
+        title="{{ label }}"
+        class="inline-flex items-center justify-center rounded-md transition focus:outline-none disabled:opacity-50
+               {% if size == 'sm' %}h-8 w-8 text-sm
+               {% elif size == 'lg' %}h-12 w-12 text-lg
+               {% else %}h-10 w-10 text-base{% endif %}
+               {% if variant == 'primary' %}bg-accent text-accent-ink hover:opacity-90 focus-visible:shadow-focus
+               {% elif variant == 'secondary' %}bg-surface-2 text-text border border-border hover:bg-surface focus-visible:shadow-focus
+               {% elif variant == 'danger' %}bg-danger text-accent-ink hover:opacity-90 focus-visible:shadow-focus
+               {% else %}text-text hover:bg-surface-2 focus-visible:shadow-focus
+               {% endif %} {{ attrs.class|default:'' }}"
+        {{ attrs }}>
+  {{ slot }}
+</button>
+{% endif %}

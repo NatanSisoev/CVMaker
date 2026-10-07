@@ -1,85 +1,59 @@
 {% extends 'base.html' %}
-{% load static %}
-{% load custom_filters %}
 
-{% block title %}CV Designs{% endblock %}
+{% block title %}CV Design{% endblock %}
 
 {% block content %}
-<head>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-</head>
+<section class="mx-auto max-w-6xl px-4 py-12">
 
-<div class="container my-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">CV Designs</h2>
-        <div class="d-flex gap-2">
-            <a href="{% url 'cvdesign-create' %}" class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-plus"></i> Add CV Design
-            </a>
-        </div>
-    </div>
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="font-display text-3xl text-text">CV Design</h1>
+    <c-button href="{% url 'cvdesign-create' %}" variant="primary" size="sm">+ Add CV Design</c-button>
+  </div>
 
-    {% if cvdesigns %}
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for design in cvdesigns %}
-        <div class="col">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title d-flex justify-content-between">
-                        {{ design.alias }}
-                        <div class="d-flex gap-2">
-                            <a href="{% url 'cvdesign-detail' design_id=design.id %}" class="btn btn-outline-secondary btn-sm" title="View">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <a href="{% url 'cvdesign-edit' design_id=design.id %}" class="btn btn-outline-secondary btn-sm" title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ design.id }}" title="Delete">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </h5>
-
-                    <p class="card-text text-muted mb-1"><strong>Theme:</strong> {{ design.get_theme_display }}</p>
-
-                    {% if design.design_file %}
-                    <p class="card-text text-muted mb-0"><strong>Design File:</strong> <a href="{{ design.design_file.url }}" target="_blank">Download</a></p>
-                    {% endif %}
-                </div>
+  {% if cvdesigns %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for design in cvdesigns %}
+        <c-card>
+          <c-slot name="header">
+            <div class="flex items-center justify-between">
+              <span class="font-medium text-text">{{ design.alias }}</span>
+              <div class="flex items-center gap-1">
+                <c-icon-button label="View" href="{% url 'cvdesign-detail' design_id=design.id %}">👁</c-icon-button>
+                <c-icon-button label="Edit" href="{% url 'cvdesign-edit' design_id=design.id %}">✎</c-icon-button>
+                <c-icon-button label="Delete" variant="danger"
+                               x-on:click="$dispatch('open-modal', 'delete-cvdesign-{{ design.id }}')">×</c-icon-button>
+              </div>
             </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="text-center py-5 text-muted">
-        <h4>No CV Designs found.</h4>
-        <p>Start by adding your first CV Design.</p>
-    </div>
-    {% endif %}
-</div>
+          </c-slot>
+          <dl class="space-y-1 text-sm text-text-muted">
+            <div class="flex gap-2"><dt class="font-medium text-text">Theme:</dt><dd>{{ design.get_theme_display }}</dd></div>
+            {% if design.design_file %}<div class="flex gap-2"><dt class="font-medium text-text">Design File:</dt><dd><a class="text-accent underline" href="{{ design.design_file.url }}" target="_blank">Download</a></dd></div>{% endif %}
+          </dl>
+        </c-card>
 
-{% block extra_js %}
-{% for design in cvdesigns %}
-<div class="modal fade" id="deleteModal{{ design.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ design.id }}" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel{{ design.id }}">Delete CV Design</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                Are you sure you want to delete CV Design "{{ design.alias }}"?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="{% url 'cvdesign-delete' design_id=design.id %}" method="POST">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
+        <c-modal id="delete-cvdesign-{{ design.id }}" title="Delete CV Design?">
+          <p class="text-text-muted">
+            This permanently deletes <strong>{{ design.alias }}</strong>. This cannot be undone.
+          </p>
+          <c-slot name="footer">
+            <c-button variant="ghost" x-on:click="$dispatch('close-modal', 'delete-cvdesign-{{ design.id }}')">Cancel</c-button>
+            <form action="{% url 'cvdesign-delete' design_id=design.id %}" method="post" class="inline">
+              {% csrf_token %}
+              <c-button type="submit" variant="danger">Delete</c-button>
+            </form>
+          </c-slot>
+        </c-modal>
+      {% endfor %}
     </div>
-</div>
-{% endfor %}
-{% endblock %}
+  {% else %}
+    <c-card>
+      <div class="text-center py-12">
+        <h2 class="font-display text-2xl text-text mb-2">No CV Design yet</h2>
+        <p class="text-text-muted mb-6">Start by adding your first one.</p>
+        <c-button href="{% url 'cvdesign-create' %}" variant="primary">Add CV Design →</c-button>
+      </div>
+    </c-card>
+  {% endif %}
+
+</section>
 {% endblock %}

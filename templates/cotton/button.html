@@ -1,0 +1,42 @@
+{# Button -- primary call-to-action.
+
+   Props:
+     variant   "primary" | "secondary" | "ghost" | "danger"   default "primary"
+     size      "sm" | "md" | "lg"                              default "md"
+     type      submit | button | reset                         default "button"
+     full      "true" makes it 100% width                      default unset
+     href      if set, renders <a> instead of <button>
+
+   Slot: button label / icon.
+#}
+<c-vars variant="primary" size="md" type="button" />
+
+{% if href %}
+<a href="{{ href }}"
+   class="inline-flex items-center justify-center gap-2 rounded-md font-medium transition focus:outline-none {% if full %}w-full{% endif %}
+          {% if size == 'sm' %}h-8 px-3 text-sm
+          {% elif size == 'lg' %}h-12 px-6 text-lg
+          {% else %}h-10 px-4 text-base{% endif %}
+          {% if variant == 'primary' %}bg-accent text-accent-ink hover:opacity-90 focus-visible:shadow-focus
+          {% elif variant == 'secondary' %}bg-surface-2 text-text border border-border hover:bg-surface focus-visible:shadow-focus
+          {% elif variant == 'ghost' %}text-text hover:bg-surface-2 focus-visible:shadow-focus
+          {% elif variant == 'danger' %}bg-danger text-accent-ink hover:opacity-90 focus-visible:shadow-focus
+          {% endif %} {{ attrs.class|default:'' }}"
+   {{ attrs }}>
+  {{ slot }}
+</a>
+{% else %}
+<button type="{{ type }}"
+        class="inline-flex items-center justify-center gap-2 rounded-md font-medium transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed {% if full %}w-full{% endif %}
+               {% if size == 'sm' %}h-8 px-3 text-sm
+               {% elif size == 'lg' %}h-12 px-6 text-lg
+               {% else %}h-10 px-4 text-base{% endif %}
+               {% if variant == 'primary' %}bg-accent text-accent-ink hover:opacity-90 focus-visible:shadow-focus
+               {% elif variant == 'secondary' %}bg-surface-2 text-text border border-border hover:bg-surface focus-visible:shadow-focus
+               {% elif variant == 'ghost' %}text-text hover:bg-surface-2 focus-visible:shadow-focus
+               {% elif variant == 'danger' %}bg-danger text-accent-ink hover:opacity-90 focus-visible:shadow-focus
+               {% endif %} {{ attrs.class|default:'' }}"
+        {{ attrs }}>
+  {{ slot }}
+</button>
+{% endif %}

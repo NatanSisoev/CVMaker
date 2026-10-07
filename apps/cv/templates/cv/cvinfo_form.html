@@ -1,36 +1,21 @@
 {% extends 'base.html' %}
-{% load widget_tweaks %}
 
 {% block title %}CV Info Form{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1>CV Info Form</h1>
+<section class="mx-auto max-w-2xl px-4 py-12">
+  <h1 class="font-display text-3xl text-text mb-6">CV Info</h1>
 
-    <form method="post" enctype="multipart/form-data" novalidate>
-        {% csrf_token %}
-        <div class="card mb-3">
-            <div class="card-header bg-light">
-                <h4>Personal Information</h4>
-            </div>
-            <div class="card-body">
-                {{ form.non_field_errors }}
-                {% for field in form %}
-                    <div class="mb-3">
-                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                        {% render_field field class="form-control" %}
-                        {% if field.help_text %}
-                            <div class="form-text">{{ field.help_text }}</div>
-                        {% endif %}
-                        {% for error in field.errors %}
-                            <div class="text-danger">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary">Save CV Info</button>
-    </form>
-</div>
+  <form method="post" enctype="multipart/form-data" novalidate class="cv-form">
+    {% csrf_token %}
+    <c-card>
+      <c-slot name="header">Personal Information</c-slot>
+      {% include 'includes/form_fields.html' %}
+    </c-card>
+    <div class="mt-6 flex items-center gap-2">
+      <c-button type="submit" variant="primary">Save CV Info</c-button>
+      <c-button href="{% url 'cvinfo-list' %}" variant="ghost">Cancel</c-button>
+    </div>
+  </form>
+</section>
 {% endblock %}

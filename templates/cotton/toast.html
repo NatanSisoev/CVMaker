@@ -1,0 +1,30 @@
+{# Toast -- a transient notification at the bottom-right.
+
+   Used via Alpine event dispatch from any page:
+     x-on:click="$dispatch('toast', { message: 'Saved.', variant: 'success' })"
+
+   The host element (one per page, dropped into base.html) listens for
+   ``toast`` events and renders the stack. Variants: success | error |
+   info (default).
+#}
+<div x-data="{ toasts: [] }"
+     x-on:toast.window="
+       const id = crypto.randomUUID();
+       toasts.push({ id, ...$event.detail });
+       setTimeout(() => toasts = toasts.filter(t => t.id !== id), 4000);
+     "
+     class="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2"
+     aria-live="polite"
+     aria-atomic="false">
+  <template x-for="toast in toasts" :key="toast.id">
+    <div x-transition.opacity
+         class="pointer-events-auto rounded-md border border-border bg-surface px-4 py-3 text-sm shadow-2 dark:shadow-none"
+         :class="{
+           'text-text': !toast.variant || toast.variant === 'info',
+           'text-text border-accent': toast.variant === 'success',
+           'text-danger border-danger': toast.variant === 'error',
+         }"
+         x-text="toast.message">
+    </div>
+  </template>
+</div>

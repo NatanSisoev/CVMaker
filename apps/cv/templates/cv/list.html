@@ -1,93 +1,74 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}CVs{% endblock %}
+{% block title %}My CVs{% endblock %}
 
 {% block content %}
-<head>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-</head>
+<section class="mx-auto max-w-6xl px-4 py-12">
 
-<div class="container my-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">CVs</h2>
-        <div class="d-flex gap-2">
-            <a href="{% url 'cv-create' %}" class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-plus"></i>
-            </a>
-            <form action="{% url 'cv-upload' %}" method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <input type="file" name="yaml_file" id="yamlUpload"
-                       accept=".yaml" hidden onchange="this.form.submit()">
-                <label for="yamlUpload" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-upload"></i>
-                </label>
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="font-display text-3xl text-text">My CVs</h1>
+    <div class="flex items-center gap-2">
+      <c-button href="{% url 'cv-create' %}" variant="primary" size="sm">+ New CV</c-button>
+      <form action="{% url 'cv-upload' %}" method="post" enctype="multipart/form-data" class="inline">
+        {% csrf_token %}
+        <input type="file" name="yaml_file" id="yamlUpload" accept=".yaml,.yml" hidden onchange="this.form.submit()">
+        <label for="yamlUpload" class="cursor-pointer inline-flex items-center justify-center gap-2 rounded-md font-medium transition focus:outline-none h-8 px-3 text-sm bg-surface-2 text-text border border-border hover:bg-surface">
+          ↥ Import YAML
+        </label>
+      </form>
+    </div>
+  </div>
+
+  {% if cvs %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for cv in cvs %}
+        <c-card>
+          <c-slot name="header">
+            <div class="flex items-center justify-between">
+              <span class="font-medium text-text">{{ cv.alias }}</span>
+              <div class="flex items-center gap-1">
+                <c-icon-button label="View" href="{% url 'cv-detail' cv.id %}">👁</c-icon-button>
+                <c-icon-button label="Edit" href="{% url 'cv-edit' cv.id %}">✎</c-icon-button>
+                <form method="post" action="{% url 'rendering:enqueue' cv_id=cv.id %}" class="inline">
+                  {% csrf_token %}
+                  <c-icon-button type="submit" label="Render PDF" variant="primary">↓</c-icon-button>
+                </form>
+                <c-icon-button label="Delete" variant="danger"
+                               x-on:click="$dispatch('open-modal', 'delete-cv-{{ cv.id }}')">×</c-icon-button>
+              </div>
+            </div>
+          </c-slot>
+          <p class="text-sm text-text-muted">
+            Last updated {{ cv.modified_date|date:"M j, Y" }}
+          </p>
+        </c-card>
+
+        <c-modal id="delete-cv-{{ cv.id }}" title="Delete this CV?">
+          <p class="text-text-muted">
+            This permanently deletes <strong>{{ cv.alias }}</strong> and every render history
+            attached to it. Sections and entries stay -- they belong to you, not the CV.
+          </p>
+          <c-slot name="footer">
+            <c-button variant="ghost" x-on:click="$dispatch('close-modal', 'delete-cv-{{ cv.id }}')">
+              Cancel
+            </c-button>
+            <form action="{% url 'cv-delete' cv_id=cv.id %}" method="post" class="inline">
+              {% csrf_token %}
+              <c-button type="submit" variant="danger">Delete CV</c-button>
             </form>
-        </div>
+          </c-slot>
+        </c-modal>
+      {% endfor %}
     </div>
-    {% if cvs %}
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for cv in cvs %}
-        <div class="col">
-            <div class="card h-100 shadow">
-                <div class="card-body">
-                    <h5 class="card-title d-flex justify-content-between">
-                        {{ cv.alias }}
-                        <div class="d-flex gap-2">
-                            <a href="{% url 'cv-detail' cv.id %}" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <a href="{% url 'cv-edit' cv.id %}" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <a href="{% url 'cv-download' cv_id=cv.id %}" class="btn btn-outline-success btn-sm" target="_blank">
-                                <i class="bi bi-download"></i>
-                            </a>
-                            <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal"
-                                    data-bs-target="#deleteModal{{ cv.id }}">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </h5>
-                    <p class="card-text text-muted">
-                        Last updated: {{ cv.modified_date|date:"M d, Y" }}
-                    </p>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="text-center py-5">
-        <h4 class="mb-3">No CVs found</h4>
-        <p class="text-muted mb-4">Start by creating your first professional CV</p>
-    </div>
-    {% endif %}
-</div>
+  {% else %}
+    <c-card>
+      <div class="text-center py-12">
+        <h2 class="font-display text-2xl text-text mb-2">No CVs yet</h2>
+        <p class="text-text-muted mb-6">Start by creating one from scratch, or import a rendercv YAML file.</p>
+        <c-button href="{% url 'cv-create' %}" variant="primary">Create your first CV →</c-button>
+      </div>
+    </c-card>
+  {% endif %}
 
-{% block extra_js %}
-    {% for cv in cvs %}
-    <div class="modal fade" id="deleteModal{{ cv.id }}" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Delete CV</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    Are you sure you want to delete this CV?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <form action="{% url 'cv-delete' cv_id=cv.id %}" method="POST">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Delete</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endfor %}
-{% endblock %}
-
+</section>
 {% endblock %}

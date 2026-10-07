@@ -10,8 +10,6 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-from entries.forms import EducationEntryForm, ExperienceEntryForm, PublicationEntryForm
-from entries.models import EducationEntry, ExperienceEntry, PublicationEntry
 from sections.models import CVSection, Section
 from sections.services import import_sections_from_data_model
 
@@ -54,10 +52,12 @@ class CVListView(LoginRequiredMixin, ListView):
 ################################################# CREATE ###############################################################
 
 
-class CVCreateView(CreateView):
-    model = CV
-    form_class = CVForm
-    template_name = "cv/form.html"
+class _SectionOrderMixin:
+    """Save a CV and rewrite its CVSection rows from the posted `section_order`.
+
+    The `sections` M2M uses an explicit through table with a required `order`,
+    so we save with commit=False (skipping `save_m2m`) and write the rows by hand.
+    """
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -69,19 +69,30 @@ class CVCreateView(CreateView):
         self.object = form.save(commit=False)
         self.object.save()
 
-        # Clear existing M2M relations (if update; for create it's safe too)
+        raw = self.request.POST.get("section_order", "")
+        ordered = [uuid.UUID(part) for part in raw.split(",") if part]
+        owned = set(
+            Section.objects.filter(user=self.request.user, id__in=ordered).values_list(
+                "id", flat=True
+            )
+        )
         self.object.sections.clear()
-
-        # Add sections with order in the through model
-        section_ids = self.request.POST.get("section_order", "")
-        section_ids = [uuid.UUID(id_str) for id_str in section_ids.split(",") if id_str]
-        sections = Section.objects.filter(id__in=section_ids)
-        self.object.sections.clear()
-
-        for order, section in enumerate(section_ids, 1):
-            CVSection.objects.create(cv=self.object, section_id=section, order=order)
-
+        CVSection.objects.bulk_create(
+            CVSection(cv=self.object, section_id=section_id, order=order)
+            for order, section_id in enumerate((i for i in ordered if i in owned), 1)
+        )
         return redirect("cv-detail", cv_id=self.object.id)
+
+
+class CVCreateView(LoginRequiredMixin, _SectionOrderMixin, CreateView):
+    model = CV
+    form_class = CVForm
+    template_name = "cv/form.html"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 ################################################# UPLOAD ###############################################################
@@ -160,162 +171,24 @@ class CVDetailView(DetailView):
 ################################################### EDIT ###############################################################
 
 
-class CVUpdateView(LoginRequiredMixin, UpdateView):
+class CVUpdateView(LoginRequiredMixin, _SectionOrderMixin, UpdateView):
+    """Edit a CV's own fields (alias, info/locale/settings/design, section order).
+
+    Entry content is edited on the entries pages; the split-pane Editor screen
+    (Phase 4.3) will bring both onto one page.
+    """
+
     model = CV
     template_name = "cv/form.html"
     form_class = CVForm
 
-    def get_queryset(self):
-        return super().get_queryset().filter(user=self.request.user)
+    def get_object(self, queryset=None):
+        return get_object_or_404(CV, id=self.kwargs["cv_id"], user=self.request.user)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
-
-    def get_success_url(self):
-        return reverse_lazy("cv-detail", kwargs={"cv_id": self.object.id})
-
-    def get_object(self, queryset=None):
-        return get_object_or_404(CV, id=self.kwargs["cv_id"], user=self.request.user)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        cv = self.get_object()
-        cv_info, created = CVInfo.objects.get_or_create(cv=cv)
-
-        if self.request.POST:
-            context["cv_info_form"] = CVInfoForm(
-                self.request.POST, self.request.FILES, instance=cv_info
-            )
-        else:
-            context["cv_info_form"] = CVInfoForm(instance=cv_info)
-
-        # Phase 2.1 (ADR-0005): SectionEntry.entry is now a real FK to
-        # BaseEntry. Promote to the concrete subclass via select_subclasses
-        # so the isinstance dispatch + ModelForm binding still works.
-        # Phase 2.3 lifts this branchy dispatch into a service that maps
-        # subclass -> form_class, dropping the if/elif tower entirely.
-        from entries.models import BaseEntry  # local import to avoid cv→entries cycle
-
-        education_forms = {}
-        experience_forms = {}
-        publication_forms = {}
-
-        for section in cv.sections.all():
-            section_entries = list(section.section_entries.all())
-            entry_ids = [se.entry_id for se in section_entries]
-            promoted = {
-                e.pk: e for e in BaseEntry.objects.filter(pk__in=entry_ids).select_subclasses()
-            }
-
-            for section_entry in section_entries:
-                real_entry = promoted.get(section_entry.entry_id)
-                if isinstance(real_entry, EducationEntry):
-                    if self.request.POST:
-                        education_forms[section_entry.id] = EducationEntryForm(
-                            self.request.POST, instance=real_entry
-                        )
-                    else:
-                        education_forms[section_entry.id] = EducationEntryForm(instance=real_entry)
-                elif isinstance(real_entry, ExperienceEntry):
-                    if self.request.POST:
-                        experience_forms[section_entry.id] = ExperienceEntryForm(
-                            self.request.POST, instance=real_entry
-                        )
-                    else:
-                        experience_forms[section_entry.id] = ExperienceEntryForm(
-                            instance=real_entry
-                        )
-                elif isinstance(real_entry, PublicationEntry):
-                    if self.request.POST:
-                        publication_forms[section_entry.id] = PublicationEntryForm(
-                            self.request.POST, instance=real_entry
-                        )
-                    else:
-                        publication_forms[section_entry.id] = PublicationEntryForm(
-                            instance=real_entry
-                        )
-
-        context["education_forms"] = education_forms
-        context["experience_forms"] = experience_forms
-        context["publication_forms"] = publication_forms
-
-        return context
-
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        form = self.get_form()
-
-        # Bind related forms manually
-        cv_info, _ = CVInfo.objects.get_or_create(cv=self.object)
-        cv_info_form = CVInfoForm(self.request.POST, self.request.FILES, instance=cv_info)
-
-        # Bind other forms similarly if needed...
-
-        if form.is_valid() and cv_info_form.is_valid():
-            # Also validate other related forms if needed here
-
-            return self.forms_valid(form, cv_info_form)
-        else:
-            return self.forms_invalid(form, cv_info_form)
-
-    def forms_valid(self, form, cv_info_form):
-        self.object = form.save()
-
-        # TODO: CVInfo gets deleted on cv edit
-
-        # Save related forms after main form saved
-        cv_info_form.save()
-
-        # Save sections (your logic)
-        self.object.sections.clear()
-        section_ids = self.request.POST.get("section_order", "")
-        section_ids = [uuid.UUID(id_str) for id_str in section_ids.split(",") if id_str]
-        for order, section_id in enumerate(section_ids, 1):
-            CVSection.objects.create(cv=self.object, section_id=section_id, order=order)
-
-        # Save other related forms here if any
-
-        return redirect(self.get_success_url())
-
-    def forms_invalid(self, form, cv_info_form):
-        context = self.get_context_data(form=form)
-        context["cv_info_form"] = cv_info_form
-        # Add other forms to context too
-        return self.render_to_response(context)
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-
-        # Clear existing CVSection relations
-        self.object.sections.clear()
-
-        # Add selected sections back with new order
-        section_ids = self.request.POST.get("section_order", "")
-        section_ids = [uuid.UUID(id_str) for id_str in section_ids.split(",") if id_str]
-        sections = Section.objects.filter(id__in=section_ids)
-        self.object.sections.clear()
-
-        for order, section in enumerate(section_ids, 1):
-            CVSection.objects.create(cv=self.object, section_id=section, order=order)
-
-        # Handle CVInfo and entry forms
-        context = self.get_context_data()
-        cv_info_form = context["cv_info_form"]
-        education_forms = context["education_forms"]
-        experience_forms = context["experience_forms"]
-        publication_forms = context["publication_forms"]
-
-        if cv_info_form.is_valid():
-            cv_info_form.save()
-
-        for form_dict in [education_forms, experience_forms, publication_forms]:
-            for entry_form in form_dict.values():
-                if entry_form.is_valid():
-                    entry_form.save()
-
-        return response
 
 
 ################################################# DELETE ###############################################################

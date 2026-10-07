@@ -1,32 +1,30 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}CV Design Detail - {{ cvdesign.alias }}{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <h2>CV Design Detail: {{ cvdesign.alias }}</h2>
-    <div class="card shadow p-4">
-        <dl class="row">
-            <dt class="col-sm-3">Alias</dt>
-            <dd class="col-sm-9">{{ cvdesign.alias }}</dd>
-
-            <dt class="col-sm-3">Theme</dt>
-            <dd class="col-sm-9">{{ cvdesign.get_theme_display }}</dd>
-
-            <dt class="col-sm-3">Design File</dt>
-            <dd class="col-sm-9">
-                {% if cvdesign.design_file %}
-                    <a href="{{ cvdesign.design_file.url }}" target="_blank">Download Design File</a>
-                {% else %}
-                    No design file uploaded.
-                {% endif %}
-            </dd>
-        </dl>
-
-        <a href="{% url 'cvdesign-list' %}" class="btn btn-secondary">Back to List</a>
-        <a href="{% url 'cvdesign-edit' design_id=cvdesign.id %}" class="btn btn-primary">Edit</a>
-        <a href="{% url 'cvdesign-delete' design_id=cvdesign.id %}" class="btn btn-danger">Delete</a>
+<section class="mx-auto max-w-3xl px-4 py-12">
+  <h1 class="font-display text-3xl text-text mb-6">CV Design: {{ cvdesign.alias }}</h1>
+  <c-card>
+    <dl class="divide-y divide-border">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Alias</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvdesign.alias }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Theme</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvdesign.get_theme_display }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Design File</dt>
+          <dd class="sm:col-span-2 text-text-muted">{% if cvdesign.design_file %}<a class="text-accent underline" href="{{ cvdesign.design_file.url }}" target="_blank">Download</a>{% else %}-{% endif %}</dd>
+        </div>
+    </dl>
+    <div class="mt-6 flex items-center gap-2">
+      <c-button href="{% url 'cvdesign-list' %}" variant="ghost">Back to List</c-button>
+      <c-button href="{% url 'cvdesign-edit' design_id=cvdesign.id %}" variant="primary">Edit</c-button>
+      <c-button href="{% url 'cvdesign-delete' design_id=cvdesign.id %}" variant="danger">Delete</c-button>
     </div>
-</div>
+  </c-card>
+</section>
 {% endblock %}

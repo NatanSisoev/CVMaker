@@ -1,26 +1,23 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}Confirm Delete CV Design - {{ cvdesign.alias }}{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <h2>Confirm Delete CV Design: {{ cvdesign.alias }}</h2>
-    <div class="alert alert-warning">
-        Are you sure you want to delete this CV Design?
-        <strong>This action cannot be undone.</strong>
-    </div>
-    <dl class="row">
-        <dt class="col-sm-3">Alias</dt>
-        <dd class="col-sm-9">{{ cvdesign.alias }}</dd>
-
-        <dt class="col-sm-3">Theme</dt>
-        <dd class="col-sm-9">{{ cvdesign.get_theme_display }}</dd>
+<section class="mx-auto max-w-xl px-4 py-12">
+  <h1 class="font-display text-3xl text-text mb-6">Delete CV Design: {{ cvdesign.alias }}</h1>
+  <c-card>
+    <p class="text-text mb-4">
+      Are you sure you want to delete this CV Design? <strong>This action cannot be undone.</strong>
+    </p>
+    <dl class="space-y-1 text-sm text-text-muted mb-6">
+      <div class="flex gap-2"><dt class="font-medium text-text">Alias:</dt><dd>{{ cvdesign.alias }}</dd></div>
+      <div class="flex gap-2"><dt class="font-medium text-text">Theme:</dt><dd>{{ cvdesign.get_theme_display }}</dd></div>
     </dl>
-    <form method="post">
-        {% csrf_token %}
-        <a href="{% url 'cvdesign-list' %}" class="btn btn-secondary">Cancel</a>
-        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+    <form method="post" class="flex items-center gap-2">
+      {% csrf_token %}
+      <c-button href="{% url 'cvdesign-list' %}" variant="ghost">Cancel</c-button>
+      <c-button type="submit" variant="danger">Confirm Delete</c-button>
     </form>
-</div>
+  </c-card>
+</section>
 {% endblock %}

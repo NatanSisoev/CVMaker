@@ -1,60 +1,46 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}CV Info Detail - {{ cvinfo.alias }}{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <h2>CV Info Detail: {{ cvinfo.alias }}</h2>
-    <div class="card shadow p-4">
-        <dl class="row">
-            <dt class="col-sm-3">Name</dt>
-            <dd class="col-sm-9">{{ cvinfo.name|default:"-" }}</dd>
-
-            <dt class="col-sm-3">Location</dt>
-            <dd class="col-sm-9">{{ cvinfo.location|default:"-" }}</dd>
-
-            <dt class="col-sm-3">Email</dt>
-            <dd class="col-sm-9">{{ cvinfo.email|default:"-" }}</dd>
-
-            <dt class="col-sm-3">Phone</dt>
-            <dd class="col-sm-9">{{ cvinfo.phone|default:"-" }}</dd>
-
-            <dt class="col-sm-3">Website</dt>
-            <dd class="col-sm-9">
-                {% if cvinfo.website %}
-                    <a href="{{ cvinfo.website }}" target="_blank">{{ cvinfo.website }}</a>
-                {% else %}
-                    -
-                {% endif %}
-            </dd>
-
-            <dt class="col-sm-3">Photo</dt>
-            <dd class="col-sm-9">
-                {% if cvinfo.photo %}
-                    <img src="{{ cvinfo.photo.url }}" alt="Photo of {{ cvinfo.name }}" class="img-thumbnail" style="max-width: 200px;">
-                {% else %}
-                    No photo uploaded.
-                {% endif %}
-            </dd>
-
-            <dt class="col-sm-3">Social Networks</dt>
-            <dd class="col-sm-9">
-                {% if cvinfo.social_networks %}
-                    <ul>
-                    {% for network, username in cvinfo.social_networks.items %}
-                        <li><strong>{{ network|capfirst }}:</strong> {{ username }}</li>
-                    {% endfor %}
-                    </ul>
-                {% else %}
-                    None
-                {% endif %}
-            </dd>
-        </dl>
-
-        <a href="{% url 'cvinfo-list' %}" class="btn btn-secondary">Back to List</a>
-        <a href="{% url 'cvinfo-edit' info_id=cvinfo.id %}" class="btn btn-primary">Edit</a>
-        <a href="{% url 'cvinfo-delete' info_id=cvinfo.id %}" class="btn btn-danger">Delete</a>
+<section class="mx-auto max-w-3xl px-4 py-12">
+  <h1 class="font-display text-3xl text-text mb-6">CV Info: {{ cvinfo.alias }}</h1>
+  <c-card>
+    <dl class="divide-y divide-border">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Name</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvinfo.name|default:"-" }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Location</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvinfo.location|default:"-" }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Email</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvinfo.email|default:"-" }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Phone</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvinfo.phone|default:"-" }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Website</dt>
+          <dd class="sm:col-span-2 text-text-muted">{% if cvinfo.website %}<a class="text-accent underline" href="{{ cvinfo.website }}" target="_blank" rel="noopener">{{ cvinfo.website }}</a>{% else %}-{% endif %}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Photo</dt>
+          <dd class="sm:col-span-2 text-text-muted">{% if cvinfo.photo %}<img src="{{ cvinfo.photo.url }}" alt="Photo of {{ cvinfo.name }}" class="max-w-[200px] rounded-md border border-border">{% else %}No photo uploaded.{% endif %}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Social Networks</dt>
+          <dd class="sm:col-span-2 text-text-muted">{% if cvinfo.social_networks %}<ul class="list-disc pl-5">{% for network, username in cvinfo.social_networks.items %}<li><strong class="text-text">{{ network|capfirst }}:</strong> {{ username }}</li>{% endfor %}</ul>{% else %}None{% endif %}</dd>
+        </div>
+    </dl>
+    <div class="mt-6 flex items-center gap-2">
+      <c-button href="{% url 'cvinfo-list' %}" variant="ghost">Back to List</c-button>
+      <c-button href="{% url 'cvinfo-edit' info_id=cvinfo.id %}" variant="primary">Edit</c-button>
+      <c-button href="{% url 'cvinfo-delete' info_id=cvinfo.id %}" variant="danger">Delete</c-button>
     </div>
-</div>
+  </c-card>
+</section>
 {% endblock %}

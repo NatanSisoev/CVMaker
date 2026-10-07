@@ -1,113 +1,59 @@
 {% extends 'base.html' %}
-{% load static %}
-{% load widget_tweaks %}
 
 {% block title %}{{ form.instance.alias|default:"New CV" }} - Create/Edit CV{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <h1>{{ form.instance.alias|default:"Create New CV" }}</h1>
+<section class="mx-auto max-w-2xl px-4 py-12">
+  <h1 class="font-display text-3xl text-text mb-6">{{ form.instance.alias|default:"Create New CV" }}</h1>
 
-    <form method="post" enctype="multipart/form-data" novalidate>
-        {% csrf_token %}
+  <form method="post" enctype="multipart/form-data" novalidate class="cv-form">
+    {% csrf_token %}
+    <c-card>
+      {{ form.non_field_errors }}
+      <div class="flex flex-col gap-4">
+        {% include 'includes/form_field.html' with field=form.alias %}
+        {% include 'includes/form_field.html' with field=form.info hint_html='No personal info yet? Create it from the Info page.' %}
+        {% include 'includes/form_field.html' with field=form.locale hint_html='No locale yet? Create it from the Locale page.' %}
+        {% include 'includes/form_field.html' with field=form.settings hint_html='No settings yet? Create them from the Settings page.' %}
+        {% include 'includes/form_field.html' with field=form.design hint_html='No design yet? Create it from the Design page.' %}
 
-        <div class="mb-4">
-            <label for="{{ form.alias.id_for_label }}" class="form-label">CV Alias</label>
-            {% render_field form.alias class="form-control" placeholder="Enter CV alias" %}
-            {% if form.alias.errors %}
-            <div class="text-danger small">{{ form.alias.errors }}</div>
-            {% endif %}
-        </div>
+        <fieldset>
+          <legend class="text-sm font-medium text-text mb-2">Sections to Include</legend>
+          <div class="max-h-72 overflow-y-auto rounded-sm border border-border p-3 flex flex-col gap-2">
+            {% for checkbox in form.sections %}
+              <label class="flex items-center gap-2 text-text" for="{{ checkbox.id_for_label }}">
+                {{ checkbox.tag }} {{ checkbox.choice_label }}
+              </label>
+            {% empty %}
+              <p class="text-text-muted">No sections available. <a class="text-accent underline" href="{% url 'section-create' %}">Create a new section</a>.</p>
+            {% endfor %}
+          </div>
+          {% for error in form.sections.errors %}<p class="text-xs text-danger mt-1">{{ error }}</p>{% endfor %}
+        </fieldset>
 
-        <!-- Select existing or create new CVInfo -->
-        <div class="mb-4">
-            <label for="{{ form.info.id_for_label }}" class="form-label">Personal Information (CVInfo)</label>
-            {% render_field form.info class="form-select" %}
-            <small class="form-text text-muted">
-                <a href="{% url 'cvinfo-create' %}">Create new personal info</a> if none exists.
-            </small>
-            {% if form.info.errors %}
-            <div class="text-danger small">{{ form.info.errors }}</div>
-            {% endif %}
-        </div>
-
-        <!-- Select existing or create new CVLocale -->
-        <div class="mb-4">
-            <label for="{{ form.locale.id_for_label }}" class="form-label">Locale</label>
-            {% render_field form.locale class="form-select" %}
-            <small class="form-text text-muted">
-                <a href="{% url 'cvlocale-create' %}">Create new locale settings</a> if none exists.
-            </small>
-            {% if form.locale.errors %}
-            <div class="text-danger small">{{ form.locale.errors }}</div>
-            {% endif %}
-        </div>
-
-        <!-- Select existing or create new CVSettings -->
-        <div class="mb-4">
-            <label for="{{ form.settings.id_for_label }}" class="form-label">Settings</label>
-            {% render_field form.settings class="form-select" %}
-            <small class="form-text text-muted">
-                <a href="{% url 'cvsettings-create' %}">Create new settings</a> if none exists.
-            </small>
-            {% if form.settings.errors %}
-            <div class="text-danger small">{{ form.settings.errors }}</div>
-            {% endif %}
-        </div>
-
-        <!-- Select existing or create new CVDesign -->
-        <div class="mb-4">
-            <label for="{{ form.design.id_for_label }}" class="form-label">Design</label>
-            {% render_field form.design class="form-select" %}
-            <small class="form-text text-muted">
-                <a href="{% url 'cvdesign-create' %}">Create new design</a> if none exists.
-            </small>
-            {% if form.design.errors %}
-            <div class="text-danger small">{{ form.design.errors }}</div>
-            {% endif %}
-        </div>
-
-        <!-- Sections Multiple Select -->
-        <div class="mb-4">
-            <label class="form-label">Sections to Include</label>
-            <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
-                {% for checkbox in form.sections %}
-                <div class="form-check">
-                    {{ checkbox.tag }}
-                    <label class="form-check-label" for="{{ checkbox.id_for_label }}">
-                        {{ checkbox.choice_label }}
-                    </label>
-                </div>
-                {% empty %}
-                <p class="text-muted">No sections available. <a href="{% url 'section-create' %}">Create a new
-                    section</a>.</p>
-                {% endfor %}
-            </div>
-            {% if form.sections.errors %}
-            <div class="text-danger small">{{ form.sections.errors }}</div>
-            {% endif %}
-        </div>
-
-        <h3>Select and Order Sections</h3>
-        <ul id="section-sortable" class="sortable-list">
+        <div>
+          <h2 class="text-sm font-medium text-text mb-2">Select and Order Sections</h2>
+          <ul id="section-sortable" class="flex flex-col gap-2">
             {% for section in form.fields.sections.queryset %}
-            <li data-section-id="{{ section.id }}" class="sortable-item">
-                <input type="checkbox"
-                       name="section_ids"
-                       value="{{ section.id }}"
+              <li data-section-id="{{ section.id }}"
+                  class="sortable-item flex cursor-grab items-center gap-2 rounded-sm border border-border bg-surface-2 px-3 py-2 text-text">
+                <input type="checkbox" name="section_ids" value="{{ section.id }}"
                        {% if section in form.initial.sections %}checked{% endif %}>
                 {{ section.title }}
-            </li>
+              </li>
             {% endfor %}
-        </ul>
+          </ul>
+          <input type="hidden" name="section_order" id="section-order">
+        </div>
+      </div>
+    </c-card>
 
-        <input type="hidden" name="section_order" id="section-order">
-
-
-        <button type="submit" class="btn btn-primary">Save CV</button>
-        <a href="{% url 'cv-list' %}" class="btn btn-secondary ms-2">Cancel</a>
-    </form>
-</div>
+    <div class="mt-6 flex items-center gap-2">
+      <c-button type="submit" variant="primary">Save CV</c-button>
+      <c-button href="{% url 'cv-list' %}" variant="ghost">Cancel</c-button>
+    </div>
+  </form>
+</section>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -137,4 +83,3 @@
   }
 </script>
 {% endblock %}
-

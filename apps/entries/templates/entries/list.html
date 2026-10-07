@@ -1,111 +1,80 @@
 {% extends 'base.html' %}
-{% load static %}
 {% load custom_filters %}
 
 {% block title %}CV Entries{% endblock %}
 
 {% block content %}
-<head>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-</head>
+<section class="mx-auto max-w-6xl px-4 py-12">
 
-<div class="container my-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Entries</h2>
-        <div class="d-flex gap-2">
-            <a href="{% url 'entry-create' %}" class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-plus"></i>
-            </a>
-        </div>
-    </div>
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="font-display text-3xl text-text">Entries</h1>
+    <c-button href="{% url 'entry-create' %}" variant="primary" size="sm">+ New Entry</c-button>
+  </div>
 
-    {% if entries %}
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for entry in entries %}
-        <div class="col">
-            <div class="card h-100 shadow">
-                <div class="card-body">
-                    <h5 class="card-title d-flex justify-content-between">
-                        {{ entry.alias }}
-                        <div class="d-flex gap-2">
-                            <a href="{% url 'entry-detail' entry_id=entry.id %}" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <a href="{% url 'entry-edit' entry_id=entry.id %}" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ entry.id }}">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </h5>
-
-                    <p class="card-text text-muted">
-                        {{ entry|class_name }}
-                    </p>
-
-                    <ul class="list-unstyled">
-                        {% if entry|class_name == 'EducationEntry' %}
-                            <li><strong>Institution:</strong> {{ entry.institution }}</li>
-                            <li><strong>Area:</strong> {{ entry.area }}</li>
-                        {% elif entry|class_name == 'ExperienceEntry' %}
-                            <li><strong>Company:</strong> {{ entry.company }}</li>
-                            <li><strong>Position:</strong> {{ entry.position }}</li>
-                        {% elif entry|class_name == 'NormalEntry' %}
-                            <li><strong>Name:</strong> {{ entry.name }}</li>
-                        {% elif entry|class_name == 'PublicationEntry' %}
-                            <li><strong>Title:</strong> {{ entry.title }}</li>
-                            <li><strong>Authors:</strong> {{ entry.authors }}</li>
-                        {% elif entry|class_name == 'OneLineEntry' %}
-                            <li><strong>Label:</strong> {{ entry.label }}</li>
-                            <li><strong>Details:</strong> {{ entry.details }}</li>
-                        {% elif entry|class_name == 'BulletEntry' %}
-                            <li><strong>Bullet:</strong> {{ entry.bullet }}</li>
-                        {% elif entry|class_name == 'NumberedEntry' %}
-                            <li><strong>Number:</strong> {{ entry.number }}</li>
-                        {% elif entry|class_name == 'ReversedNumberedEntry' %}
-                            <li><strong>Reversed Number:</strong> {{ entry.reversed_number }}</li>
-                        {% elif entry|class_name == 'TextEntry' %}
-                            <li><strong>Text:</strong> {{ entry.text }}</li>
-                        {% endif %}
-                    </ul>
-                </div>
+  {% if entries %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for entry in entries %}
+        <c-card>
+          <c-slot name="header">
+            <div class="flex items-center justify-between">
+              <span class="font-medium text-text">{{ entry.alias }}</span>
+              <div class="flex items-center gap-1">
+                <c-icon-button label="View" href="{% url 'entry-detail' entry_id=entry.id %}">👁</c-icon-button>
+                <c-icon-button label="Edit" href="{% url 'entry-edit' entry_id=entry.id %}">✎</c-icon-button>
+                <c-icon-button label="Delete" variant="danger"
+                               x-on:click="$dispatch('open-modal', 'delete-entry-{{ entry.id }}')">×</c-icon-button>
+              </div>
             </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="text-center py-5">
-        <h4 class="mb-3">No entries found.</h4>
-        <p class="text-muted mb-4">Start by adding your first entry to your CV.</p>
-    </div>
-    {% endif %}
-</div>
+          </c-slot>
+          <p class="mb-2 text-xs uppercase tracking-wide text-text-muted">{{ entry|class_name }}</p>
+          <ul class="space-y-1 text-sm text-text-muted">
+            {% if entry|class_name == 'EducationEntry' %}
+              <li><strong class="text-text">Institution:</strong> {{ entry.institution }}</li>
+              <li><strong class="text-text">Area:</strong> {{ entry.area }}</li>
+            {% elif entry|class_name == 'ExperienceEntry' %}
+              <li><strong class="text-text">Company:</strong> {{ entry.company }}</li>
+              <li><strong class="text-text">Position:</strong> {{ entry.position }}</li>
+            {% elif entry|class_name == 'NormalEntry' %}
+              <li><strong class="text-text">Name:</strong> {{ entry.name }}</li>
+            {% elif entry|class_name == 'PublicationEntry' %}
+              <li><strong class="text-text">Title:</strong> {{ entry.title }}</li>
+              <li><strong class="text-text">Authors:</strong> {{ entry.authors }}</li>
+            {% elif entry|class_name == 'OneLineEntry' %}
+              <li><strong class="text-text">Label:</strong> {{ entry.label }}</li>
+              <li><strong class="text-text">Details:</strong> {{ entry.details }}</li>
+            {% elif entry|class_name == 'BulletEntry' %}
+              <li><strong class="text-text">Bullet:</strong> {{ entry.bullet }}</li>
+            {% elif entry|class_name == 'NumberedEntry' %}
+              <li><strong class="text-text">Number:</strong> {{ entry.number }}</li>
+            {% elif entry|class_name == 'ReversedNumberedEntry' %}
+              <li><strong class="text-text">Reversed Number:</strong> {{ entry.reversed_number }}</li>
+            {% elif entry|class_name == 'TextEntry' %}
+              <li><strong class="text-text">Text:</strong> {{ entry.text }}</li>
+            {% endif %}
+          </ul>
+        </c-card>
 
-{% block extra_js %}
-
-{% for entry in entries %}
-<div class="modal fade" id="deleteModal{{ entry.id }}" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Delete Entry</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                Are you sure you want to delete this entry?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="{% url 'entry-delete' entry_id=entry.id %}" method="POST">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
+        <c-modal id="delete-entry-{{ entry.id }}" title="Delete this entry?">
+          <p class="text-text-muted">This permanently deletes <strong>{{ entry.alias }}</strong> and removes it from every section.</p>
+          <c-slot name="footer">
+            <c-button variant="ghost" x-on:click="$dispatch('close-modal', 'delete-entry-{{ entry.id }}')">Cancel</c-button>
+            <form action="{% url 'entry-delete' entry_id=entry.id %}" method="post" class="inline">
+              {% csrf_token %}
+              <c-button type="submit" variant="danger">Delete</c-button>
+            </form>
+          </c-slot>
+        </c-modal>
+      {% endfor %}
     </div>
-</div>
-{% endfor %}
-{% endblock %}
+  {% else %}
+    <c-card>
+      <div class="text-center py-12">
+        <h2 class="font-display text-2xl text-text mb-2">No entries yet</h2>
+        <p class="text-text-muted mb-6">Start by adding your first entry to your CV.</p>
+        <c-button href="{% url 'entry-create' %}" variant="primary">Create an entry →</c-button>
+      </div>
+    </c-card>
+  {% endif %}
 
+</section>
 {% endblock %}

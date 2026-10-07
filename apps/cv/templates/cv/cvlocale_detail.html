@@ -1,77 +1,74 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}CV Locale Detail - {{ cvlocale.alias }}{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <h2>CV Locale Detail: {{ cvlocale.alias }}</h2>
-    <div class="card shadow p-4">
-        <dl class="row">
-            <dt class="col-sm-3">Language</dt>
-            <dd class="col-sm-9">{{ cvlocale.language }}</dd>
-
-            <dt class="col-sm-3">Phone Number Format</dt>
-            <dd class="col-sm-9">{{ cvlocale.get_phone_number_format_display }}</dd>
-
-            <dt class="col-sm-3">Page Numbering Template</dt>
-            <dd class="col-sm-9">{{ cvlocale.page_numbering_template }}</dd>
-
-            <dt class="col-sm-3">Last Updated Date Template</dt>
-            <dd class="col-sm-9">{{ cvlocale.last_updated_date_template }}</dd>
-
-            <dt class="col-sm-3">Date Template</dt>
-            <dd class="col-sm-9">{{ cvlocale.date_template }}</dd>
-
-            <dt class="col-sm-3">Month</dt>
-            <dd class="col-sm-9">{{ cvlocale.month }}</dd>
-
-            <dt class="col-sm-3">Months</dt>
-            <dd class="col-sm-9">{{ cvlocale.months }}</dd>
-
-            <dt class="col-sm-3">Year</dt>
-            <dd class="col-sm-9">{{ cvlocale.year }}</dd>
-
-            <dt class="col-sm-3">Years</dt>
-            <dd class="col-sm-9">{{ cvlocale.years }}</dd>
-
-            <dt class="col-sm-3">Present</dt>
-            <dd class="col-sm-9">{{ cvlocale.present }}</dd>
-
-            <dt class="col-sm-3">Range Separator ("to")</dt>
-            <dd class="col-sm-9">{{ cvlocale.to }}</dd>
-
-            <dt class="col-sm-3">Abbreviations for Months</dt>
-            <dd class="col-sm-9">
-                <ul>
-                    {% for abbr in cvlocale.abbreviations_for_months %}
-                    <li>{{ abbr }}</li>
-                    {% endfor %}
-                </ul>
-            </dd>
-
-            <dt class="col-sm-3">Full Names of Months</dt>
-            <dd class="col-sm-9">
-                <ul>
-                    {% for name in cvlocale.full_names_of_months %}
-                    <li>{{ name }}</li>
-                    {% endfor %}
-                </ul>
-            </dd>
-
-            <dt class="col-sm-3">Locale File</dt>
-            <dd class="col-sm-9">
-                {% if cvlocale.locale_file %}
-                    <a href="{{ cvlocale.locale_file.url }}" target="_blank">Download Locale File</a>
-                {% else %}
-                    No locale file uploaded.
-                {% endif %}
-            </dd>
-        </dl>
-
-        <a href="{% url 'cvlocale-list' %}" class="btn btn-secondary">Back to List</a>
-        <a href="{% url 'cvlocale-edit' locale_id=cvlocale.id %}" class="btn btn-primary">Edit</a>
-        <a href="{% url 'cvlocale-delete' locale_id=cvlocale.id %}" class="btn btn-danger">Delete</a>
+<section class="mx-auto max-w-3xl px-4 py-12">
+  <h1 class="font-display text-3xl text-text mb-6">CV Locale: {{ cvlocale.alias }}</h1>
+  <c-card>
+    <dl class="divide-y divide-border">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Language</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvlocale.language }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Phone Number Format</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvlocale.get_phone_number_format_display }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Page Numbering Template</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvlocale.page_numbering_template }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Last Updated Date Template</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvlocale.last_updated_date_template }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Date Template</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvlocale.date_template }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Month</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvlocale.month }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Months</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvlocale.months }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Year</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvlocale.year }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Years</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvlocale.years }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Present</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvlocale.present }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Range Separator ("to")</dt>
+          <dd class="sm:col-span-2 text-text-muted">{{ cvlocale.to }}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Abbreviations for Months</dt>
+          <dd class="sm:col-span-2 text-text-muted">{% if cvlocale.abbreviations_for_months %}<ul class="list-disc pl-5">{% for item in cvlocale.abbreviations_for_months %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}-{% endif %}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Full Names of Months</dt>
+          <dd class="sm:col-span-2 text-text-muted">{% if cvlocale.full_names_of_months %}<ul class="list-disc pl-5">{% for item in cvlocale.full_names_of_months %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}-{% endif %}</dd>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 py-3">
+          <dt class="font-medium text-text">Locale File</dt>
+          <dd class="sm:col-span-2 text-text-muted">{% if cvlocale.locale_file %}<a class="text-accent underline" href="{{ cvlocale.locale_file.url }}" target="_blank">Download</a>{% else %}-{% endif %}</dd>
+        </div>
+    </dl>
+    <div class="mt-6 flex items-center gap-2">
+      <c-button href="{% url 'cvlocale-list' %}" variant="ghost">Back to List</c-button>
+      <c-button href="{% url 'cvlocale-edit' locale_id=cvlocale.id %}" variant="primary">Edit</c-button>
+      <c-button href="{% url 'cvlocale-delete' locale_id=cvlocale.id %}" variant="danger">Delete</c-button>
     </div>
-</div>
+  </c-card>
+</section>
 {% endblock %}

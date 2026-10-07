@@ -1,0 +1,10 @@
+{# Every field of `form`, styled. Wrap the caller in a `.cv-form` element. #}
+{% if form.non_field_errors %}
+  <div class="rounded-sm border border-danger px-3 py-2 text-sm text-danger" role="alert">{{ form.non_field_errors }}</div>
+{% endif %}
+<div class="flex flex-col gap-4">
+  {% for field in form.visible_fields %}
+    {% include 'includes/form_field.html' with field=field %}
+  {% endfor %}
+  {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+</div>

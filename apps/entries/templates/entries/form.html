@@ -1,47 +1,36 @@
 {% extends 'base.html' %}
-{% load widget_tweaks %}
 {% load custom_filters %}
 
 {% block title %}Create New Entry{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Create New Entry</h1>
-    </div>
+<section class="mx-auto max-w-3xl px-4 py-12">
+  <h1 class="font-display text-3xl text-text mb-6">Create New Entry</h1>
 
-    <div class="card">
-        <div class="card-header">
-            <h4 class="mb-0">Entry Details</h4>
-        </div>
-        <div class="card-body">
-            {% if step == 1 %}
-                <h5>Select Entry Type</h5>
-                <form method="get">
-                    <div class="row">
-                        {% for type in entry_types %}
-                        <div class="col-md-4 mb-2">
-                            <button type="submit" name="entry_type" value="{{ type }}" class="btn btn-outline-primary w-100">
-                                {{ type|title|remove_underscores }}
-                            </button>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </form>
-
-            {% elif step == 2 %}
-                <h5>Fill in the Entry Details</h5>
-                <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="entry_type" value="{{ entry_type }}">
-                    {{ form.as_p }}
-
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-circle"></i> Save Entry
-                    </button>
-                </form>
-            {% endif %}
-        </div>
-    </div>
-</div>
+  {% if step == 1 %}
+    <c-card>
+      <c-slot name="header">Select Entry Type</c-slot>
+      <form method="get" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+        {% for type in entry_types %}
+          <button type="submit" name="entry_type" value="{{ type }}"
+                  class="h-10 rounded-md border border-border bg-surface-2 px-4 text-text font-medium transition hover:bg-surface focus:outline-none focus-visible:shadow-focus">
+            {{ type|title|remove_underscores }}
+          </button>
+        {% endfor %}
+      </form>
+    </c-card>
+  {% elif step == 2 %}
+    <form method="post" class="cv-form">
+      {% csrf_token %}
+      <input type="hidden" name="entry_type" value="{{ entry_type }}">
+      <c-card>
+        <c-slot name="header">Fill in the Entry Details</c-slot>
+        {% include 'includes/form_fields.html' %}
+      </c-card>
+      <div class="mt-6">
+        <c-button type="submit" variant="primary">Save Entry</c-button>
+      </div>
+    </form>
+  {% endif %}
+</section>
 {% endblock %}

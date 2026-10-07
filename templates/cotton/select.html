@@ -1,0 +1,26 @@
+{# Select -- a native <select> styled to match the form atoms.
+
+   Props: name, label, hint, error, value, required, id.
+   Slot:  one or more <option> elements.
+#}
+<c-vars required="" />
+
+<div class="flex flex-col gap-2">
+  {% if label %}
+    <label for="{{ id|default:name }}" class="text-sm font-medium text-text">
+      {{ label }}{% if required %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}
+    </label>
+  {% endif %}
+  <select name="{{ name }}"
+          id="{{ id|default:name }}"
+          {% if required %}required{% endif %}
+          class="form-select h-10 rounded-sm border border-border bg-surface-2 px-3 text-base text-text focus:border-accent focus:outline-none focus:shadow-focus {% if error %}border-danger focus:border-danger{% endif %} {{ attrs.class|default:'' }}"
+          {{ attrs }}>
+    {{ slot }}
+  </select>
+  {% if error %}
+    <p class="text-xs text-danger">{{ error }}</p>
+  {% elif hint %}
+    <p class="text-xs text-text-muted">{{ hint }}</p>
+  {% endif %}
+</div>

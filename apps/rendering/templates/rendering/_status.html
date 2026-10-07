@@ -1,56 +1,51 @@
-{% comment %}
-HTMX-driven polling fragment for a Render.
+{# HTMX polling fragment for a Render.
 
-Self-polls via ``hx-get`` while the render is in flight. On terminal
-state, the fragment swaps once more and the next response has no
-``hx-trigger``, so polling stops. The CSS animation on .render-spinner
-is in static/css/rendering.css (lands with Phase 4's frontend rewrite;
-for now Bootstrap's spinner is fine).
-{% endcomment %}
+   Self-polls while in flight; the next response has no hx-trigger
+   once terminal, so polling stops automatically. See ADR-0007 for the
+   full lifecycle.
+#}
 <div id="render-status-{{ render.id }}"
-     class="render-status p-3 border rounded"
+     class="rounded-md border border-border bg-surface-2 p-3 text-sm"
      {% if not render.is_terminal %}hx-get="{% url 'rendering:status' render_id=render.id %}"
      hx-trigger="every 500ms"
      hx-swap="outerHTML"{% endif %}>
 
   {% if render.status == 'queued' %}
-    <div class="d-flex align-items-center gap-2">
-      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-      <span>Queued — waiting for a worker to pick it up.</span>
+    <div class="flex items-center gap-3 text-text-muted">
+      <span class="inline-block h-2 w-2 rounded-full bg-accent animate-pulse"></span>
+      Queued — waiting for a worker.
     </div>
 
   {% elif render.status == 'running' %}
-    <div class="d-flex align-items-center gap-2">
-      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-      <span>Rendering — Typst is composing your PDF…</span>
+    <div class="flex items-center gap-3 text-text-muted">
+      <span class="inline-block h-2 w-2 rounded-full bg-accent animate-pulse"></span>
+      Rendering — Typst is composing your PDF…
     </div>
 
   {% elif render.status == 'done' %}
-    <div class="d-flex align-items-center justify-content-between gap-3">
+    <div class="flex items-center justify-between gap-3">
       <div>
-        <strong>Done.</strong>
-        <small class="text-muted">Completed {{ render.completed_at|date:"H:i:s" }}.</small>
+        <strong class="text-text">Done.</strong>
+        <span class="text-text-muted text-xs ml-1">Completed {{ render.completed_at|date:"H:i:s" }}.</span>
       </div>
-      <a href="{% url 'rendering:pdf' render_id=render.id %}"
-         class="btn btn-primary btn-sm">
+      <c-button href="{% url 'rendering:pdf' render_id=render.id %}" variant="primary" size="sm">
         Download PDF
-      </a>
+      </c-button>
     </div>
 
   {% elif render.status == 'failed' %}
-    <div class="alert alert-danger mb-0">
-      <strong>Render failed.</strong>
-      <pre class="mb-0 mt-2 small text-wrap">{{ render.error|default:"No error details available." }}</pre>
+    <div class="flex flex-col gap-2">
+      <strong class="text-danger">Render failed.</strong>
+      <pre class="text-xs text-text-muted whitespace-pre-wrap font-mono">{{ render.error|default:"No error details available." }}</pre>
       <form method="post"
             action="{% url 'rendering:enqueue' cv_id=render.cv_id %}"
-            class="mt-2"
             hx-post="{% url 'rendering:enqueue' cv_id=render.cv_id %}"
             hx-target="#render-status-{{ render.id }}"
             hx-swap="outerHTML">
         {% csrf_token %}
         <input type="hidden" name="language" value="{{ render.language }}">
         <input type="hidden" name="style" value="{{ render.style }}">
-        <button type="submit" class="btn btn-outline-danger btn-sm">Retry</button>
+        <c-button type="submit" variant="secondary" size="sm">Retry</c-button>
       </form>
     </div>
   {% endif %}

@@ -1,0 +1,17 @@
+{# Checkbox.
+
+   Props: name, label, value, checked ("true" to check), id.
+#}
+<c-vars checked="" />
+
+<label class="flex items-center gap-2 cursor-pointer">
+  <input type="checkbox"
+         name="{{ name }}"
+         id="{{ id|default:name }}"
+         value="{{ value|default:'on' }}"
+         {% if checked %}checked{% endif %}
+         class="form-checkbox h-4 w-4 rounded-sm border-border bg-surface-2 text-accent focus:shadow-focus focus:outline-none"
+         {{ attrs }} />
+  {% if label %}<span class="text-sm text-text">{{ label }}</span>{% endif %}
+  {{ slot }}
+</label>

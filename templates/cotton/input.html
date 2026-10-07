@@ -1,0 +1,33 @@
+{# Input -- text/email/password/etc.
+
+   Props:
+     name      required
+     type      "text" | "email" | "password" | "url" | "number"  default "text"
+     label     display label (omit for unlabeled)
+     hint      help text below the input
+     error     error string (red, replaces hint)
+     value     initial value
+     required  "true" adds the required attribute
+     id        id attribute (auto-generated from name if absent)
+#}
+<c-vars type="text" required="" />
+
+<div class="flex flex-col gap-2">
+  {% if label %}
+    <label for="{{ id|default:name }}" class="text-sm font-medium text-text">
+      {{ label }}{% if required %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}
+    </label>
+  {% endif %}
+  <input type="{{ type }}"
+         name="{{ name }}"
+         id="{{ id|default:name }}"
+         value="{{ value|default:'' }}"
+         {% if required %}required{% endif %}
+         class="form-input h-10 rounded-sm border border-border bg-surface-2 px-3 text-base text-text placeholder:text-text-muted focus:border-accent focus:outline-none focus:shadow-focus {% if error %}border-danger focus:border-danger{% endif %} {{ attrs.class|default:'' }}"
+         {{ attrs }} />
+  {% if error %}
+    <p class="text-xs text-danger">{{ error }}</p>
+  {% elif hint %}
+    <p class="text-xs text-text-muted">{{ hint }}</p>
+  {% endif %}
+</div>

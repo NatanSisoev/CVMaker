@@ -1,74 +1,41 @@
 {% extends 'base.html' %}
-{% load widget_tweaks %}
 {% load custom_filters %}
 
 {% block title %}{% if form.instance.pk %}Edit{% else %}Create{% endif %} Section{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>{% if form.instance.pk %}Edit{% else %}Create{% endif %} Section</h1>
-        <a href="{% url 'section-list' %}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Back to List
-        </a>
+<section class="mx-auto max-w-4xl px-4 py-12">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="font-display text-3xl text-text">{% if form.instance.pk %}Edit{% else %}Create{% endif %} Section</h1>
+    <c-button href="{% url 'section-list' %}" variant="ghost" size="sm">← Back to List</c-button>
+  </div>
+
+  <form method="post" class="cv-form">
+    {% csrf_token %}
+    <c-card>
+      <c-slot name="header">Section Configuration</c-slot>
+      {{ form.non_field_errors }}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {% include 'includes/form_field.html' with field=form.title %}
+        {% include 'includes/form_field.html' with field=form.alias %}
+      </div>
+
+      <h2 class="text-sm font-medium text-text mb-2">Select Entries to Include</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        {% for value, label in form.entries.field.choices %}
+          <label for="entry-{{ value }}"
+                 class="flex cursor-pointer items-center gap-2 rounded-sm border border-border bg-surface-2 px-3 py-2 text-sm text-text hover:bg-surface">
+            <input type="checkbox" name="{{ form.entries.name }}" value="{{ value }}" id="entry-{{ value }}"
+                   {% if value in form.entries.value %}checked{% endif %}>
+            {{ label|title|remove_underscores }}
+          </label>
+        {% endfor %}
+      </div>
+    </c-card>
+
+    <div class="mt-6">
+      <c-button type="submit" variant="primary">{% if form.instance.pk %}Update{% else %}Create{% endif %} Section</c-button>
     </div>
-
-    <div class="card">
-        <div class="card-header">
-            <h4 class="mb-0">Section Configuration</h4>
-        </div>
-        <div class="card-body">
-            <form method="post">
-                {% csrf_token %}
-
-                <!-- Main Section Fields -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="form-label">{{ form.title.label }}</label>
-                            {% render_field form.title class="form-control" %}
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="form-label">{{ form.alias.label }}</label>
-                            {% render_field form.alias class="form-control" %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Entry Selection Grid -->
-                <div class="border-top pt-4">
-                    <h5>Select Entries to Include</h5>
-                    <div class="row g-3">
-                        {% for value, label in form.entries.field.choices %}
-                        <div class="col-md-4 col-lg-3">
-                            <div class="form-check">
-                                <input type="checkbox"
-                                       name="{{ form.entries.name }}"
-                                       value="{{ value }}"
-                                       id="entry-{{ value }}"
-                                       class="form-check-input"
-                                       {% if value in form.entries.value %}checked{% endif %}>
-                                <label class="form-check-label w-100 btn btn-outline-primary"
-                                       for="entry-{{ value }}">
-                                    {{ label|title|remove_underscores }}
-                                </label>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- Form Actions -->
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-circle"></i>
-                        {% if form.instance.pk %}Update{% else %}Create{% endif %} Section
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+  </form>
+</section>
 {% endblock %}

@@ -1,112 +1,79 @@
 {% extends 'base.html' %}
-{% load static %}
 {% load custom_filters %}
-{% block title %}Section Details - {{ section.title }}{% endblock %}
+
+{% block title %}{{ section.title }}{% endblock %}
+
 {% block content %}
-  <head>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"
-          rel="stylesheet">
-  </head>
-  <div class="container mt-5">
-    <div class="card">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="mb-0">{{ section.title }}</h3>
-        <div class="d-flex gap-2">
-          <a href="{% url 'section-edit' section.id %}"
-             class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-pencil"></i>
-          </a>
-          <button class="btn btn-sm btn-outline-danger"
-                  data-bs-toggle="modal"
-                  data-bs-target="#deleteSectionModal{{ section.id }}">
-            <i class="bi bi-trash"></i>
-          </button>
+<section class="mx-auto max-w-4xl px-4 py-12">
+
+  <c-card>
+    <c-slot name="header">
+      <div class="flex items-center justify-between">
+        <span class="font-display text-xl text-text">{{ section.title }}</span>
+        <div class="flex items-center gap-2">
+          <c-button href="{% url 'section-edit' section.id %}" variant="secondary" size="sm">Edit</c-button>
+          <c-button variant="danger" size="sm"
+                    x-on:click="$dispatch('open-modal', 'delete-section')">Delete</c-button>
         </div>
       </div>
-      <div class="card-body">
-        <dl class="row mb-4">
-          <dt class="col-sm-2">Alias</dt>
-          <dd class="col-sm-10">
-            {{ section.alias }}
-          </dd>
-          <dt class="col-sm-2">Created By</dt>
-          <dd class="col-sm-10">
-            {{ section.user.username }}
-          </dd>
-        </dl>
-        <div class="border-top pt-4">
-          <h4 class="mb-3">Contained Entries</h4>
-          <div class="list-group">
-            {% for entry in section.section_entries.all %}
-              <div class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                  <span class="badge bg-primary me-2">{{ entry.real_entry|class_name|remove_underscores }}</span>
-                  {{ entry.entry.alias }}
-                </div>
-                <div class="btn-group">
-                  <a href="{% url 'entry-edit' entry_id=entry.entry.id %}"
-                     class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-pencil"></i>
-                  </a>
-                  <button class="btn btn-sm btn-outline-danger"
-                          data-bs-toggle="modal"
-                          data-bs-target="#deleteEntryModal{{ entry.entry.id }}">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </div>
-            {% empty %}
-              <div class="alert alert-info">No entries in this section yet.</div>
-            {% endfor %}
+    </c-slot>
+
+    <dl class="grid grid-cols-[max-content,1fr] gap-x-6 gap-y-2 mb-6 text-sm">
+      <dt class="text-text-muted">Alias</dt>
+      <dd class="font-mono">{{ section.alias }}</dd>
+      <dt class="text-text-muted">Owner</dt>
+      <dd>{{ section.user.email }}</dd>
+    </dl>
+
+    <h3 class="font-medium text-text mb-3">Entries</h3>
+    <ul class="flex flex-col gap-2">
+      {% for entry in section.section_entries.all %}
+        <li class="flex items-center justify-between rounded-md border border-border bg-surface-2 px-3 py-2">
+          <div class="flex items-center gap-2">
+            <c-badge>{{ entry.real_entry|class_name|remove_underscores }}</c-badge>
+            <span class="text-text">{{ entry.entry.alias }}</span>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Section Delete Modal -->
-  <div class="modal fade"
-       id="deleteSectionModal{{ section.id }}"
-       tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Delete Section</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">Are you sure you want to delete "{{ section.title }}"?</div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <form action="{% url 'section-delete' section_id=section.id %}"
-                method="POST">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Delete</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Entry Delete Modals -->
-  {% for entry in section.section_entries.all %}
-    <div class="modal fade"
-         id="deleteEntryModal{{ entry.entry.id }}"
-         tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Delete Entry</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <div class="flex items-center gap-1">
+            <c-icon-button label="Edit" size="sm" href="{% url 'entry-edit' entry_id=entry.entry.id %}">✎</c-icon-button>
+            <c-icon-button label="Delete" size="sm" variant="danger"
+                           x-on:click="$dispatch('open-modal', 'delete-entry-{{ entry.entry.id }}')">×</c-icon-button>
           </div>
-          <div class="modal-body">Are you sure you want to delete "{{ entry.entry.alias }}"?</div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <form action="{% url 'entry-delete' entry_id=entry.entry.id %}"
-                  method="POST">
+        </li>
+
+        <c-modal id="delete-entry-{{ entry.entry.id }}" title="Delete this entry?">
+          <p class="text-text-muted">
+            <strong>{{ entry.entry.alias }}</strong> will be removed from every section
+            that includes it. This cannot be undone.
+          </p>
+          <c-slot name="footer">
+            <c-button variant="ghost" x-on:click="$dispatch('close-modal', 'delete-entry-{{ entry.entry.id }}')">
+              Cancel
+            </c-button>
+            <form action="{% url 'entry-delete' entry_id=entry.entry.id %}" method="post" class="inline">
               {% csrf_token %}
-              <button type="submit" class="btn btn-danger">Delete</button>
+              <c-button type="submit" variant="danger">Delete entry</c-button>
             </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  {% endfor %}
+          </c-slot>
+        </c-modal>
+      {% empty %}
+        <li class="text-text-muted text-sm">No entries in this section yet.</li>
+      {% endfor %}
+    </ul>
+  </c-card>
+
+  <c-modal id="delete-section" title="Delete this section?">
+    <p class="text-text-muted">
+      <strong>{{ section.title }}</strong> will be removed from every CV that uses it.
+      The underlying entries stay -- they belong to you, not this section.
+    </p>
+    <c-slot name="footer">
+      <c-button variant="ghost" x-on:click="$dispatch('close-modal', 'delete-section')">Cancel</c-button>
+      <form action="{% url 'section-delete' section_id=section.id %}" method="post" class="inline">
+        {% csrf_token %}
+        <c-button type="submit" variant="danger">Delete section</c-button>
+      </form>
+    </c-slot>
+  </c-modal>
+
+</section>
 {% endblock %}

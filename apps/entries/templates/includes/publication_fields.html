@@ -1,19 +1,19 @@
-<dt class="col-sm-3">Title</dt>
-<dd class="col-sm-9">{{ entry.title|default:"-" }}</dd>
+<dt class="font-medium text-text">Title</dt>
+<dd class="sm:col-span-2 text-text-muted">{{ entry.title|default:"-" }}</dd>
 
-<dt class="col-sm-3">Authors</dt>
-<dd class="col-sm-9">{{ entry.authors|default:"-" }}</dd>
+<dt class="font-medium text-text">Authors</dt>
+<dd class="sm:col-span-2 text-text-muted">{{ entry.authors|default:"-" }}</dd>
 
-<dt class="col-sm-3">DOI</dt>
-<dd class="col-sm-9">{{ entry.doi|default:"-" }}</dd>
+<dt class="font-medium text-text">DOI</dt>
+<dd class="sm:col-span-2 text-text-muted">{{ entry.doi|default:"-" }}</dd>
 
-<dt class="col-sm-3">URL</dt>
-<dd class="col-sm-9">
-    <a href="{{ entry.url|default:'#' }}" target="_blank">{{ entry.url|default:"-" }}</a>
+<dt class="font-medium text-text">URL</dt>
+<dd class="sm:col-span-2 text-text-muted">
+    <a class="text-accent underline" href="{{ entry.url|default:'#' }}" target="_blank" rel="noopener">{{ entry.url|default:"-" }}</a>
 </dd>
 
-<dt class="col-sm-3">Journal</dt>
-<dd class="col-sm-9">{{ entry.journal|default:"-" }}</dd>
+<dt class="font-medium text-text">Journal</dt>
+<dd class="sm:col-span-2 text-text-muted">{{ entry.journal|default:"-" }}</dd>
 
-<dt class="col-sm-3">Date</dt>
-<dd class="col-sm-9">{{ entry.date|date:"M Y"|default:"-" }}</dd>
+<dt class="font-medium text-text">Date</dt>
+<dd class="sm:col-span-2 text-text-muted">{{ entry.date|date:"M Y"|default:"-" }}</dd>

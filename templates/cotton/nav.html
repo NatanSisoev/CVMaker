@@ -1,0 +1,38 @@
+{# Top navigation bar.
+
+   Phase 4.2 ships the minimal shape (logo + a couple of links + theme
+   toggle + user/login slot). Phase 4.3 expands with a search /
+   command-palette trigger.
+#}
+<nav class="border-b border-border bg-surface">
+  <div class="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
+    <div class="flex items-center gap-6">
+      <a href="{% url 'homepage' %}" class="font-display text-lg text-text hover:opacity-80">
+        CVMaker
+      </a>
+      <ul class="hidden md:flex items-center gap-4 text-sm">
+        <li><a href="{% url 'templates' %}" class="text-text-muted hover:text-text">Templates</a></li>
+        <li><a href="{% url 'import' %}"    class="text-text-muted hover:text-text">Import</a></li>
+        <li><a href="{% url 'help' %}"      class="text-text-muted hover:text-text">Help</a></li>
+      </ul>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="button" onclick="toggleTheme()" aria-label="Toggle theme"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-surface-2 hover:text-text focus:outline-none focus-visible:shadow-focus">
+        {# Sun / moon icon swap is handled by CSS via [data-theme] -- keep markup simple. #}
+        <span class="block dark:hidden">☾</span>
+        <span class="hidden dark:block">☀</span>
+      </button>
+      {% if user.is_authenticated %}
+        <c-button href="{% url 'cv-list' %}" variant="ghost" size="sm">My CVs</c-button>
+        <form method="post" action="{% url 'logout' %}" class="inline">
+          {% csrf_token %}
+          <c-button type="submit" variant="ghost" size="sm">Log out</c-button>
+        </form>
+      {% else %}
+        <c-button href="{% url 'login' %}" variant="ghost" size="sm">Log in</c-button>
+        <c-button href="{% url 'signup' %}" variant="primary" size="sm">Sign up</c-button>
+      {% endif %}
+    </div>
+  </div>
+</nav>

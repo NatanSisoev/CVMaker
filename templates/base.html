@@ -1,34 +1,28 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en" class="h-100">
-<head>
+{% load static %}<!DOCTYPE html>
+<html lang="en" class="h-full">
+  <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}CVMaker{% endblock %}</title>
+    <meta name="theme-color" content="#FAFAF7">
+    <title>{% block title %}CVMaker{% endblock %} — CVMaker</title>
     <link rel="icon" href="{% static 'img/favicon.ico' %}">
-    <link rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;600&family=Inter:wght@400;500&display=swap">
-    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    {# Tailwind output -- `npm run build` produces this. In prod the
+       hashed name comes from whitenoise's CompressedManifestStaticFilesStorage. #}
+    <link rel="stylesheet" href="{% static 'dist/app.css' %}">
     {% block extra_css %}{% endblock %}
-</head>
-<body class="d-flex flex-column h-100">
-{% include 'includes/nav.html' %}
-
-<main class="flex-grow-1">
-    <div class="container-lg px-4 py-5">
-        <div class="mx-auto" style="max-width: 1200px;">
-            {% block breadcrumb %}{% endblock %}
-            {% block content %}{% endblock %}
-        </div>
-    </div>
-</main>
-
-{% include 'includes/footer.html' %}
-
-<script src="{% static 'js/jquery-3.7.1.min.js' %}" defer></script>
-<script src="{% static 'js/bootstrap.bundle.min.js' %}" defer></script>
-
-{% block extra_scripts %}{% endblock %}
-</body>
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body class="flex min-h-full flex-col bg-bg text-text font-sans">
+    <c-nav />
+    <main class="flex-1">
+      {% block breadcrumb %}{% endblock %}
+      {% block content %}{% endblock %}
+    </main>
+    <c-footer />
+    <c-toast />
+    {# JS at the end so it doesn't block first paint. HTMX + Alpine are
+       small; we revisit if either outgrows it. #}
+    <script src="{% static 'dist/app.js' %}" defer></script>
+    {% block extra_scripts %}{% endblock %}
+  </body>
 </html>

@@ -1,0 +1,118 @@
+/**
+ * Tailwind entry. The `@tailwind` directives expand into the base reset,
+ * the utility class generators, and the components layer.
+ *
+ * Design tokens live as CSS custom properties so dark mode is one
+ * attribute flip on <html>, not a Tailwind variant rebuild. Tailwind's
+ * config (`tailwind.config.js`) reads these via `var(--…)` for
+ * `colors.*`.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------
+   Design tokens. See docs/DESIGN.md for the prose canonical source.
+   --------------------------------------------------------------------- */
+@layer base {
+  :root {
+    /* Surfaces */
+    --bg:         #FAFAF7;
+    --surface:    #FFFFFF;
+    --surface-2: #F4F3EE;
+    --border:    #E7E5DE;
+
+    /* Text */
+    --text:       #17171A;
+    --text-muted: #6B6B68;
+
+    /* Accents */
+    --accent:     #C2410C;
+    --accent-ink: #FFFFFF;
+    --danger:     #991B1B;
+  }
+
+  [data-theme='dark'] {
+    --bg:         #0E0E0C;
+    --surface:    #171714;
+    --surface-2: #1F1F1C;
+    --border:    #2A2A26;
+
+    --text:       #ECECE8;
+    --text-muted: #9A9A95;
+
+    --accent:     #F97316;
+    --accent-ink: #17171A;
+    --danger:     #F87171;
+  }
+
+  /* Self-hosted font faces. The files land in static/fonts/ once
+     Phase 4.1's font task runs; the @font-face declarations stay
+     idempotent (the browser ignores them if the files aren't there). */
+  @font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('/static/fonts/Inter-Variable.woff2') format('woff2-variations');
+  }
+  @font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('/static/fonts/Fraunces-Variable.woff2') format('woff2-variations');
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 100 800;
+    font-display: swap;
+    src: url('/static/fonts/JetBrainsMono-Variable.woff2') format('woff2-variations');
+  }
+
+  /* Tighten the body-level defaults so we don't fight Tailwind's reset
+     on every page. */
+  html {
+    background: var(--bg);
+    color: var(--text);
+    font-family: theme('fontFamily.sans');
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Component-layer escape hatches. Stick to utility classes wherever
+   possible; this layer is for things Tailwind can't express cleanly
+   (focus-visible rings on form widgets, HTMX request indicators).
+   --------------------------------------------------------------------- */
+@layer components {
+  /* Show "loading…" UI only while HTMX has an inflight request.
+     Pair with `class="htmx-indicator"` on the element to show.
+     `data-loading` attribute on a parent gates the visibility. */
+  .htmx-indicator { opacity: 0; transition: opacity 150ms ease; }
+  .htmx-request .htmx-indicator { opacity: 1; }
+  .htmx-request.htmx-indicator { opacity: 1; }
+}
+
+/* ---------------------------------------------------------------------
+   Server-rendered Django form widgets. `{{ field }}` emits bare inputs
+   (plus whatever legacy `form-control` classes forms.py sets), so style
+   them by scope instead of per-widget. Wrap forms in `.cv-form`.
+   --------------------------------------------------------------------- */
+@layer components {
+  .cv-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+  .cv-form select,
+  .cv-form textarea {
+    @apply w-full rounded-sm border border-border bg-surface-2 px-3 py-2 text-base text-text
+           placeholder:text-text-muted focus:border-accent focus:outline-none focus:shadow-focus;
+  }
+  .cv-form input[type="checkbox"],
+  .cv-form input[type="radio"] {
+    @apply h-4 w-4 rounded-sm border-border text-accent focus:shadow-focus;
+  }
+  .cv-form input[type="file"] { @apply text-sm text-text-muted; }
+  .cv-form ul { @apply list-none p-0; }
+}

@@ -1,0 +1,51 @@
+{# Modal -- Alpine-driven, accessible-by-default dialog.
+
+   Props:
+     id       required (string used by Alpine + ARIA labelling)
+     title    string in the header
+     open     "true" renders open by default (defaults to closed)
+
+   Open from outside with: x-on:click="$dispatch('open-modal', '<id>')"
+   The dispatch handler watches the event name and matches on the id.
+
+   Close: the backdrop, the × button, and Escape all close.
+
+   Slots:
+     default   modal body
+     footer    optional footer row (e.g., action buttons)
+#}
+<c-vars open="" />
+
+<div x-data="{ open: {{ open|default:'false' }} }"
+     x-on:open-modal.window="if ($event.detail === '{{ id }}') open = true"
+     x-on:close-modal.window="if ($event.detail === '{{ id }}') open = false"
+     x-on:keydown.escape.window="open = false"
+     x-show="open"
+     x-cloak
+     class="fixed inset-0 z-50 flex items-center justify-center"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="{{ id }}-title">
+  {# Backdrop #}
+  <div x-show="open"
+       x-transition.opacity
+       x-on:click="open = false"
+       class="absolute inset-0 bg-black/40"></div>
+  {# Panel #}
+  <div x-show="open"
+       x-transition
+       class="relative w-full max-w-lg mx-4 rounded-lg border border-border bg-surface shadow-2 dark:shadow-none"
+       role="document">
+    <div class="flex items-center justify-between border-b border-border px-4 py-3">
+      <h2 id="{{ id }}-title" class="font-display text-lg text-text">{{ title }}</h2>
+      <button type="button"
+              x-on:click="open = false"
+              aria-label="Close"
+              class="text-text-muted hover:text-text">×</button>
+    </div>
+    <div class="px-4 py-4">{{ slot }}</div>
+    {% if footer %}
+      <div class="flex items-center justify-end gap-2 border-t border-border px-4 py-3">{{ footer }}</div>
+    {% endif %}
+  </div>
+</div>

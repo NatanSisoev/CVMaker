@@ -1,56 +1,41 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Write once, render anywhere{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-center mb-3">
-    <div class="text-center px-3" style="max-width: 800px;">
-        <h1 class="display-1 fw-light mb-4 text-primary">Professional Resume Builder</h1>
-        <div class="d-flex gap-3 justify-content-center flex-md-row flex-column">
-            <a href="{% url 'cv-create' %}" class="btn btn-xl btn-dark rounded-pill px-5 py-4 shadow-lg">
-                Create Your CV Now →
-            </a>
-            <a href="{% url 'cv-list' %}" class="btn btn-xl btn-outline-dark rounded-pill px-5 py-4 border-2">
-                Browse Your CVs →
-            </a>
-        </div>
+<section class="mx-auto max-w-4xl px-4 py-16 md:py-24">
+  <div class="flex flex-col items-center text-center gap-6">
+    <h1 class="font-display text-4xl md:text-6xl text-text leading-tight">
+      Write your CV once.<br>
+      <span class="text-accent">Render it in any language, any style.</span>
+    </h1>
+    <p class="max-w-2xl text-lg text-text-muted">
+      Every experience, lesson, and publication you've earned -- written once,
+      translated to the languages you care about, then assembled into a CV
+      the exact role wants. PDF in seconds, via Typst.
+    </p>
+    <div class="mt-4 flex flex-col gap-3 md:flex-row">
+      {% if user.is_authenticated %}
+        <c-button href="{% url 'cv-create' %}" variant="primary" size="lg">
+          Create a CV →
+        </c-button>
+        <c-button href="{% url 'cv-list' %}" variant="secondary" size="lg">
+          My CVs
+        </c-button>
+      {% else %}
+        <c-button href="{% url 'signup' %}" variant="primary" size="lg">
+          Get started — free →
+        </c-button>
+        <c-button href="{% url 'login' %}" variant="secondary" size="lg">
+          Log in
+        </c-button>
+      {% endif %}
     </div>
-</div>
+  </div>
+</section>
 
-<div class="bg-explainer"></div>
-
-{% endblock %}
-
-{% block extra_css %}
-<style>
-  .btn-outline-dark {
-      border-color: #1a1b1f;
-      color: #1a1b1f;
-      background: transparent;
-      border-width: 2px;
-  }
-
-  .btn-outline-dark:hover {
-      background: rgba(26, 27, 31, 0.05);
-      color: #1a1b1f;
-      border-color: #1a1b1f;
-  }
-
-  @media (max-width: 768px) {
-      .btn-xl {
-          width: 100%;
-          max-width: 300px;
-          margin: 0 auto;
-      }
-  }
-
-  .bg-explainer {
-    height: 80vh;
-    margin-top: -250px; /* No top margin */
-    margin-bottom: -500px; /* No bottom margin */
-    background-image: url('/static/img/explainer.svg');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-  }
-</style>
+<section class="mx-auto max-w-5xl px-4 pb-24">
+  <img src="{% static 'img/explainer.svg' %}" alt="" class="mx-auto max-h-[60vh] w-full opacity-90">
+</section>
 {% endblock %}

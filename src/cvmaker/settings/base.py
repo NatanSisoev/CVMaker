@@ -66,8 +66,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    "widget_tweaks",
-    "crispy_forms",
+    "django_cotton",  # Component templates (Phase 4)
     "django_rq",  # Render queue (Phase 3)
 ]
 
@@ -114,7 +113,12 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [BASE_DIR / "templates"],
-        "APP_DIRS": True,
+        # APP_DIRS is deliberately False -- django_cotton needs an explicit
+        # ``loaders`` list, and Django refuses to combine APP_DIRS=True with
+        # an explicit loaders config. We re-add the standard
+        # ``app_directories.Loader`` below to preserve per-app template
+        # discovery (apps/*/templates/).
+        "APP_DIRS": False,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -122,6 +126,23 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+            ],
+            "loaders": [
+                (
+                    "django.template.loaders.cached.Loader",
+                    [
+                        # django-cotton: intercepts <c-component> tags and
+                        # rewrites them into ``{% include %}`` calls
+                        # against templates/cotton/.
+                        "django_cotton.cotton_loader.Loader",
+                        "django.template.loaders.filesystem.Loader",
+                        "django.template.loaders.app_directories.Loader",
+                    ],
+                ),
+            ],
+            "builtins": [
+                # Lets every template use ``<c-...>`` without {% load %}.
+                "django_cotton.templatetags.cotton",
             ],
         },
     },
@@ -250,7 +271,6 @@ DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="CVMaker <noreply@
 # Misc
 # ----------------------------------------------------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-CRISPY_TEMPLATE_PACK = "bootstrap5"  # Phase 4 replaces with cotton
 
 # ----------------------------------------------------------------------
 # Render queue (Phase 3 / ADR-0007)

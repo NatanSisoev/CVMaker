@@ -1,0 +1,15 @@
+{# Badge -- a small inline label.
+
+   Props:
+     variant   "neutral" | "accent" | "danger"   default "neutral"
+   Slot: label text.
+#}
+<c-vars variant="neutral" />
+
+<span class="inline-flex items-center rounded-sm px-2 py-0.5 text-xs font-medium
+  {% if variant == 'accent' %}bg-accent text-accent-ink
+  {% elif variant == 'danger' %}bg-danger text-accent-ink
+  {% else %}bg-surface-2 text-text border border-border
+  {% endif %} {{ attrs.class|default:'' }}" {{ attrs }}>
+  {{ slot }}
+</span>

@@ -1,118 +1,115 @@
 {% extends 'base.html' %}
-{% load static %}
 {% load cv_tags %}
 
 {% block title %}CV Preview - {{ cv.alias }}{% endblock %}
 
 {% block content %}
-<div class="container my-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>{{ cv.alias }} Preview</h1>
-    <div>
-      <a href="{% url 'cv-download' cv.id %}" class="btn btn-outline-secondary btn-sm" target="_blank">
-        <i class="bi bi-download"></i> Download
-      </a>
-      <a href="{% url 'cv-edit' cv.id %}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-pencil"></i> Edit
-      </a>
+<section class="mx-auto max-w-6xl px-4 py-12">
+
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="font-display text-3xl text-text">{{ cv.alias }}</h1>
+    <div class="flex items-center gap-2">
+      <form method="post" action="{% url 'rendering:enqueue' cv_id=cv.id %}" class="inline">
+        {% csrf_token %}
+        <c-button type="submit" variant="primary" size="sm">↓ Render PDF</c-button>
+      </form>
+      <c-button href="{% url 'cv-edit' cv.id %}" variant="secondary" size="sm">✎ Edit</c-button>
     </div>
   </div>
 
-  <div class="row g-4">
-    <!-- Info block -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
     {% if cv.info %}
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100">
-        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Info</h5>
-          <a href="{% url 'cvinfo-detail' cv.info.id %}" class="btn btn-sm btn-light">View</a>
-        </div>
-        <div class="card-body">
-          <p><strong>Name:</strong> {{ cv.info.name }}</p>
-          <p><strong>Email:</strong> {{ cv.info.email }}</p>
-          <p><strong>Phone:</strong> {{ cv.info.phone }}</p>
-        </div>
-      </div>
-    </div>
+      <c-card>
+        <c-slot name="header">
+          <div class="flex items-center justify-between">
+            <span>Info</span>
+            <c-button href="{% url 'cvinfo-detail' cv.info.id %}" variant="ghost" size="sm">View</c-button>
+          </div>
+        </c-slot>
+        <dl class="space-y-1 text-sm text-text-muted">
+          <div><dt class="inline font-medium text-text">Name:</dt> <dd class="inline">{{ cv.info.name }}</dd></div>
+          <div><dt class="inline font-medium text-text">Email:</dt> <dd class="inline">{{ cv.info.email }}</dd></div>
+          <div><dt class="inline font-medium text-text">Phone:</dt> <dd class="inline">{{ cv.info.phone }}</dd></div>
+        </dl>
+      </c-card>
     {% endif %}
 
-    <!-- Design block -->
     {% if cv.design %}
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100">
-        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Design</h5>
-          <a href="{% url 'cvdesign-detail' cv.design.id %}" class="btn btn-sm btn-light">View</a>
-        </div>
-        <div class="card-body">
-          <p><strong>Template:</strong> {{ cv.design.template_name }}</p>
-          <p><strong>Color:</strong> <span style="background-color: {{ cv.design.primary_color }}; padding: 0 10px;">&nbsp;</span> {{ cv.design.primary_color }}</p>
-        </div>
-      </div>
-    </div>
+      <c-card>
+        <c-slot name="header">
+          <div class="flex items-center justify-between">
+            <span>Design</span>
+            <c-button href="{% url 'cvdesign-detail' cv.design.id %}" variant="ghost" size="sm">View</c-button>
+          </div>
+        </c-slot>
+        <dl class="space-y-1 text-sm text-text-muted">
+          <div><dt class="inline font-medium text-text">Template:</dt> <dd class="inline">{{ cv.design.template_name }}</dd></div>
+          <div class="flex items-center gap-2">
+            <dt class="font-medium text-text">Color:</dt>
+            <dd class="flex items-center gap-2">
+              <span class="inline-block h-4 w-4 rounded-sm border border-border" style="background-color: {{ cv.design.primary_color }}"></span>
+              {{ cv.design.primary_color }}
+            </dd>
+          </div>
+        </dl>
+      </c-card>
     {% endif %}
 
-    <!-- Locale block -->
     {% if cv.locale %}
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100">
-        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Locale</h5>
-          <a href="{% url 'cvlocale-detail' cv.locale.id %}" class="btn btn-sm btn-light">View</a>
-        </div>
-        <div class="card-body">
-          <p><strong>Language:</strong> {{ cv.locale.language_code }}</p>
-          <p><strong>Region:</strong> {{ cv.locale.region }}</p>
-        </div>
-      </div>
-    </div>
+      <c-card>
+        <c-slot name="header">
+          <div class="flex items-center justify-between">
+            <span>Locale</span>
+            <c-button href="{% url 'cvlocale-detail' cv.locale.id %}" variant="ghost" size="sm">View</c-button>
+          </div>
+        </c-slot>
+        <dl class="space-y-1 text-sm text-text-muted">
+          <div><dt class="inline font-medium text-text">Language:</dt> <dd class="inline">{{ cv.locale.language_code }}</dd></div>
+          <div><dt class="inline font-medium text-text">Region:</dt> <dd class="inline">{{ cv.locale.region }}</dd></div>
+        </dl>
+      </c-card>
     {% endif %}
 
-    <!-- Settings block -->
     {% if cv.settings %}
-    <div class="col-md-6 col-lg-3">
-      <div class="card h-100">
-        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Settings</h5>
-          <a href="{% url 'cvsettings-detail' cv.settings.id %}" class="btn btn-sm btn-light">View</a>
-        </div>
-        <div class="card-body">
-          <p><strong>Page Size:</strong> {{ cv.settings.page_size }}</p>
-          <p><strong>Margins:</strong> {{ cv.settings.margins }}</p>
-        </div>
-      </div>
-    </div>
+      <c-card>
+        <c-slot name="header">
+          <div class="flex items-center justify-between">
+            <span>Settings</span>
+            <c-button href="{% url 'cvsettings-detail' cv.settings.id %}" variant="ghost" size="sm">View</c-button>
+          </div>
+        </c-slot>
+        <dl class="space-y-1 text-sm text-text-muted">
+          <div><dt class="inline font-medium text-text">Page size:</dt> <dd class="inline">{{ cv.settings.page_size }}</dd></div>
+          <div><dt class="inline font-medium text-text">Margins:</dt> <dd class="inline">{{ cv.settings.margins }}</dd></div>
+        </dl>
+      </c-card>
     {% endif %}
   </div>
 
-  <!-- Sections preview cards below -->
-  <div class="row mt-4">
-    <h3 class="mb-3">Sections</h3>
-    {% if cv.sections.all %}
+  <h2 class="font-display text-2xl text-text mt-12 mb-4">Sections</h2>
+  {% if cv.sections.all %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       {% for section in cv.sections.all %}
-        <div class="col-md-4 mb-3">
-          <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <h5 class="mb-0">{{ section.title }}</h5>
-              <div class="btn-group btn-group-sm">
-                <a href="{% url 'section-edit' section.id %}" class="btn btn-outline-secondary" title="Edit">
-                  <i class="bi bi-pencil"></i>
-                </a>
-                <a href="{% url 'section-detail' section.id %}" class="btn btn-outline-primary" title="View">
-                  <i class="bi bi-eye"></i>
-                </a>
+        <c-card>
+          <c-slot name="header">
+            <div class="flex items-center justify-between">
+              <span>{{ section.title }}</span>
+              <div class="flex items-center gap-1">
+                <c-icon-button label="Edit" size="sm" href="{% url 'section-edit' section.id %}">✎</c-icon-button>
+                <c-icon-button label="View" size="sm" href="{% url 'section-detail' section.id %}">👁</c-icon-button>
               </div>
             </div>
-            <div class="card-body">
-              <p><strong>Alias:</strong> {{ section.alias }}</p>
-              <p><strong>Entries:</strong> {{ section.section_entries.count }}</p>
-            </div>
-          </div>
-        </div>
+          </c-slot>
+          <dl class="space-y-1 text-sm text-text-muted">
+            <div><dt class="inline font-medium text-text">Alias:</dt> <dd class="inline">{{ section.alias }}</dd></div>
+            <div><dt class="inline font-medium text-text">Entries:</dt> <dd class="inline">{{ section.section_entries.count }}</dd></div>
+          </dl>
+        </c-card>
       {% endfor %}
-    {% else %}
-      <p>No sections added.</p>
-    {% endif %}
-  </div>
-</div>
+    </div>
+  {% else %}
+    <p class="text-text-muted">No sections added.</p>
+  {% endif %}
+
+</section>
 {% endblock %}
