@@ -116,3 +116,6 @@
   .cv-form input[type="file"] { @apply text-sm text-text-muted; }
   .cv-form ul { @apply list-none p-0; }
 }
+
+/* Alpine: hide x-cloak'd elements until Alpine initialises them. */
+[x-cloak] { display: none !important; }

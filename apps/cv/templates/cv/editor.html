@@ -67,12 +67,28 @@
               <ul class="flex flex-col gap-1 text-sm"
                   x-sortable="{% url 'section-reorder-entries' section_id=section.id %}">
                 {% for section_entry in section.section_entries.all %}
-                  <li data-id="{{ section_entry.entry_id }}" class="flex items-center gap-1">
-                    <button type="button" data-drag-handle
-                            class="cursor-grab px-1 text-text-muted hover:text-text"
-                            aria-label="Drag to reorder {{ section_entry.entry.alias }}">⠿</button>
-                    <a class="block flex-1 rounded-sm px-2 py-1 text-text hover:bg-surface-2 focus-visible:shadow-focus focus:outline-none"
-                       href="{% url 'entry-detail' entry_id=section_entry.entry_id %}">{{ section_entry.entry.alias }}</a>
+                  <li data-id="{{ section_entry.entry_id }}" x-data="{ open: false }">
+                    <div class="flex items-center gap-1">
+                      <button type="button" data-drag-handle
+                              class="cursor-grab px-1 text-text-muted hover:text-text"
+                              aria-label="Drag to reorder {{ section_entry.entry.alias }}">⠿</button>
+                      <button type="button"
+                              class="flex flex-1 items-center justify-between rounded-sm px-2 py-1 text-left text-text hover:bg-surface-2 focus-visible:shadow-focus focus:outline-none"
+                              x-on:click="open = !open"
+                              :aria-expanded="open"
+                              aria-controls="inline-slot-{{ section_entry.entry_id }}">
+                        <span>{{ section_entry.entry.alias }}</span>
+                        <span class="text-text-muted" x-text="open ? '▾' : '▸'" aria-hidden="true">▸</span>
+                      </button>
+                    </div>
+                    {# Loaded the first time it is opened (intersect fires once it becomes visible). #}
+                    <div id="inline-slot-{{ section_entry.entry_id }}" x-show="open" x-cloak>
+                      <div hx-get="{% url 'entry-inline' entry_id=section_entry.entry_id %}"
+                           hx-trigger="intersect once"
+                           hx-swap="outerHTML">
+                        <p class="px-2 py-1 text-sm text-text-muted">Loading…</p>
+                      </div>
+                    </div>
                   </li>
                 {% empty %}
                   <li class="px-2 py-1 text-text-muted">No entries yet.</li>

@@ -1,0 +1,13 @@
+{# Inline entry editor (HTMX fragment). Swapped in place by the Editor screen. #}
+<div id="inline-entry-{{ entry.id }}" class="cv-form mt-2 rounded-sm border border-border bg-surface-2 p-3">
+  <form hx-post="{% url 'entry-inline' entry_id=entry.id %}"
+        hx-target="#inline-entry-{{ entry.id }}"
+        hx-swap="outerHTML"
+        hx-disabled-elt="find button[type=submit]">
+    {% include 'includes/form_fields.html' %}
+    <div class="mt-4 flex items-center gap-2">
+      <c-button type="submit" variant="primary" size="sm">Save</c-button>
+      <c-button href="{% url 'entry-edit' entry_id=entry.id %}" variant="ghost" size="sm">Full page</c-button>
+    </div>
+  </form>
+</div>

@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
@@ -129,6 +131,37 @@ class EntryUpdateView(EntryBaseView, UpdateView):
         context["entry"] = entry  # Add the entry object to context
         context["entry_type"] = entry.__class__.__name__  # Set entry type
         return context
+
+
+class EntryInlineEditView(EntryBaseView, View):
+    """HTMX fragment: the entry's form, edited in place inside the Editor.
+
+    GET returns the form; POST saves it. Invalid input re-renders the form with
+    errors at 200 (HTMX doesn't swap 4xx bodies by default). A successful save
+    re-renders the form and fires a toast via the ``HX-Trigger`` header.
+    """
+
+    template_name = "entries/_inline_form.html"
+
+    def _render(self, request, entry, form, saved=False):
+        response = render(request, self.template_name, {"entry": entry, "form": form})
+        if saved:
+            response["HX-Trigger"] = json.dumps(
+                {"toast": {"message": f"Saved {entry.alias}.", "variant": "success"}}
+            )
+        return response
+
+    def get(self, request, entry_id):
+        entry = self.get_object()
+        return self._render(request, entry, ENTRY_FORMS[entry.type](instance=entry))
+
+    def post(self, request, entry_id):
+        entry = self.get_object()
+        form = ENTRY_FORMS[entry.type](request.POST, instance=entry)
+        if not form.is_valid():
+            return self._render(request, entry, form)
+        entry = form.save()
+        return self._render(request, entry, ENTRY_FORMS[entry.type](instance=entry), saved=True)
 
 
 ################################################# DELETE ###############################################################
