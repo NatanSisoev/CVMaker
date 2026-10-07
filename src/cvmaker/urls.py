@@ -16,6 +16,7 @@ from django.shortcuts import render
 from django.urls import URLPattern, URLResolver, include, path
 from django.views.generic import TemplateView
 
+from core.views import palette_view
 from cv.views import HomePageView
 
 
@@ -44,6 +45,7 @@ def _placeholder(page_title: str, page_description: str | None = None):
 urlpatterns: list[URLPattern | URLResolver] = [
     path("", HomePageView.as_view(), name="homepage"),
     path("admin/", admin.site.urls),
+    path("palette/", palette_view, name="palette"),
     # Domain apps
     path("cv/", include("cv.urls")),
     path("section/", include("sections.urls")),

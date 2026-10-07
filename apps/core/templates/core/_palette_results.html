@@ -1,0 +1,14 @@
+{# Command-palette results (HTMX fragment). Options are links; the palette's
+   Alpine component moves aria-selected between them. #}
+{% for title, items in groups %}
+  <li role="presentation" class="px-3 pb-1 pt-3 text-xs font-medium uppercase tracking-wide text-text-muted">{{ title }}</li>
+  {% for item in items %}
+    <li role="option" aria-selected="false" data-url="{{ item.url }}"
+        class="mx-1 flex cursor-pointer items-center justify-between rounded-sm px-3 py-2 text-sm text-text aria-selected:bg-surface-2">
+      <span>{{ item.label }}</span>
+      {% if item.hint %}<span class="text-xs text-text-muted">{{ item.hint }}</span>{% endif %}
+    </li>
+  {% endfor %}
+{% empty %}
+  <li role="presentation" class="px-3 py-6 text-center text-sm text-text-muted">No matches for “{{ q }}”.</li>
+{% endfor %}

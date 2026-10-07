@@ -96,6 +96,61 @@ Alpine.directive('sortable', (el, { expression }) => {
   });
 });
 
+// Command palette (templates/cotton/command_palette.html). Results are an
+// HTMX fragment of [role=option] items carrying data-url; this component
+// only tracks the open state and which option is active.
+Alpine.data('palette', () => ({
+  open: false,
+  active: -1,
+  activeId: null,
+  init() {
+    this.$el.addEventListener('htmx:afterSwap', () => this.reset());
+  },
+  options() {
+    return [...this.$refs.results.querySelectorAll('[role=option]')];
+  },
+  hotkey(evt) {
+    if ((evt.metaKey || evt.ctrlKey) && evt.key.toLowerCase() === 'k') {
+      evt.preventDefault();
+      this.open ? this.hide() : this.show();
+    }
+  },
+  show() {
+    this.open = true;
+    this.$nextTick(() => {
+      this.$refs.input.value = '';
+      this.$refs.input.focus();
+      this.$refs.input.dispatchEvent(new Event('palette-open'));
+    });
+  },
+  hide() {
+    this.open = false;
+  },
+  reset() {
+    this.options().forEach((opt, i) => { opt.id = `palette-opt-${i}`; });
+    this.select(this.options().length ? 0 : -1);
+  },
+  select(index) {
+    const opts = this.options();
+    opts.forEach((opt, i) => opt.setAttribute('aria-selected', String(i === index)));
+    this.active = index;
+    this.activeId = index >= 0 ? opts[index].id : null;
+    if (index >= 0) opts[index].scrollIntoView({ block: 'nearest' });
+  },
+  move(delta) {
+    const count = this.options().length;
+    if (count) this.select((this.active + delta + count) % count);
+  },
+  go() {
+    const opt = this.options()[this.active];
+    if (opt) window.location.assign(opt.dataset.url);
+  },
+  pick(evt) {
+    const opt = evt.target.closest('[role=option]');
+    if (opt) window.location.assign(opt.dataset.url);
+  },
+}));
+
 Alpine.start();
 
 // Replay server-side Django messages (see base.html) as toasts.

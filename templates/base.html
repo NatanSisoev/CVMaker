@@ -20,6 +20,7 @@
     </main>
     <c-footer />
     <c-toast />
+    {% if user.is_authenticated %}<c-command-palette />{% endif %}
     {# Django messages, replayed as toasts by app.js once Alpine is up. #}
     {% if messages %}
       <template id="flash">{% for message in messages %}<span data-level="{{ message.tags }}">{{ message }}</span>{% endfor %}</template>

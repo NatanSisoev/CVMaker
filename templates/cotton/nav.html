@@ -24,6 +24,11 @@
         <span class="hidden dark:block">☀</span>
       </button>
       {% if user.is_authenticated %}
+        <button type="button" x-data x-on:click="$dispatch('open-palette')"
+                class="hidden items-center gap-2 rounded-md border border-border px-2 py-1 text-xs text-text-muted hover:text-text focus:outline-none focus-visible:shadow-focus md:inline-flex"
+                aria-label="Open command palette (Ctrl+K)">
+          Search <kbd class="font-mono">Ctrl K</kbd>
+        </button>
         <c-button href="{% url 'cv-list' %}" variant="ghost" size="sm">My CVs</c-button>
         <c-button href="{% url 'profile' %}" variant="ghost" size="sm">Settings</c-button>
         <form method="post" action="{% url 'logout' %}" class="inline">
