@@ -49,34 +49,46 @@
 
     {# Left: outline of sections and entries #}
     <aside class="w-full overflow-y-auto md:max-h-[calc(100vh-12rem)] md:w-[var(--w)] md:pr-3"
-           aria-label="CV outline">
-      {% for section in sections %}
-        <c-card class="mb-3">
-          <c-slot name="header">
-            <div class="flex items-center justify-between">
-              <span>{{ section.title }}</span>
-              <c-icon-button label="Edit section" size="sm" href="{% url 'section-edit' section.id %}">✎</c-icon-button>
-            </div>
-          </c-slot>
-          <ul class="flex flex-col gap-1 text-sm">
-            {% for section_entry in section.section_entries.all %}
-              <li>
-                <a class="block rounded-sm px-2 py-1 text-text hover:bg-surface-2 focus-visible:shadow-focus focus:outline-none"
-                   href="{% url 'entry-detail' entry_id=section_entry.entry_id %}">{{ section_entry.entry.alias }}</a>
-              </li>
-            {% empty %}
-              <li class="px-2 py-1 text-text-muted">No entries yet.</li>
-            {% endfor %}
-          </ul>
-        </c-card>
-      {% empty %}
+           aria-label="CV outline"
+           x-on:sortable-saved="$dispatch('toast', { message: 'Order saved. Render again to update the preview.', variant: 'success' })">
+      {% if sections %}
+        <div class="flex flex-col gap-3" x-sortable="{% url 'cv-reorder-sections' cv_id=cv.id %}">
+          {% for section in sections %}
+            <c-card data-id="{{ section.id }}">
+              <c-slot name="header">
+                <div class="flex items-center gap-2">
+                  <button type="button" data-drag-handle
+                          class="cursor-grab px-1 text-text-muted hover:text-text"
+                          aria-label="Drag to reorder section {{ section.title }}">⠿</button>
+                  <span class="mr-auto">{{ section.title }}</span>
+                  <c-icon-button label="Edit section" size="sm" href="{% url 'section-edit' section.id %}">✎</c-icon-button>
+                </div>
+              </c-slot>
+              <ul class="flex flex-col gap-1 text-sm"
+                  x-sortable="{% url 'section-reorder-entries' section_id=section.id %}">
+                {% for section_entry in section.section_entries.all %}
+                  <li data-id="{{ section_entry.entry_id }}" class="flex items-center gap-1">
+                    <button type="button" data-drag-handle
+                            class="cursor-grab px-1 text-text-muted hover:text-text"
+                            aria-label="Drag to reorder {{ section_entry.entry.alias }}">⠿</button>
+                    <a class="block flex-1 rounded-sm px-2 py-1 text-text hover:bg-surface-2 focus-visible:shadow-focus focus:outline-none"
+                       href="{% url 'entry-detail' entry_id=section_entry.entry_id %}">{{ section_entry.entry.alias }}</a>
+                  </li>
+                {% empty %}
+                  <li class="px-2 py-1 text-text-muted">No entries yet.</li>
+                {% endfor %}
+              </ul>
+            </c-card>
+          {% endfor %}
+        </div>
+      {% else %}
         <c-card>
           <p class="text-text-muted">
             This CV has no sections yet.
             <a class="text-accent underline" href="{% url 'cv-edit' cv.id %}">Add some</a>.
           </p>
         </c-card>
-      {% endfor %}
+      {% endif %}
     </aside>
 
     {# Drag handle: pointer-draggable, keyboard-resizable with arrow keys #}

@@ -14,8 +14,10 @@
 
 import 'htmx.org';
 import Alpine from 'alpinejs';
+import Sortable from 'sortablejs';
 
 window.Alpine = Alpine;
+window.Sortable = Sortable;
 
 // CSRF: every HTMX request that mutates state needs Django's CSRF token.
 // Cookie name matches Django's CSRF_COOKIE_NAME default.
@@ -58,5 +60,40 @@ window.toggleTheme = () => {
   localStorage.setItem(THEME_KEY, next);
   applyTheme(next);
 };
+
+// x-sortable="<url>": drag-reorder the element's [data-id] children by
+// their [data-drag-handle], then POST the new order as repeated `ids`.
+// On failure the DOM is put back and an error toast is shown.
+Alpine.directive('sortable', (el, { expression }) => {
+  const ids = () => [...el.children].map((child) => child.dataset.id).filter(Boolean);
+  let before = [];
+  Sortable.create(el, {
+    animation: 150,
+    handle: '[data-drag-handle]',
+    onStart: () => { before = ids(); },
+    onEnd: async (evt) => {
+      if (evt.oldIndex === evt.newIndex) return;
+      const body = new URLSearchParams(ids().map((id) => ['ids', id]));
+      let ok = false;
+      try {
+        const res = await fetch(expression, {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrfToken() },
+          body,
+        });
+        ok = res.ok;
+      } catch (_) { /* network error -> revert below */ }
+      if (ok) {
+        el.dispatchEvent(new CustomEvent('sortable-saved', { bubbles: true }));
+        return;
+      }
+      const byId = Object.fromEntries([...el.children].map((c) => [c.dataset.id, c]));
+      before.forEach((id) => byId[id] && el.appendChild(byId[id]));
+      window.dispatchEvent(new CustomEvent('toast', {
+        detail: { message: 'Could not save the new order. Please try again.', variant: 'error' },
+      }));
+    },
+  });
+});
 
 Alpine.start();

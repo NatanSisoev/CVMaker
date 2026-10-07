@@ -57,8 +57,9 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
+// Sortable ships in the deferred app.js bundle, which runs before DOMContentLoaded.
+document.addEventListener("DOMContentLoaded", () => {
   const sortableList = document.getElementById("section-sortable");
   const orderInput = document.getElementById("section-order");
 
@@ -76,10 +77,11 @@
       onEnd: updateOrderField
     });
 
-    document.addEventListener("DOMContentLoaded", updateOrderField);
+    updateOrderField();
     document.querySelectorAll("#section-sortable input[type='checkbox']").forEach(input => {
       input.addEventListener("change", updateOrderField);
     });
   }
+});
 </script>
 {% endblock %}
