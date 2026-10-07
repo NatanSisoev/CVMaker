@@ -15,12 +15,46 @@ from .models import (
     TextEntry,
 )
 
+LANGUAGE_CODE_RE = re.compile(r"^[a-z]{2}$")
 
-class EducationEntryForm(forms.ModelForm):
+
+class _EntryForm(forms.ModelForm):
+    """Shared behaviour for every entry form: the entry's original language.
+
+    Blank keeps the current value (``en`` for new entries), so posts that omit
+    the field don't reset it. Switching to a language that already has a
+    translation is refused: ``get_field`` would start ignoring that translation.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        field = self.fields["canonical_language"]
+        field.required = False
+        field.label = "Original language"
+        field.help_text = "2-letter ISO 639-1 code the fields below are written in, e.g. en, es."
+        field.widget.attrs.update({"maxlength": 2, "placeholder": "en", "autocomplete": "off"})
+
+    def clean_canonical_language(self):
+        code = (self.cleaned_data.get("canonical_language") or "").strip().lower()
+        if not code:
+            return self.instance.canonical_language or "en"
+        if not LANGUAGE_CODE_RE.match(code):
+            raise forms.ValidationError("Use a 2-letter ISO 639-1 code, e.g. en or es.")
+        if code != self.instance.canonical_language and code in (self.instance.translations or {}):
+            raise forms.ValidationError(
+                "This entry already has a %(code)s translation. Remove it first, "
+                "or the translation would stop being used.",
+                params={"code": code.upper()},
+            )
+        return code
+
+
+class EducationEntryForm(_EntryForm):
     class Meta:
         model = EducationEntry
         fields = [
             "alias",
+            "canonical_language",
             "institution",
             "area",
             "degree",
@@ -38,11 +72,12 @@ class EducationEntryForm(forms.ModelForm):
         }
 
 
-class ExperienceEntryForm(forms.ModelForm):
+class ExperienceEntryForm(_EntryForm):
     class Meta:
         model = ExperienceEntry
         fields = [
             "alias",
+            "canonical_language",
             "company",
             "position",
             "location",
@@ -59,11 +94,12 @@ class ExperienceEntryForm(forms.ModelForm):
         }
 
 
-class PublicationEntryForm(forms.ModelForm):
+class PublicationEntryForm(_EntryForm):
     class Meta:
         model = PublicationEntry
         fields = [
             "alias",
+            "canonical_language",
             "title",
             "authors",
             "doi",
@@ -76,11 +112,12 @@ class PublicationEntryForm(forms.ModelForm):
         }
 
 
-class NormalEntryForm(forms.ModelForm):
+class NormalEntryForm(_EntryForm):
     class Meta:
         model = NormalEntry
         fields = [
             "alias",
+            "canonical_language",
             "name",
             "location",
             "start_date",
@@ -96,37 +133,34 @@ class NormalEntryForm(forms.ModelForm):
         }
 
 
-class OneLineEntryForm(forms.ModelForm):
+class OneLineEntryForm(_EntryForm):
     class Meta:
         model = OneLineEntry
-        fields = ["alias", "label", "details"]
+        fields = ["alias", "canonical_language", "label", "details"]
 
 
-class BulletEntryForm(forms.ModelForm):
+class BulletEntryForm(_EntryForm):
     class Meta:
         model = BulletEntry
-        fields = ["alias", "bullet"]
+        fields = ["alias", "canonical_language", "bullet"]
 
 
-class NumberedEntryForm(forms.ModelForm):
+class NumberedEntryForm(_EntryForm):
     class Meta:
         model = NumberedEntry
-        fields = ["alias", "number"]
+        fields = ["alias", "canonical_language", "number"]
 
 
-class ReversedNumberedEntryForm(forms.ModelForm):
+class ReversedNumberedEntryForm(_EntryForm):
     class Meta:
         model = ReversedNumberedEntry
-        fields = ["alias", "reversed_number"]
+        fields = ["alias", "canonical_language", "reversed_number"]
 
 
-class TextEntryForm(forms.ModelForm):
+class TextEntryForm(_EntryForm):
     class Meta:
         model = TextEntry
-        fields = ["alias", "text"]
-
-
-LANGUAGE_CODE_RE = re.compile(r"^[a-z]{2}$")
+        fields = ["alias", "canonical_language", "text"]
 
 
 class TranslationForm(forms.Form):
