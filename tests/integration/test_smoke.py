@@ -207,3 +207,37 @@ def test_cv_update_saves_fields_and_section_order(client, user, cv, other_user):
 def test_cv_edit_is_owner_only(client, cv, other_user):
     client.force_login(other_user)
     assert client.get(reverse("cv-edit", args=[cv.id])).status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Editor screen
+# ---------------------------------------------------------------------------
+def test_editor_renders_outline_and_switchers(client, user, cv):
+    from sections.models import CVSection, SectionEntry
+    from tests.factories import EducationEntryFactory, SectionFactory
+
+    section = SectionFactory(user=user, title="Schooling")
+    entry = EducationEntryFactory(user=user, alias="my-degree", translations={"es": {}})
+    SectionEntry.objects.create(section=section, entry=entry, order=1)
+    CVSection.objects.create(cv=cv, section=section, order=1)
+
+    client.force_login(user)
+    resp = client.get(reverse("cv-editor", args=[cv.id]))
+
+    assert resp.status_code == 200
+    body = resp.content.decode()
+    assert "Schooling" in body and "my-degree" in body
+    assert 'value="es"' in body and 'value="en"' in body  # translation + canonical
+    assert 'value="moderncv"' in body
+    assert 'value="custom"' not in body
+    assert 'role="separator"' in body
+
+
+def test_editor_is_owner_only(client, cv, other_user):
+    client.force_login(other_user)
+    assert client.get(reverse("cv-editor", args=[cv.id])).status_code == 404
+
+
+def test_editor_requires_login(client, cv):
+    resp = client.get(reverse("cv-editor", args=[cv.id]))
+    assert resp.status_code == 302 and "login" in resp.url

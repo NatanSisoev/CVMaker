@@ -127,3 +127,25 @@ def _copy_or_none(instance, model_class):
     fresh._state.adding = True
     fresh.save()
     return fresh
+
+
+def available_languages(cv: CV) -> list[str]:
+    """ISO 639-1 codes the CV can be rendered in, active locale first.
+
+    Union of the locale's language, every entry's canonical language, and every
+    translation key on the entries in the CV's sections. Entries missing a
+    translation fall back to canonical at render time (ADR-0006), so every code
+    listed is renderable, just not necessarily fully translated.
+    """
+    from entries.models import BaseEntry
+
+    found: set[str] = set()
+    entries = BaseEntry.objects.filter(section_entries__section__cvsection__cv=cv).distinct()
+    for entry in entries:
+        found.add(entry.canonical_language)
+        found.update(entry.translations or {})
+
+    active = cv.locale.language if cv.locale_id else None
+    if active:
+        found.add(active)
+    return sorted(found, key=lambda code: (code != active, code))

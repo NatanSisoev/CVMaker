@@ -28,7 +28,7 @@
               <span class="font-medium text-text">{{ cv.alias }}</span>
               <div class="flex items-center gap-1">
                 <c-icon-button label="View" href="{% url 'cv-detail' cv.id %}">👁</c-icon-button>
-                <c-icon-button label="Edit" href="{% url 'cv-edit' cv.id %}">✎</c-icon-button>
+                <c-icon-button label="Open editor" href="{% url 'cv-editor' cv.id %}">✎</c-icon-button>
                 <form method="post" action="{% url 'rendering:enqueue' cv_id=cv.id %}" class="inline">
                   {% csrf_token %}
                   <c-icon-button type="submit" label="Render PDF" variant="primary">↓</c-icon-button>

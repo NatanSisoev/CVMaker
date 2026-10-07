@@ -6,7 +6,7 @@
 #}
 <div id="render-status-{{ render.id }}"
      class="rounded-md border border-border bg-surface-2 p-3 text-sm"
-     {% if not render.is_terminal %}hx-get="{% url 'rendering:status' render_id=render.id %}"
+     {% if not render.is_terminal %}hx-get="{% url 'rendering:status' render_id=render.id %}{% if preview %}?preview=1{% endif %}"
      hx-trigger="every 500ms"
      hx-swap="outerHTML"{% endif %}>
 
@@ -32,6 +32,11 @@
         Download PDF
       </c-button>
     </div>
+    {% if preview %}
+      <iframe src="{% url 'rendering:pdf' render_id=render.id %}#toolbar=0"
+              title="PDF preview"
+              class="mt-3 h-[calc(100vh-16rem)] w-full rounded-sm border border-border bg-white"></iframe>
+    {% endif %}
 
   {% elif render.status == 'failed' %}
     <div class="flex flex-col gap-2">
@@ -45,6 +50,7 @@
         {% csrf_token %}
         <input type="hidden" name="language" value="{{ render.language }}">
         <input type="hidden" name="style" value="{{ render.style }}">
+        {% if preview %}<input type="hidden" name="preview" value="1">{% endif %}
         <c-button type="submit" variant="secondary" size="sm">Retry</c-button>
       </form>
     </div>

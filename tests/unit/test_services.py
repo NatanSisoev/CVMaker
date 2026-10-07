@@ -209,3 +209,23 @@ class TestImportSectionsFromDataModel:
         assert len(section_entries) == 1
         bullet = section_entries[0].real_entry
         assert bullet.bullet == "Imported bullet."
+
+
+class TestSectionFormEntryKinds:
+    def _form(self, user, ids):
+        from sections.forms import SectionForm
+
+        return SectionForm(
+            data={"title": "T", "alias": "t", "entries": [str(i) for i in ids]}, user=user
+        )
+
+    def test_mixed_kinds_rejected(self, user, education_entry, experience_entry):
+        form = self._form(user, [education_entry.id, experience_entry.id])
+        assert not form.is_valid()
+        assert "only one kind" in form.errors["entries"][0]
+
+    def test_single_kind_accepted(self, user, education_entry):
+        assert self._form(user, [education_entry.id]).is_valid()
+
+    def test_empty_accepted(self, user):
+        assert self._form(user, []).is_valid()

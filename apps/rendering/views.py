@@ -51,18 +51,23 @@ def enqueue_render_view(request, cv_id):
         requested_by=request.user,
     )
 
-    # Cache hit -- the PDF already exists. Redirect straight to it; no
-    # polling round-trip required.
-    if render_row.status == RenderStatus.DONE and render_row.pdf_file:
+    preview = bool(request.POST.get("preview"))
+    is_htmx = request.headers.get("HX-Request") == "true"
+    cache_hit = render_row.status == RenderStatus.DONE and bool(render_row.pdf_file)
+
+    # Cache hit from a plain form post -- redirect straight to the PDF.
+    # (HTMX would follow the redirect and swap raw PDF bytes into the page,
+    # so HTMX callers get the fragment instead.)
+    if cache_hit and not is_htmx:
         return redirect("rendering:pdf", render_id=render_row.id)
 
-    # Cache miss -- return the polling fragment with 202 Accepted.
     response = render(
         request,
         "rendering/_status.html",
-        {"render": render_row},
+        {"render": render_row, "preview": preview},
     )
-    response.status_code = 202
+    # Cache miss -> 202 Accepted + polling fragment; HTMX cache hit -> 200.
+    response.status_code = 200 if cache_hit else 202
     return response
 
 
@@ -73,7 +78,11 @@ def enqueue_render_view(request, cv_id):
 @require_GET
 def render_status_view(request, render_id):
     render_row = _get_owned_render(request.user, render_id)
-    return render(request, "rendering/_status.html", {"render": render_row})
+    return render(
+        request,
+        "rendering/_status.html",
+        {"render": render_row, "preview": bool(request.GET.get("preview"))},
+    )
 
 
 # ---------------------------------------------------------------------------

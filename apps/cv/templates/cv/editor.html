@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Editor - {{ cv.alias }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-[96rem] px-4 py-4"
+     x-data="{
+       pct: 38,
+       drag: false,
+       move(e) {
+         const r = $refs.wrap.getBoundingClientRect();
+         this.pct = Math.min(70, Math.max(25, ((e.clientX - r.left) / r.width) * 100));
+       },
+     }"
+     x-on:pointermove.window="drag && move($event)"
+     x-on:pointerup.window="drag = false">
+
+  {# Top bar: title, language + style switchers, render #}
+  <form class="mb-4 flex flex-wrap items-end gap-3"
+        hx-post="{% url 'rendering:enqueue' cv_id=cv.id %}"
+        hx-target="#preview"
+        hx-swap="innerHTML"
+        hx-disabled-elt="find button[type=submit]">
+    <input type="hidden" name="preview" value="1">
+    <h1 class="mr-auto font-display text-2xl text-text">{{ cv.alias }}</h1>
+
+    <c-select name="language" label="Language" id="editor-language">
+      {% for code in languages %}
+        <option value="{{ code }}"{% if forloop.first %} selected{% endif %}>{{ code|upper }}</option>
+      {% empty %}
+        <option value="">Default</option>
+      {% endfor %}
+    </c-select>
+
+    <c-select name="style" label="Style" id="editor-style">
+      {% for value, label in styles %}
+        <option value="{{ value }}"{% if value == current_style %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </c-select>
+
+    <c-button type="submit" variant="primary">Render preview</c-button>
+    <c-button href="{% url 'cv-edit' cv.id %}" variant="secondary">CV settings</c-button>
+  </form>
+
+  <div x-ref="wrap"
+       class="flex min-h-[32rem] flex-col gap-4 md:flex-row md:gap-0"
+       :style="{ '--w': pct + '%' }"
+       :class="drag && 'select-none'">
+
+    {# Left: outline of sections and entries #}
+    <aside class="w-full overflow-y-auto md:max-h-[calc(100vh-12rem)] md:w-[var(--w)] md:pr-3"
+           aria-label="CV outline">
+      {% for section in sections %}
+        <c-card class="mb-3">
+          <c-slot name="header">
+            <div class="flex items-center justify-between">
+              <span>{{ section.title }}</span>
+              <c-icon-button label="Edit section" size="sm" href="{% url 'section-edit' section.id %}">✎</c-icon-button>
+            </div>
+          </c-slot>
+          <ul class="flex flex-col gap-1 text-sm">
+            {% for section_entry in section.section_entries.all %}
+              <li>
+                <a class="block rounded-sm px-2 py-1 text-text hover:bg-surface-2 focus-visible:shadow-focus focus:outline-none"
+                   href="{% url 'entry-detail' entry_id=section_entry.entry_id %}">{{ section_entry.entry.alias }}</a>
+              </li>
+            {% empty %}
+              <li class="px-2 py-1 text-text-muted">No entries yet.</li>
+            {% endfor %}
+          </ul>
+        </c-card>
+      {% empty %}
+        <c-card>
+          <p class="text-text-muted">
+            This CV has no sections yet.
+            <a class="text-accent underline" href="{% url 'cv-edit' cv.id %}">Add some</a>.
+          </p>
+        </c-card>
+      {% endfor %}
+    </aside>
+
+    {# Drag handle: pointer-draggable, keyboard-resizable with arrow keys #}
+    <div class="hidden w-2 shrink-0 cursor-col-resize items-stretch justify-center md:flex"
+         role="separator" aria-orientation="vertical" aria-label="Resize panes"
+         :aria-valuenow="Math.round(pct)" aria-valuemin="25" aria-valuemax="70"
+         tabindex="0"
+         x-on:pointerdown.prevent="drag = true"
+         x-on:keydown.left.prevent="pct = Math.max(25, pct - 2)"
+         x-on:keydown.right.prevent="pct = Math.min(70, pct + 2)">
+      <div class="w-px bg-border" :class="drag && 'bg-accent'"></div>
+    </div>
+
+    {# Right: live preview #}
+    <section class="min-w-0 flex-1 md:pl-3" aria-label="PDF preview">
+      <div id="preview" aria-live="polite">
+        <div class="rounded-md border border-dashed border-border p-12 text-center text-text-muted">
+          Pick a language and style, then press <strong class="text-text">Render preview</strong>.
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

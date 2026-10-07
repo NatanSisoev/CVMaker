@@ -77,6 +77,23 @@ class SectionForm(forms.ModelForm):
             current_ids = self.instance.section_entries.values_list("entry_id", flat=True)
             self.fields["entries"].initial = [str(eid) for eid in current_ids]
 
+    def clean_entries(self):
+        """rendercv needs one entry type per section; reject mixes up front."""
+        from entries.models import BaseEntry
+
+        ids = self.cleaned_data.get("entries", [])
+        kinds = {
+            type(entry).__name__.replace("Entry", "")
+            for entry in BaseEntry.objects.filter(pk__in=ids).select_subclasses()
+        }
+        if len(kinds) > 1:
+            raise forms.ValidationError(
+                "A section can hold only one kind of entry (found %(kinds)s). "
+                "Create a separate section for each kind.",
+                params={"kinds": ", ".join(sorted(kinds))},
+            )
+        return ids
+
     def save(self, commit=True):
         section = super().save(commit=False)
         section.user = self.user

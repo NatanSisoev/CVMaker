@@ -13,7 +13,7 @@
         {% csrf_token %}
         <c-button type="submit" variant="primary" size="sm">↓ Render PDF</c-button>
       </form>
-      <c-button href="{% url 'cv-edit' cv.id %}" variant="secondary" size="sm">✎ Edit</c-button>
+      <c-button href="{% url 'cv-editor' cv.id %}" variant="secondary" size="sm">✎ Open editor</c-button>
     </div>
   </div>
 

@@ -15,6 +15,7 @@ from sections.services import import_sections_from_data_model
 
 from .forms import CVDesignForm, CVForm, CVInfoForm, CVLocaleForm, CVSettingsForm
 from .models import CV, CVDesign, CVInfo, CVLocale, CVSettings
+from .services import available_languages
 
 ################################################## HOME ################################################################
 
@@ -189,6 +190,32 @@ class CVUpdateView(LoginRequiredMixin, _SectionOrderMixin, UpdateView):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
+
+
+class CVEditorView(LoginRequiredMixin, DetailView):
+    """Split-pane editor: outline on the left, live PDF preview on the right."""
+
+    model = CV
+    template_name = "cv/editor.html"
+    context_object_name = "cv"
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            CV.objects.select_related("info", "locale", "design"),
+            pk=self.kwargs["cv_id"],
+            user=self.request.user,
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cv = self.object
+        context["languages"] = available_languages(cv)
+        context["styles"] = [c for c in CVDesign.THEME_CHOICES if c[0] != "custom"]
+        context["current_style"] = cv.design.theme if cv.design_id else "classic"
+        context["sections"] = cv.sections.prefetch_related("section_entries__entry").order_by(
+            "cvsection__order"
+        )
+        return context
 
 
 ################################################# DELETE ###############################################################

@@ -12,6 +12,7 @@ import pytest
 from django.urls import reverse
 
 from rendering import services as rendering_services
+from rendering import views as rendering_views
 from rendering.models import RenderStatus
 from rendering.services import enqueue_render
 from tests.factories import CVFactory, UserFactory
@@ -21,8 +22,7 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture(autouse=True)
 def _no_dispatch(monkeypatch):
-    """Same stub used by the unit tests -- keep enqueue from sync-running
-    the not-yet-wired _render_payload_to_pdf."""
+    """Keep enqueue from dispatching to Redis; the worker isn't under test here."""
     monkeypatch.setattr(rendering_services, "_dispatch_render_job", lambda render: None)
 
 
@@ -175,3 +175,53 @@ class TestPdfView:
         # FileResponse iterates the file in chunks.
         body = b"".join(resp.streaming_content)
         assert body == b"%PDF-1.4 fake"
+
+
+# ---------------------------------------------------------------------------
+# Editor preview mode (HTMX)
+# ---------------------------------------------------------------------------
+class TestPreviewMode:
+    def _done_render(self, cv):
+        from rendering.models import Render, RenderStatus
+
+        return Render.objects.create(
+            cv=cv, language="en", style="classic", payload_hash="h", status=RenderStatus.DONE
+        )
+
+    def test_htmx_cache_hit_returns_fragment_not_redirect(self, client, cv, monkeypatch):
+        render_row = self._done_render(cv)
+        render_row.pdf_file.name = "renders/x.pdf"
+        render_row.save()
+        monkeypatch.setattr(rendering_views, "enqueue_render", lambda *a, **k: render_row)
+
+        client.force_login(cv.user)
+        resp = client.post(
+            reverse("rendering:enqueue", kwargs={"cv_id": cv.id}),
+            {"preview": "1"},
+            HTTP_HX_REQUEST="true",
+        )
+
+        assert resp.status_code == 200
+        assert b"<iframe" in resp.content
+
+    def test_plain_post_cache_hit_still_redirects(self, client, cv, monkeypatch):
+        render_row = self._done_render(cv)
+        render_row.pdf_file.name = "renders/x.pdf"
+        render_row.save()
+        monkeypatch.setattr(rendering_views, "enqueue_render", lambda *a, **k: render_row)
+
+        client.force_login(cv.user)
+        resp = client.post(reverse("rendering:enqueue", kwargs={"cv_id": cv.id}))
+        assert resp.status_code == 302
+
+    def test_polling_url_keeps_preview_flag(self, client, cv):
+        from rendering.models import Render, RenderStatus
+
+        render_row = Render.objects.create(
+            cv=cv, language="en", style="", payload_hash="p", status=RenderStatus.RUNNING
+        )
+        client.force_login(cv.user)
+        resp = client.get(
+            reverse("rendering:status", kwargs={"render_id": render_row.id}), {"preview": "1"}
+        )
+        assert b"?preview=1" in resp.content
