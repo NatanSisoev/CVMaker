@@ -7,6 +7,8 @@ used by ``manage.py`` when ``DJANGO_SETTINGS_MODULE`` is unset.
 
 from __future__ import annotations
 
+import os
+
 from .base import *  # noqa: F403
 from .base import (  # type: ignore[attr-defined]
     AWS_S3_ENDPOINT_URL,
@@ -65,8 +67,10 @@ INTERNAL_IPS = ["127.0.0.1", "::1"]
 
 
 # Make the toolbar play nicely with Docker (`host.docker.internal`).
+# Opt-in (DEBUG_TOOLBAR=1): its handle floats over the right edge of every page
+# and blocks clicks on the real UI there.
 def _show_toolbar(request):
-    return DEBUG
+    return DEBUG and env.bool("DEBUG_TOOLBAR", default=False)
 
 
 DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": "cvmaker.settings.dev._show_toolbar"}
@@ -94,3 +98,8 @@ SILENCED_SYSTEM_CHECKS = [
     "django_ratelimit.E003",
     "django_ratelimit.W001",
 ]
+
+# No Redis configured -> render inside the request so `runserver` alone is enough.
+# Set REDIS_URL (compose does) to use the real queue + worker instead, or
+# RENDER_INLINE explicitly to override either way.
+RENDER_INLINE = env.bool("RENDER_INLINE", default="REDIS_URL" not in os.environ)

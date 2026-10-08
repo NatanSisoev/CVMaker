@@ -40,11 +40,36 @@ createdb cvmaker            # or whatever DB_NAME you set
 uv run python manage.py migrate
 uv run python manage.py createsuperuser   # optional, for /admin
 
-# 6. Run
+# 6. Front-end assets (Tailwind CSS + the HTMX/Alpine bundle); needs Node 20+
+npm ci && npm run build        # `npm run dev` rebuilds on change
+
+# 7. Demo data + run
+uv run python manage.py seed_demo      # demo@cvmaker.test / demo-password-123
 uv run python manage.py runserver
 ```
 
-Visit <http://localhost:8000>.
+Visit <http://localhost:8000> and log in with the demo account.
+
+Without Redis, `runserver` renders PDFs **inside the request** (`RENDER_INLINE`,
+dev only), so no worker is needed. Set `REDIS_URL` (or use `docker compose up`)
+to use the real queue and worker. Emails print to the console; verification
+links appear in the server log. The Django debug toolbar is opt-in
+(`DEBUG_TOOLBAR=1`) because its handle covers the right edge of the page.
+
+### What to try
+
+| Where | What |
+|---|---|
+| `/cv/` | Dashboard. *Import YAML* takes a rendercv file. |
+| `/cv/<id>/editor/` | Resize panes; pick language + style, **Render preview**; drag ⠿ handles to reorder; click an entry to edit it inline and add translations. |
+| `Ctrl/⌘ + K` | Command palette. |
+| `/accounts/profile/` | Settings: profile, API token, data export, account deletion. |
+| `/accounts/signup/` | Real signup with email verification (link is in the server log). |
+| `/api/v1/docs/` | Swagger UI (log in as a staff user: `manage.py createsuperuser`). |
+| `/components/` | Component kitchen sink (DEBUG only). |
+
+CLI: create a token in Settings, then
+`CVMAKER_TOKEN=... python scripts/cvmaker_cli.py list` and `... render <cv-id> -o cv.pdf`.
 
 ## Layout
 

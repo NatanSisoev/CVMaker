@@ -455,3 +455,8 @@ for _provider, _scope in (("google", ["profile", "email"]), ("github", ["user:em
             ],
             "SCOPE": _scope,
         }
+
+
+# Render jobs normally go to the RQ worker (Redis). RENDER_INLINE=true runs them
+# inside the web request instead -- for local demos without Redis. Never in prod.
+RENDER_INLINE = env.bool("RENDER_INLINE", default=False)

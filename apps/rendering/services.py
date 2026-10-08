@@ -159,6 +159,14 @@ def _dispatch_render_job(render: Render) -> None:
     ``django_rq`` (and therefore Redis) at module load time -- Django's
     ``manage.py check`` would crash without a reachable Redis otherwise.
     """
+    from django.conf import settings
+
+    if settings.RENDER_INLINE:  # dev without Redis: run the job in this request
+        from .tasks import render_cv
+
+        render_cv(render.id)
+        return
+
     import django_rq
 
     queue = django_rq.get_queue("render")
