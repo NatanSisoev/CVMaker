@@ -1,4 +1,4 @@
-"""Account-related views. Phase 6 swaps this for allauth."""
+"""Account settings, GDPR export/deletion, and the waitlist. Auth itself is allauth."""
 
 from __future__ import annotations
 
@@ -10,43 +10,38 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.generic import CreateView
 from django_ratelimit.decorators import ratelimit
 from rest_framework.authtoken.models import Token
 
-from .forms import DeleteAccountForm, ProfileForm, SignUpForm, WaitlistForm
+from .forms import DeleteAccountForm, ProfileForm, WaitlistForm
 from .gdpr import delete_account, export_user_data
 from .models import WaitlistEntry
 
 
-class SignUpView(CreateView):
-    """Account creation -- or, with ``SIGNUP_MODE = "waitlist"``, a waitlist form.
+class WaitlistView(View):
+    """Collect an email while ``SIGNUP_MODE = "waitlist"``.
 
-    In waitlist mode no account can be created (not even by POSTing the signup
-    fields directly). Joining twice looks the same as joining once, so the
-    form doesn't reveal who is already on the list.
+    Joining twice looks the same as joining once, so the form doesn't reveal
+    who is already on the list. In open mode this just points at signup.
     """
 
-    form_class = SignUpForm
-    success_url = reverse_lazy("login")
-    template_name = "accounts/signup.html"
+    def get(self, request):
+        if settings.SIGNUP_MODE != "waitlist":
+            return redirect("account_signup")
+        return render(request, "accounts/waitlist.html", {"form": WaitlistForm()})
 
-    def dispatch(self, request, *args, **kwargs):
-        if settings.SIGNUP_MODE == "waitlist":
-            return self._waitlist(request)
-        return super().dispatch(request, *args, **kwargs)
-
-    def _waitlist(self, request):
-        form = WaitlistForm(request.POST or None)
-        if request.method == "POST" and form.is_valid():
-            WaitlistEntry.objects.get_or_create(email=form.cleaned_data["email"])
-            messages.success(request, "You're on the list. We'll email you when signups open.")
-            return redirect("homepage")
-        return render(request, "accounts/waitlist.html", {"form": form})
+    def post(self, request):
+        if settings.SIGNUP_MODE != "waitlist":
+            return redirect("account_signup")
+        form = WaitlistForm(request.POST)
+        if not form.is_valid():
+            return render(request, "accounts/waitlist.html", {"form": form})
+        WaitlistEntry.objects.get_or_create(email=form.cleaned_data["email"])
+        messages.success(request, "You're on the list. We'll email you when signups open.")
+        return redirect("homepage")
 
 
 @method_decorator(ratelimit(key="user", rate="10/m", method="POST"), name="post")

@@ -11,6 +11,11 @@
     <input type="hidden" name="action" value="profile">
     <c-card>
       <c-slot name="header">Profile</c-slot>
+      <p class="mb-4 text-sm text-text-muted">
+        Signed in as <strong class="text-text">{{ user.email }}</strong>.
+        <a class="text-accent underline" href="{% url 'account_email' %}">Change email</a> ·
+        <a class="text-accent underline" href="{% url 'mfa_index' %}">Two-factor authentication</a>
+      </p>
       {% include 'includes/form_fields.html' with form=profile_form %}
       <div class="mt-6"><c-button type="submit" variant="primary">Save profile</c-button></div>
     </c-card>

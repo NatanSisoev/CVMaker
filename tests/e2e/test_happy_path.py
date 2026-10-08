@@ -27,12 +27,16 @@ def test_signup_build_edit_render_download(app, page, live_server, js_errors):
     page.fill("input[name=password1]", PASSWORD)
     page.fill("input[name=password2]", PASSWORD)
     page.click("form button[type=submit]")
-    page.wait_for_url(re.compile(r"/accounts/login/"))
+    page.wait_for_url(re.compile(r"/accounts/confirm-email/$"))  # "check your inbox"
 
-    page.fill("input[name=username]", EMAIL)
-    page.fill("input[name=password]", PASSWORD)
+    # Mandatory email verification: open the link from the email, confirm.
+    from django.core import mail
+
+    (message,) = mail.outbox
+    confirm_path = re.search(r"https?://[^/]+(/\S+)", message.body).group(1)
+    app(confirm_path)
     page.click("form button[type=submit]")
-    page.wait_for_url(live_server.url + "/")
+    page.wait_for_url(live_server.url + "/")  # confirming logs the user in
 
     # --- personal info ----------------------------------------------------
     app("/cv/info/create/")

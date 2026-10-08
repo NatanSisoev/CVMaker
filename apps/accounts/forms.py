@@ -12,53 +12,23 @@ from typing import ClassVar
 
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm
 
 User = get_user_model()
-
-
-class SignUpForm(UserCreationForm):
-    """Email-first signup. Username is hidden and defaulted on save."""
-
-    email = forms.EmailField(
-        required=True, widget=forms.EmailInput(attrs={"autocomplete": "email"})
-    )
-
-    class Meta:
-        model = User
-        fields = ("email", "password1", "password2")
-
-    def save(self, commit: bool = True) -> User:
-        user = super().save(commit=False)
-        # Pre-fill username from the email's local part to satisfy the
-        # AbstractUser uniqueness constraint. Users can change it later.
-        user.username = self.cleaned_data["email"].split("@", 1)[0]
-        if commit:
-            user.save()
-        return user
 
 
 _LANGUAGE_TAG_RE = re.compile(r"^[a-z]{2}(-[A-Z]{2})?$")
 
 
 class ProfileForm(forms.ModelForm):
-    """The editable part of the account: name, email, preferred language."""
+    """Display name and preferred language. Email changes go through allauth
+    (``account_email``) so the new address is verified first."""
 
     class Meta:
         model = User
-        fields = ("display_name", "email", "preferred_language")
+        fields = ("display_name", "preferred_language")
         widgets: ClassVar[dict[str, forms.Widget]] = {
-            "email": forms.EmailInput(attrs={"autocomplete": "email"}),
             "preferred_language": forms.TextInput(attrs={"maxlength": 5, "placeholder": "en"}),
         }
-
-    def clean_email(self) -> str:
-        email = User.objects.normalize_email(self.cleaned_data["email"])
-        # The DB constraint is case-sensitive; addresses aren't, so check iexact.
-        taken = User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists()
-        if taken:
-            raise forms.ValidationError("Another account already uses this email address.")
-        return email
 
     def clean_preferred_language(self) -> str:
         tag = (self.cleaned_data.get("preferred_language") or "").strip()

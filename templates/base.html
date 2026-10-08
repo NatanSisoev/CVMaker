@@ -19,7 +19,9 @@
     <c-nav />
     <main class="flex-1">
       {% block breadcrumb %}{% endblock %}
-      {% block content %}{% endblock %}
+      {% block main %}
+        {% block content %}{% endblock %}
+      {% endblock main %}
     </main>
     <c-footer />
     <c-toast />

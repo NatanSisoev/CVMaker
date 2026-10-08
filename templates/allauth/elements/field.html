@@ -1,0 +1,37 @@
+{% load allauth %}
+<div class="flex flex-col gap-1">
+  {% if attrs.type != "checkbox" and attrs.type != "radio" %}
+    <label for="{{ attrs.id }}" class="text-sm font-medium text-text">{% slot label %}{% endslot %}</label>
+  {% endif %}
+  {% if attrs.type == "textarea" %}
+    <textarea class="w-full rounded-sm border border-border bg-surface-2 px-3 py-2 text-base text-text focus:border-accent focus:outline-none focus:shadow-focus"
+              {% if attrs.required %}required{% endif %}
+              {% if attrs.rows %}rows="{{ attrs.rows }}"{% endif %}
+              {% if attrs.disabled %}disabled{% endif %}
+              {% if attrs.readonly %}readonly{% endif %}
+              {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
+              {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
+              {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %}>{% slot value %}{% endslot %}</textarea>
+  {% else %}
+    <div class="{% if attrs.type == 'checkbox' or attrs.type == 'radio' %}flex items-center gap-2{% endif %}">
+      <input {% if attrs.type != "checkbox" and attrs.type != "radio" %}class="w-full rounded-sm border border-border bg-surface-2 px-3 py-2 text-base text-text focus:border-accent focus:outline-none focus:shadow-focus"{% endif %}
+             {% if attrs.required %}required{% endif %}
+             {% if attrs.disabled %}disabled{% endif %}
+             {% if attrs.readonly %}readonly{% endif %}
+             {% if attrs.checked %}checked{% endif %}
+             {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
+             {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
+             {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %}
+             {% if attrs.autocomplete %}autocomplete="{{ attrs.autocomplete }}"{% endif %}
+             {% if attrs.value is not None %}value="{{ attrs.value }}"{% endif %}
+             type="{{ attrs.type }}">
+      {% if attrs.type == "checkbox" or attrs.type == "radio" %}
+        <label for="{{ attrs.id }}" class="text-sm text-text">{% slot label %}{% endslot %}</label>
+      {% endif %}
+    </div>
+  {% endif %}
+  {% if slots.help_text %}
+    <p class="text-xs text-text-muted">{% slot help_text %}{% endslot %}</p>
+  {% endif %}
+  {% if attrs.errors %}<div class="text-xs text-danger">{{ attrs.errors }}</div>{% endif %}
+</div>

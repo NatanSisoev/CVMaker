@@ -64,9 +64,12 @@ def logged_in(app, page, live_server, transactional_db):
     user = UserFactory(email="grace@example.com", username="grace")
     user.set_password(PASSWORD)
     user.save()
+    from allauth.account.models import EmailAddress
+
+    EmailAddress.objects.create(user=user, email=user.email, verified=True, primary=True)
 
     app("/accounts/login/")
-    page.fill("input[name=username]", user.email)
+    page.fill("input[name=login]", user.email)
     page.fill("input[name=password]", PASSWORD)
     page.click("form button[type=submit]")
     page.wait_for_url(live_server.url + "/")

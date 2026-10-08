@@ -54,7 +54,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("", include("rendering.urls", namespace="rendering")),
     # Auth (allauth replaces these in Phase 6)
     path("accounts/", include("accounts.urls")),
-    path("accounts/", include("django.contrib.auth.urls")),
+    path("accounts/", include("allauth.urls")),  # login, signup, verify, reset, 2FA
     # Placeholder routes — linked from nav/footer, real content in Phase 6
     path(
         "templates/",

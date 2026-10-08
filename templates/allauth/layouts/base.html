@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{# allauth pages fill `head_title` and `content`; base.html's `main` block wraps
+   `content`, so the entrance/manage layouts can add their shell around it. #}
+{% block title %}
+  {% block head_title %}
+  {% endblock head_title %}
+{% endblock title %}

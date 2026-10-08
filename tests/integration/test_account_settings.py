@@ -6,8 +6,6 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from tests.factories import UserFactory
-
 pytestmark = pytest.mark.django_db
 
 User = get_user_model()
@@ -15,7 +13,7 @@ URL = reverse("profile")
 
 
 def _profile(**overrides):
-    data = {"action": "profile", "display_name": "", "email": "", "preferred_language": "en"}
+    data = {"action": "profile", "display_name": "", "preferred_language": "en"}
     data.update(overrides)
     return data
 
@@ -29,7 +27,8 @@ def test_renders_both_forms(client, user):
     client.force_login(user)
     body = client.get(URL).content.decode()
     assert 'value="profile"' in body and 'value="password"' in body
-    assert f'value="{user.email}"' in body
+    assert user.email in body  # shown read-only; changed via allauth
+    assert reverse("account_email") in body and reverse("mfa_index") in body
     assert 'name="old_password"' in body
 
 
@@ -37,31 +36,26 @@ def test_profile_saves_and_flashes(client, user):
     client.force_login(user)
     resp = client.post(
         URL,
-        _profile(display_name="Ada", email="ada@example.com", preferred_language="pt_br"),
+        _profile(display_name="Ada", preferred_language="pt_br"),
         follow=True,
     )
     user.refresh_from_db()
-    assert (user.display_name, user.email, user.preferred_language) == (
-        "Ada",
-        "ada@example.com",
-        "pt-BR",  # normalised
-    )
+    assert (user.display_name, user.preferred_language) == ("Ada", "pt-BR")  # normalised
     assert b'id="flash"' in resp.content and b"Profile saved." in resp.content
 
 
-def test_email_taken_case_insensitively(client, user):
-    UserFactory(email="taken@example.com", username="taken")
+def test_profile_form_cannot_change_email(client, user):
+    """Email changes must go through allauth so the new address is verified."""
     client.force_login(user)
-    resp = client.post(URL, _profile(email="TAKEN@example.com"))
-    assert resp.status_code == 200
-    assert b"Another account already uses this email" in resp.content
+    original = user.email
+    client.post(URL, {**_profile(display_name="X"), "email": "hijack@example.com"})
     user.refresh_from_db()
-    assert user.email != "TAKEN@example.com"
+    assert user.email == original
 
 
 def test_bad_language_rejected(client, user):
     client.force_login(user)
-    resp = client.post(URL, _profile(email=user.email, preferred_language="eng"))
+    resp = client.post(URL, _profile(preferred_language="eng"))
     assert b"Use a language code like" in resp.content
 
 

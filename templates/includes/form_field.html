@@ -1,12 +1,28 @@
 {# One Django form field: label, widget, help text, errors.
-   Context: field (BoundField); optional hint_html (trusted markup shown under the widget). #}
-<div class="flex flex-col gap-2">
-  <label for="{{ field.id_for_label }}" class="text-sm font-medium text-text">
-    {{ field.label }}
-    {% if field.field.required %}<span class="text-danger" aria-hidden="true">*</span>{% endif %}
-  </label>
-  {{ field }}
-  {% if hint_html %}<p class="text-xs text-text-muted">{{ hint_html }}</p>{% endif %}
-  {% if field.help_text %}<p class="text-xs text-text-muted">{{ field.help_text }}</p>{% endif %}
-  {% for error in field.errors %}<p class="text-xs text-danger">{{ error }}</p>{% endfor %}
-</div>
+   Context: field (BoundField); optional hint_html (trusted markup shown under the widget).
+   Checkboxes put the label beside the box; help text may be HTML (Django's
+   password rules are a <ul>), so it goes in a div, not a <p>. #}
+{% if field.widget_type == "checkbox" %}
+  <div class="flex flex-col gap-1">
+    <div class="flex items-center gap-2">
+      {{ field }}
+      <label for="{{ field.id_for_label }}" class="text-sm text-text">{{ field.label }}</label>
+    </div>
+    {% for error in field.errors %}<p class="text-xs text-danger">{{ error }}</p>{% endfor %}
+  </div>
+{% else %}
+  <div class="flex flex-col gap-2">
+    <label for="{{ field.id_for_label }}" class="text-sm font-medium text-text">
+      {{ field.label }}
+      {% if field.field.required %}<span class="text-danger" aria-hidden="true">*</span>{% endif %}
+    </label>
+    {{ field }}
+    {% if hint_html %}<p class="text-xs text-text-muted">{{ hint_html }}</p>{% endif %}
+    {% if field.help_text %}
+      <div class="text-xs text-text-muted [&_a]:text-accent [&_a]:underline [&_ul]:list-disc [&_ul]:pl-4">
+        {{ field.help_text }}
+      </div>
+    {% endif %}
+    {% for error in field.errors %}<p class="text-xs text-danger">{{ error }}</p>{% endfor %}
+  </div>
+{% endif %}

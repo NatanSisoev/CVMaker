@@ -3,6 +3,6 @@
 {% block content %}
   <section class="mx-auto max-w-xl px-4 py-24 text-center">
     <h1 class="font-display text-3xl text-text mb-4">Slow down a little</h1>
-    <p class="text-text-muted">{{ message }}</p>
+    <p class="text-text-muted">{{ message|default:"Too many attempts. Please wait a few minutes and try again." }}</p>
   </section>
 {% endblock %}

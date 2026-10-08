@@ -92,4 +92,8 @@ CACHES["ratelimit"] = {
     "LOCATION": "ratelimit",
 }
 RATELIMIT_USE_CACHE = "ratelimit"
-SILENCED_SYSTEM_CHECKS = [*globals().get("SILENCED_SYSTEM_CHECKS", []), "django_ratelimit.E003"]
+SILENCED_SYSTEM_CHECKS = [
+    *globals().get("SILENCED_SYSTEM_CHECKS", []),
+    "django_ratelimit.E003",
+    "django_ratelimit.W001",
+]

@@ -1,0 +1,29 @@
+{% extends "allauth/layouts/base.html" %}
+{# Signed-in account management (email, password, 2FA, connections). #}
+{% block main %}
+  <section class="mx-auto max-w-3xl px-4 py-12">
+    <nav aria-label="Account" class="mb-6 flex flex-wrap gap-2 text-sm">
+      <a class="rounded-md px-3 py-1 text-text-muted hover:bg-surface-2 hover:text-text"
+         href="{% url 'profile' %}">Settings</a>
+      {% url 'account_email' as email_url_ %}
+      {% if email_url_ %}
+        <a class="rounded-md px-3 py-1 text-text-muted hover:bg-surface-2 hover:text-text"
+           href="{{ email_url_ }}">Email</a>
+      {% endif %}
+      {% url 'mfa_index' as mfa_url_ %}
+      {% if mfa_url_ %}
+        <a class="rounded-md px-3 py-1 text-text-muted hover:bg-surface-2 hover:text-text"
+           href="{{ mfa_url_ }}">Two-factor</a>
+      {% endif %}
+      {% url 'socialaccount_connections' as connections_url_ %}
+      {% if connections_url_ %}
+        <a class="rounded-md px-3 py-1 text-text-muted hover:bg-surface-2 hover:text-text"
+           href="{{ connections_url_ }}">Connected accounts</a>
+      {% endif %}
+    </nav>
+    <div class="flex flex-col gap-4">
+      {% block content %}
+      {% endblock content %}
+    </div>
+  </section>
+{% endblock main %}

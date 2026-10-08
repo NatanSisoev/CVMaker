@@ -1,0 +1,28 @@
+{% extends "account/base_entrance.html" %}
+{% block head_title %}
+  Join the waitlist
+{% endblock head_title %}
+{% block content %}
+  <h1 class="font-display text-3xl text-text">Join the waitlist</h1>
+  <p class="text-sm text-text-muted">
+    CVMaker isn't open for signups yet. Leave your email and we'll let you know as soon as it is.
+  </p>
+  <form method="post"
+        action="{% url 'waitlist' %}"
+        novalidate
+        class="cv-form flex flex-col gap-4">
+    {% csrf_token %}
+    <div class="flex flex-col gap-1">
+      <label for="waitlist-email" class="text-sm font-medium text-text">Email</label>
+      <input id="waitlist-email"
+             name="email"
+             type="email"
+             autocomplete="email"
+             required>
+    </div>
+    <c-button type="submit" variant="primary" full="true">Join the waitlist</c-button>
+  </form>
+  <p class="text-center text-sm text-text-muted">
+    Already have an account? <a href="{% url 'account_login' %}" class="text-accent underline">Log in</a>.
+  </p>
+{% endblock content %}

@@ -40,13 +40,13 @@
         </button>
         <c-button href="{% url 'cv-list' %}" variant="ghost" size="sm">My CVs</c-button>
         <c-button href="{% url 'profile' %}" variant="ghost" size="sm">Settings</c-button>
-        <form method="post" action="{% url 'logout' %}" class="inline">
+        <form method="post" action="{% url 'account_logout' %}" class="inline">
           {% csrf_token %}
           <c-button type="submit" variant="ghost" size="sm">Log out</c-button>
         </form>
       {% else %}
-        <c-button href="{% url 'login' %}" variant="ghost" size="sm">Log in</c-button>
-        <c-button href="{% url 'signup' %}" variant="primary" size="sm">
+        <c-button href="{% url 'account_login' %}" variant="ghost" size="sm">Log in</c-button>
+        <c-button href="{% url 'account_signup' %}" variant="primary" size="sm">
         {% if signup_mode == "waitlist" %}
           Join waitlist
         {% else %}

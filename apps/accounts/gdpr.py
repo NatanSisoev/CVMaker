@@ -99,6 +99,10 @@ def export_user_data(user) -> dict[str, Any]:
             "display_name": user.display_name,
             "preferred_language": user.preferred_language,
             "date_joined": user.date_joined,
+            "email_addresses": [
+                {"email": e.email, "verified": e.verified, "primary": e.primary}
+                for e in user.emailaddress_set.all()
+            ],
         },
         "cvs": cvs,
         "sections": sections,

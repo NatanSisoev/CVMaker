@@ -1,0 +1,14 @@
+{% load allauth %}
+{% comment %} djlint:off {% endcomment %}
+{% if "danger" in attrs.tags %}{% setvar variant %}bg-danger text-accent-ink hover:opacity-90{% endsetvar %}
+{% elif "link" in attrs.tags or "minor" in attrs.tags %}{% setvar variant %}text-text-muted underline hover:text-text px-0 h-auto{% endsetvar %}
+{% elif "outline" in attrs.tags or "secondary" in attrs.tags %}{% setvar variant %}bg-surface-2 text-text border border-border hover:bg-surface{% endsetvar %}
+{% else %}{% setvar variant %}bg-accent text-accent-ink hover:opacity-90{% endsetvar %}{% endif %}
+<{% if attrs.href %}a href="{{ attrs.href }}"{% else %}button{% endif %}
+ class="inline-flex items-center justify-center gap-2 rounded-md font-medium transition focus:outline-none focus-visible:shadow-focus disabled:opacity-50 h-10 px-4 text-base {{ variant }}{% if "prominent" in attrs.tags %} w-full{% endif %}"
+{% if attrs.form %}form="{{ attrs.form }}"{% endif %}
+{% if attrs.id %}id="{{ attrs.id }}"{% endif %}
+{% if attrs.name %}name="{{ attrs.name }}"{% endif %}
+{% if attrs.value %}value="{{ attrs.value }}"{% endif %}
+{% if attrs.type %}type="{{ attrs.type }}"{% endif %}
+>{% slot %}{% endslot %}</{% if attrs.href %}a{% else %}button{% endif %}>

@@ -61,6 +61,9 @@ def test_export_requires_login(client):
 
 
 def test_export_contains_your_data_and_nothing_else(client, owner, owned_data, someone_else):
+    from allauth.account.models import EmailAddress
+
+    EmailAddress.objects.create(user=owner, email=owner.email, verified=True, primary=True)
     Token.objects.create(user=owner)
     client.force_login(owner)
 
@@ -71,6 +74,9 @@ def test_export_contains_your_data_and_nothing_else(client, owner, owned_data, s
     data = json.loads(resp.content)
     assert data["format"] == "cvmaker-export" and data["version"] == 1
     assert data["account"]["email"] == owner.email
+    assert data["account"]["email_addresses"] == [
+        {"email": owner.email, "verified": True, "primary": True}
+    ]
     assert [c["alias"] for c in data["cvs"]] == ["mine"]
     (entry,) = data["entries"]
     assert entry["alias"] == "algo" and entry["type"] == "bullet"

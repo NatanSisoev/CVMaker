@@ -26,33 +26,7 @@ def _no_dispatch(monkeypatch):
 # ---------------------------------------------------------------------------
 # Rate limits
 # ---------------------------------------------------------------------------
-def test_login_is_limited_per_username(client, user):
-    url = reverse("login")
-    for _ in range(5):
-        assert client.post(url, {"username": user.email, "password": "wrong"}).status_code == 200
-    resp = client.post(url, {"username": user.email, "password": "wrong"})
-    assert resp.status_code == 429
-    assert resp["Retry-After"] == "60"
-    assert b"Slow down" in resp.content
-
-
-def test_login_is_limited_per_ip_across_usernames(client):
-    url = reverse("login")
-    for i in range(10):
-        client.post(url, {"username": f"u{i}@example.com", "password": "x"})
-    assert client.post(url, {"username": "new@example.com", "password": "x"}).status_code == 429
-
-
-def test_login_get_is_never_limited(client):
-    for _ in range(30):
-        assert client.get(reverse("login")).status_code == 200
-
-
-def test_signup_is_limited_per_ip(client):
-    url = reverse("signup")
-    for i in range(5):
-        client.post(url, {"email": f"s{i}@example.com", "password1": "x", "password2": "y"})
-    assert client.post(url, {"email": "late@example.com"}).status_code == 429
+# Login and signup limits are allauth's ACCOUNT_RATE_LIMITS now; see test_auth_flow.py.
 
 
 def test_render_web_view_is_limited_per_user_with_htmx_toast(client):

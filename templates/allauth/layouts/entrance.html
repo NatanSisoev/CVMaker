@@ -1,0 +1,10 @@
+{% extends "allauth/layouts/base.html" %}
+{# Login, signup, password reset, email confirmation: one narrow card. #}
+{% block main %}
+  <section class="mx-auto max-w-md px-4 py-16">
+    <div class="rounded-md border border-border bg-surface p-6 shadow-1 dark:shadow-none flex flex-col gap-4">
+      {% block content %}
+      {% endblock content %}
+    </div>
+  </section>
+{% endblock main %}

@@ -122,6 +122,9 @@ jobs:
       - name: Django system check
         run: uv run python manage.py check
 
+      - name: No missing migrations
+        run: uv run python manage.py makemigrations --check --dry-run
+
       # The e2e tests (tests/e2e) drive Chromium against the built JS/CSS
       # bundle; without these steps they skip themselves.
       - name: Set up Node
