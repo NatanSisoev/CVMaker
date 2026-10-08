@@ -1,17 +1,13 @@
 {% extends 'base.html' %}
-
 {% block title %}{{ page_title|default:"Coming soon" }}{% endblock %}
-
 {% block content %}
-<section class="mx-auto max-w-2xl px-4 py-24 text-center">
-  <h1 class="font-display text-4xl md:text-5xl text-text mb-4">
-    {{ page_title|default:"Coming soon" }}
-  </h1>
-  <p class="text-lg text-text-muted mb-8">
-    {{ page_description|default:"This page isn't built yet. It's on the roadmap." }}
-  </p>
-  <c-button href="{% url 'homepage' %}" variant="secondary" size="md">
+  <section class="mx-auto max-w-2xl px-4 py-24 text-center">
+    <h1 class="font-display text-4xl md:text-5xl text-text mb-4">{{ page_title|default:"Coming soon" }}</h1>
+    <p class="text-lg text-text-muted mb-8">
+      {{ page_description|default:"This page isn't built yet. It's on the roadmap." }}
+    </p>
+    <c-button href="{% url 'homepage' %}" variant="secondary" size="md">
     Back to home
-  </c-button>
-</section>
+    </c-button>
+  </section>
 {% endblock %}

@@ -1,41 +1,41 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block title %}Write once, render anywhere{% endblock %}
-
 {% block content %}
-<section class="mx-auto max-w-4xl px-4 py-16 md:py-24">
-  <div class="flex flex-col items-center text-center gap-6">
-    <h1 class="font-display text-4xl md:text-6xl text-text leading-tight">
-      Write your CV once.<br>
-      <span class="text-accent">Render it in any language, any style.</span>
-    </h1>
-    <p class="max-w-2xl text-lg text-text-muted">
-      Every experience, lesson, and publication you've earned -- written once,
-      translated to the languages you care about, then assembled into a CV
-      the exact role wants. PDF in seconds, via Typst.
-    </p>
-    <div class="mt-4 flex flex-col gap-3 md:flex-row">
-      {% if user.is_authenticated %}
-        <c-button href="{% url 'cv-create' %}" variant="primary" size="lg">
+  <section class="mx-auto max-w-4xl px-4 py-16 md:py-24">
+    <div class="flex flex-col items-center text-center gap-6">
+      <h1 class="font-display text-4xl md:text-6xl text-text leading-tight">
+        Write your CV once.
+        <br>
+        <span class="text-accent">Render it in any language, any style.</span>
+      </h1>
+      <p class="max-w-2xl text-lg text-text-muted">
+        Every experience, lesson, and publication you've earned -- written once,
+        translated to the languages you care about, then assembled into a CV
+        the exact role wants. PDF in seconds, via Typst.
+      </p>
+      <div class="mt-4 flex flex-col gap-3 md:flex-row">
+        {% if user.is_authenticated %}
+          <c-button href="{% url 'cv-create' %}" variant="primary" size="lg">
           Create a CV →
-        </c-button>
-        <c-button href="{% url 'cv-list' %}" variant="secondary" size="lg">
+          </c-button>
+          <c-button href="{% url 'cv-list' %}" variant="secondary" size="lg">
           My CVs
-        </c-button>
-      {% else %}
-        <c-button href="{% url 'signup' %}" variant="primary" size="lg">
+          </c-button>
+        {% else %}
+          <c-button href="{% url 'signup' %}" variant="primary" size="lg">
           Get started — free →
-        </c-button>
-        <c-button href="{% url 'login' %}" variant="secondary" size="lg">
+          </c-button>
+          <c-button href="{% url 'login' %}" variant="secondary" size="lg">
           Log in
-        </c-button>
-      {% endif %}
+          </c-button>
+        {% endif %}
+      </div>
     </div>
-  </div>
-</section>
-
-<section class="mx-auto max-w-5xl px-4 pb-24">
-  <img src="{% static 'img/explainer.svg' %}" alt="" class="mx-auto max-h-[60vh] w-full opacity-90">
-</section>
+  </section>
+  <section class="mx-auto max-w-5xl px-4 pb-24">
+    <img src="{% static 'img/explainer.svg' %}"
+         alt=""
+         class="mx-auto max-h-[60vh] w-full opacity-90">
+  </section>
 {% endblock %}

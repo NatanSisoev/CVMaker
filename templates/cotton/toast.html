@@ -8,23 +8,14 @@
    info (default).
 #}
 <div x-data="{ toasts: [] }"
-     x-on:toast.window="
-       const id = crypto.randomUUID();
-       toasts.push({ id, ...$event.detail });
-       setTimeout(() => toasts = toasts.filter(t => t.id !== id), 4000);
-     "
+     x-on:toast.window=" const id = crypto.randomUUID(); toasts.push({ id, ...$event.detail }); setTimeout(() => toasts = toasts.filter(t => t.id !== id), 4000); "
      class="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2"
      aria-live="polite"
      aria-atomic="false">
   <template x-for="toast in toasts" :key="toast.id">
     <div x-transition.opacity
          class="pointer-events-auto rounded-md border border-border bg-surface px-4 py-3 text-sm shadow-2 dark:shadow-none"
-         :class="{
-           'text-text': !toast.variant || toast.variant === 'info',
-           'text-text border-accent': toast.variant === 'success',
-           'text-danger border-danger': toast.variant === 'error',
-         }"
-         x-text="toast.message">
-    </div>
+         :class="{ 'text-text': !toast.variant || toast.variant === 'info', 'text-text border-accent': toast.variant === 'success', 'text-danger border-danger': toast.variant === 'error', }"
+         x-text="toast.message"></div>
   </template>
 </div>

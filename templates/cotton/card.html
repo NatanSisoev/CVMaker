@@ -10,15 +10,9 @@
               containing a full-bleed image at the top)
 #}
 <c-vars padded="true" />
-
-<div class="rounded-md border border-border bg-surface shadow-1 dark:shadow-none {{ attrs.class|default:'' }}" {{ attrs }}>
-  {% if header %}
-    <div class="border-b border-border px-4 py-3 font-medium text-text">{{ header }}</div>
-  {% endif %}
-  <div class="{% if padded == 'true' %}p-4{% endif %}">
-    {{ slot }}
-  </div>
-  {% if footer %}
-    <div class="border-t border-border px-4 py-3 text-sm text-text-muted">{{ footer }}</div>
-  {% endif %}
+<div class="rounded-md border border-border bg-surface shadow-1 dark:shadow-none {{ attrs.class|default:'' }}"
+     {{ attrs }}>
+  {% if header %}<div class="border-b border-border px-4 py-3 font-medium text-text">{{ header }}</div>{% endif %}
+  <div class="{% if padded == 'true' %}p-4{% endif %}">{{ slot }}</div>
+  {% if footer %}<div class="border-t border-border px-4 py-3 text-sm text-text-muted">{{ footer }}</div>{% endif %}
 </div>

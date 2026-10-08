@@ -4,17 +4,30 @@
    in the `palette` Alpine component (static/src/app.js); results come from
    the `palette` view as an HTMX fragment.
 #}
-<div x-data="palette" x-on:keydown.window="hotkey($event)" x-on:open-palette.window="show()">
-  <div x-show="open" x-cloak x-transition.opacity
+<div x-data="palette"
+     x-on:keydown.window="hotkey($event)"
+     x-on:open-palette.window="show()">
+  <div x-show="open"
+       x-cloak
+       x-transition.opacity
        class="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 pt-[15vh]"
        x-on:click.self="hide()">
-    <div role="dialog" aria-modal="true" aria-label="Command palette"
+    <div role="dialog"
+         aria-modal="true"
+         aria-label="Command palette"
          class="w-full max-w-lg overflow-hidden rounded-md border border-border bg-surface shadow-2"
          x-on:keydown.escape.prevent="hide()">
-      <input x-ref="input" type="text" name="q" autocomplete="off" spellcheck="false"
+      <input x-ref="input"
+             type="text"
+             name="q"
+             autocomplete="off"
+             spellcheck="false"
              placeholder="Jump to a CV, entry, section or action…"
-             role="combobox" aria-autocomplete="list" aria-controls="palette-results"
-             :aria-expanded="open" :aria-activedescendant="activeId"
+             role="combobox"
+             aria-autocomplete="list"
+             aria-controls="palette-results"
+             :aria-expanded="open"
+             :aria-activedescendant="activeId"
              class="h-12 w-full border-0 border-b border-border bg-surface px-4 text-base text-text placeholder:text-text-muted focus:outline-none focus:ring-0"
              hx-get="{% url 'palette' %}"
              hx-trigger="input changed delay:150ms, palette-open"
@@ -23,9 +36,13 @@
              x-on:keydown.arrow-down.prevent="move(1)"
              x-on:keydown.arrow-up.prevent="move(-1)"
              x-on:keydown.enter.prevent="go()">
-      <ul id="palette-results" x-ref="results" role="listbox" aria-label="Results"
+      <ul id="palette-results"
+          x-ref="results"
+          role="listbox"
+          aria-label="Results"
           class="max-h-80 overflow-y-auto pb-2"
-          x-on:click="pick($event)"></ul>
+          x-on:click="pick($event)">
+      </ul>
       <p class="border-t border-border px-4 py-2 text-xs text-text-muted">↑↓ to move · Enter to open · Esc to close</p>
     </div>
   </div>

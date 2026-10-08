@@ -11,11 +11,11 @@
      id        id attribute (auto-generated from name if absent)
 #}
 <c-vars type="text" required="" />
-
 <div class="flex flex-col gap-2">
   {% if label %}
     <label for="{{ id|default:name }}" class="text-sm font-medium text-text">
-      {{ label }}{% if required %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}
+      {{ label }}
+      {% if required %}<span class="text-danger" aria-hidden="true">*</span>{% endif %}
     </label>
   {% endif %}
   <input type="{{ type }}"

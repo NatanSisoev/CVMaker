@@ -15,7 +15,6 @@
      footer    optional footer row (e.g., action buttons)
 #}
 <c-vars open="" />
-
 <div x-data="{ open: {{ open|default:'false' }} }"
      x-on:open-modal.window="if ($event.detail === '{{ id }}') open = true"
      x-on:close-modal.window="if ($event.detail === '{{ id }}') open = false"

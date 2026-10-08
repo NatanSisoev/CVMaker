@@ -32,8 +32,6 @@ RUN uv sync --frozen --no-dev
 # ----------------------------------------------------------------------
 FROM python:3.12-slim-bookworm AS runtime
 
-ARG TYPST_VERSION=0.12.0
-
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:${PATH}" \
@@ -46,11 +44,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         fonts-dejavu \
         fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
-
-RUN curl -fsSL "https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-x86_64-unknown-linux-musl.tar.xz" \
-    | tar -xJ -C /tmp \
-    && mv /tmp/typst-x86_64-unknown-linux-musl/typst /usr/local/bin/typst \
-    && rm -rf /tmp/typst-x86_64-unknown-linux-musl
 
 RUN groupadd --system --gid 1000 app \
     && useradd --system --uid 1000 --gid app --home /app --shell /usr/sbin/nologin app

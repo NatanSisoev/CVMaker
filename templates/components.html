@@ -1,143 +1,129 @@
 {% extends 'base.html' %}
-
 {% block title %}Component library{% endblock %}
-
 {% block content %}
-<section class="mx-auto max-w-5xl px-4 py-12 space-y-12">
-
-  <header>
-    <h1 class="font-display text-3xl text-text">Component library</h1>
-    <p class="mt-2 text-text-muted">
-      Visual reference for every Cotton component. The CI smoke-test
-      pings this URL; if a component is missing, the page renders a
-      "TemplateDoesNotExist" message instead of the example below.
-    </p>
-  </header>
-
-  {# ---------------- Buttons ---------------- #}
-  <section>
-    <h2 class="font-display text-2xl text-text mb-4">Buttons</h2>
-    <div class="flex flex-wrap items-center gap-3">
-      <c-button>Primary</c-button>
-      <c-button variant="secondary">Secondary</c-button>
-      <c-button variant="ghost">Ghost</c-button>
-      <c-button variant="danger">Danger</c-button>
-      <c-button size="sm">Small</c-button>
-      <c-button size="lg">Large</c-button>
-      <c-button disabled>Disabled</c-button>
-      <c-button href="/">Link button</c-button>
-    </div>
-    <div class="mt-4 flex flex-wrap items-center gap-3">
-      <c-icon-button label="Edit">✎</c-icon-button>
-      <c-icon-button label="Delete" variant="danger">×</c-icon-button>
-      <c-icon-button label="Add" variant="primary">+</c-icon-button>
-    </div>
-  </section>
-
-  {# ---------------- Form atoms ---------------- #}
-  <section>
-    <h2 class="font-display text-2xl text-text mb-4">Form atoms</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <c-input name="demo-email" type="email" label="Email" hint="We never share this." />
-      <c-input name="demo-name" label="Name" required="true" />
-      <c-input name="demo-broken" label="Phone" error="That doesn't look like a phone number." />
-      <c-textarea name="demo-bio" label="Bio" rows="3" hint="Markdown is supported." />
-      <c-select name="demo-language" label="Language">
+  <section class="mx-auto max-w-5xl px-4 py-12 space-y-12">
+    <header>
+      <h1 class="font-display text-3xl text-text">Component library</h1>
+      <p class="mt-2 text-text-muted">
+        Visual reference for every Cotton component. The CI smoke-test
+        pings this URL; if a component is missing, the page renders a
+        "TemplateDoesNotExist" message instead of the example below.
+      </p>
+    </header>
+    {# ---------------- Buttons ---------------- #}
+    <section>
+      <h2 class="font-display text-2xl text-text mb-4">Buttons</h2>
+      <div class="flex flex-wrap items-center gap-3">
+        <c-button>Primary</c-button>
+        <c-button variant="secondary">Secondary</c-button>
+        <c-button variant="ghost">Ghost</c-button>
+        <c-button variant="danger">Danger</c-button>
+        <c-button size="sm">Small</c-button>
+        <c-button size="lg">Large</c-button>
+        <c-button disabled>Disabled</c-button>
+        <c-button href="/">Link button</c-button>
+      </div>
+      <div class="mt-4 flex flex-wrap items-center gap-3">
+        <c-icon-button label="Edit">✎</c-icon-button>
+        <c-icon-button label="Delete" variant="danger">×</c-icon-button>
+        <c-icon-button label="Add" variant="primary">+</c-icon-button>
+      </div>
+    </section>
+    {# ---------------- Form atoms ---------------- #}
+    <section>
+      <h2 class="font-display text-2xl text-text mb-4">Form atoms</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <c-input name="demo-email" type="email" label="Email" hint="We never share this." />
+        <c-input name="demo-name" label="Name" required="true" />
+        <c-input name="demo-broken" label="Phone" error="That doesn't look like a phone number." />
+        <c-textarea name="demo-bio" label="Bio" rows="3" hint="Markdown is supported." />
+        <c-select name="demo-language" label="Language">
         <option value="en">English</option>
         <option value="es">Spanish</option>
         <option value="fr">French</option>
-      </c-select>
-      <div class="flex items-center gap-6 pt-6">
-        <c-checkbox name="demo-news" label="Send me product updates" />
-        <c-checkbox name="demo-ack" label="I agree" checked="true" />
+        </c-select>
+        <div class="flex items-center gap-6 pt-6">
+          <c-checkbox name="demo-news" label="Send me product updates" />
+          <c-checkbox name="demo-ack" label="I agree" checked="true" />
+        </div>
       </div>
-    </div>
-  </section>
-
-  {# ---------------- Cards ---------------- #}
-  <section>
-    <h2 class="font-display text-2xl text-text mb-4">Cards</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <c-card header="Plain card">
+    </section>
+    {# ---------------- Cards ---------------- #}
+    <section>
+      <h2 class="font-display text-2xl text-text mb-4">Cards</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <c-card header="Plain card">
         Body content. Lorem ipsum dolor sit amet.
-      </c-card>
-      <c-card>
+        </c-card>
+        <c-card>
         <c-slot name="header">With a custom header</c-slot>
         Body.
         <c-slot name="footer">Footer text · last edited 12s ago</c-slot>
-      </c-card>
-    </div>
-  </section>
-
-  {# ---------------- Badges + chips ---------------- #}
-  <section>
-    <h2 class="font-display text-2xl text-text mb-4">Badges &amp; chips</h2>
-    <div class="flex flex-wrap items-center gap-3">
-      <c-badge>Neutral</c-badge>
-      <c-badge variant="accent">Accent</c-badge>
-      <c-badge variant="danger">Danger</c-badge>
-      <c-chip>en</c-chip>
-      <c-chip>es</c-chip>
-      <c-chip dismissible="true">fr</c-chip>
-      <c-language-chip code="en" done="4" total="4" />
-      <c-language-chip code="es" done="2" total="4" />
-      <c-language-chip code="fr" done="0" total="4" />
-    </div>
-  </section>
-
-  {# ---------------- Modal ---------------- #}
-  <section>
-    <h2 class="font-display text-2xl text-text mb-4">Modal</h2>
-    <c-button x-on:click="$dispatch('open-modal', 'demo-modal')">
+        </c-card>
+      </div>
+    </section>
+    {# ---------------- Badges + chips ---------------- #}
+    <section>
+      <h2 class="font-display text-2xl text-text mb-4">Badges &amp; chips</h2>
+      <div class="flex flex-wrap items-center gap-3">
+        <c-badge>Neutral</c-badge>
+        <c-badge variant="accent">Accent</c-badge>
+        <c-badge variant="danger">Danger</c-badge>
+        <c-chip>en</c-chip>
+        <c-chip>es</c-chip>
+        <c-chip dismissible="true">fr</c-chip>
+        <c-language-chip code="en" done="4" total="4" />
+        <c-language-chip code="es" done="2" total="4" />
+        <c-language-chip code="fr" done="0" total="4" />
+      </div>
+    </section>
+    {# ---------------- Modal ---------------- #}
+    <section>
+      <h2 class="font-display text-2xl text-text mb-4">Modal</h2>
+      <c-button x-on:click="$dispatch('open-modal', 'demo-modal')">
       Open modal
-    </c-button>
-    <c-modal id="demo-modal" title="Modal title">
+      </c-button>
+      <c-modal id="demo-modal" title="Modal title">
       <p class="text-text-muted">
         Modal body. Press <kbd class="font-mono text-sm">Esc</kbd> or click the
         backdrop to close.
       </p>
       <c-slot name="footer">
-        <c-button variant="ghost" x-on:click="$dispatch('close-modal', 'demo-modal')">
-          Cancel
-        </c-button>
-        <c-button variant="primary" x-on:click="$dispatch('close-modal', 'demo-modal')">
-          Confirm
-        </c-button>
+      <c-button variant="ghost" x-on:click="$dispatch('close-modal', 'demo-modal')">
+      Cancel
+      </c-button>
+      <c-button variant="primary" x-on:click="$dispatch('close-modal', 'demo-modal')">
+      Confirm
+      </c-button>
       </c-slot>
-    </c-modal>
-  </section>
-
-  {# ---------------- Toast ---------------- #}
-  <section>
-    <h2 class="font-display text-2xl text-text mb-4">Toast</h2>
-    <div class="flex flex-wrap items-center gap-3">
-      <c-button variant="secondary"
-                x-on:click="$dispatch('toast', { message: 'Saved.', variant: 'success' })">
+      </c-modal>
+    </section>
+    {# ---------------- Toast ---------------- #}
+    <section>
+      <h2 class="font-display text-2xl text-text mb-4">Toast</h2>
+      <div class="flex flex-wrap items-center gap-3">
+        <c-button variant="secondary" x-on:click="$dispatch('toast', { message: 'Saved.', variant: 'success' })">
         Success toast
-      </c-button>
-      <c-button variant="secondary"
-                x-on:click="$dispatch('toast', { message: 'Something went wrong.', variant: 'error' })">
+        </c-button>
+        <c-button variant="secondary" x-on:click="$dispatch('toast', { message: 'Something went wrong.', variant: 'error' })">
         Error toast
-      </c-button>
-      <c-button variant="secondary"
-                x-on:click="$dispatch('toast', { message: 'Heads up.', variant: 'info' })">
+        </c-button>
+        <c-button variant="secondary" x-on:click="$dispatch('toast', { message: 'Heads up.', variant: 'info' })">
         Info toast
-      </c-button>
-    </div>
+        </c-button>
+      </div>
+    </section>
+    {# ---------------- Typography ---------------- #}
+    <section>
+      <h2 class="font-display text-2xl text-text mb-4">Typography</h2>
+      <div class="space-y-2">
+        <p class="font-display text-5xl">Display 5xl</p>
+        <p class="font-display text-3xl">Display 3xl</p>
+        <p class="text-xl">Body xl</p>
+        <p class="text-base">Body base — the default for prose.</p>
+        <p class="text-sm text-text-muted">Body sm muted — labels, metadata.</p>
+        <p class="font-mono text-sm">Mono · cv.locale.language = "es"</p>
+      </div>
+    </section>
   </section>
-
-  {# ---------------- Typography ---------------- #}
-  <section>
-    <h2 class="font-display text-2xl text-text mb-4">Typography</h2>
-    <div class="space-y-2">
-      <p class="font-display text-5xl">Display 5xl</p>
-      <p class="font-display text-3xl">Display 3xl</p>
-      <p class="text-xl">Body xl</p>
-      <p class="text-base">Body base — the default for prose.</p>
-      <p class="text-sm text-text-muted">Body sm muted — labels, metadata.</p>
-      <p class="font-mono text-sm">Mono · cv.locale.language = "es"</p>
-    </div>
-  </section>
-
-</section>
 {% endblock %}

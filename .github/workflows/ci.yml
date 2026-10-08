@@ -6,7 +6,8 @@
 # Jobs:
 #   lint       — ruff + djlint
 #   typecheck  — mypy with django-stubs
-#   test       — pytest against a Postgres service container; coverage to Codecov
+#   test       — pytest (incl. Playwright e2e) against a Postgres service
+#                container; coverage to Codecov
 #   build      — docker build for the web image (no push; push happens from
 #                a separate release workflow once we wire Phase 8)
 
@@ -120,6 +121,20 @@ jobs:
 
       - name: Django system check
         run: uv run python manage.py check
+
+      # The e2e tests (tests/e2e) drive Chromium against the built JS/CSS
+      # bundle; without these steps they skip themselves.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Build front-end assets
+        run: npm ci --no-audit --no-fund && npm run build
+
+      - name: Install Playwright Chromium
+        run: uv run playwright install --with-deps chromium
 
       - name: pytest
         run: uv run pytest --cov --cov-report=xml --cov-report=term

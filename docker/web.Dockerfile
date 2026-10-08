@@ -1,10 +1,29 @@
 # Multi-stage build for the Django web service.
 #
+# Stage 0 — assets: Node builds static/dist (Tailwind CSS + HTMX/Alpine/Sortable
+#           bundle). static/dist is gitignored, so the image must build it.
 # Stage 1 — builder: install uv, sync deps into /app/.venv.
-# Stage 2 — runtime: slim Python + Typst binary, copy venv, non-root user.
+# Stage 2 — runtime: slim Python + fonts, copy venv, non-root user.
 #
-# Typst is installed from the official release tarball so the image doesn't
-# depend on cargo. Adjust TYPST_VERSION as new releases land.
+# Typst compiles in-process via the `typst` Python package that rendercv[full]
+# pulls in, so no standalone Typst binary is installed.
+
+# ----------------------------------------------------------------------
+# Stage 0 — assets
+# ----------------------------------------------------------------------
+FROM node:20-bookworm-slim AS assets
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+
+# Tailwind scans templates and apps for class names (see tailwind.config.js).
+COPY tailwind.config.js postcss.config.js ./
+COPY static/src ./static/src
+COPY templates ./templates
+COPY apps ./apps
+RUN npm run build
 
 # ----------------------------------------------------------------------
 # Stage 1 — builder
@@ -37,34 +56,26 @@ RUN uv sync --frozen --no-install-project --no-dev
 COPY . .
 RUN uv sync --frozen --no-dev
 
+# Built front-end assets from stage 0 (collectstatic picks them up at boot).
+COPY --from=assets /app/static/dist ./static/dist
+
 # ----------------------------------------------------------------------
 # Stage 2 — runtime
 # ----------------------------------------------------------------------
 FROM python:3.12-slim-bookworm AS runtime
-
-ARG TYPST_VERSION=0.12.0
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:${PATH}" \
     DJANGO_SETTINGS_MODULE=cvmaker.settings.prod
 
-# Runtime-only deps: libpq for psycopg, curl for the Typst download,
-# fontconfig + fonts for Typst rendering.
+# Runtime-only deps: libpq for psycopg, fontconfig + fonts for Typst rendering.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        curl \
         libpq5 \
         fontconfig \
         fonts-dejavu \
         fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
-
-# Install Typst
-RUN curl -fsSL "https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-x86_64-unknown-linux-musl.tar.xz" \
-    | tar -xJ -C /tmp \
-    && mv /tmp/typst-x86_64-unknown-linux-musl/typst /usr/local/bin/typst \
-    && rm -rf /tmp/typst-x86_64-unknown-linux-musl \
-    && typst --version
 
 # Non-root user
 RUN groupadd --system --gid 1000 app \

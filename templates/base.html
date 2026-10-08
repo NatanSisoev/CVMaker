@@ -1,10 +1,13 @@
-{% load static %}<!DOCTYPE html>
+{% load static %}
+<!DOCTYPE html>
 <html lang="en" class="h-full">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#FAFAF7">
-    <title>{% block title %}CVMaker{% endblock %} — CVMaker</title>
+    <title>
+      {% block title %}CVMaker{% endblock %}
+    — CVMaker</title>
     <link rel="icon" href="{% static 'img/favicon.ico' %}">
     {# Tailwind output -- `npm run build` produces this. In prod the
        hashed name comes from whitenoise's CompressedManifestStaticFilesStorage. #}
@@ -23,7 +26,9 @@
     {% if user.is_authenticated %}<c-command-palette />{% endif %}
     {# Django messages, replayed as toasts by app.js once Alpine is up. #}
     {% if messages %}
-      <template id="flash">{% for message in messages %}<span data-level="{{ message.tags }}">{{ message }}</span>{% endfor %}</template>
+      <template id="flash">
+        {% for message in messages %}<span data-level="{{ message.tags }}">{{ message }}</span>{% endfor %}
+      </template>
     {% endif %}
     {# JS at the end so it doesn't block first paint. HTMX + Alpine are
        small; we revisit if either outgrows it. #}

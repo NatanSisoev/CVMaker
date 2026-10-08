@@ -8,7 +8,6 @@
    Renders a <button>; the caller attaches behaviour (x-on:click, hx-...).
 #}
 <c-vars done="0" total="0" />
-
 <button type="button"
         class="inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-1 text-sm font-medium text-text transition hover:bg-surface focus:outline-none focus-visible:shadow-focus {{ attrs.class|default:'' }}"
         title="{{ done }} of {{ total }} entr{{ total|pluralize:'y,ies' }} translated"
@@ -17,10 +16,12 @@
     <span class="h-2 w-2 rounded-full bg-accent" aria-hidden="true"></span>
     <span class="sr-only">complete</span>
   {% elif done|add:0 == 0 %}
-    <span class="h-2 w-2 rounded-full border border-text-muted" aria-hidden="true"></span>
+    <span class="h-2 w-2 rounded-full border border-text-muted"
+          aria-hidden="true"></span>
     <span class="sr-only">not translated</span>
   {% else %}
-    <span class="h-2 w-2 rounded-full border border-accent bg-gradient-to-r from-accent from-50% to-transparent to-50%" aria-hidden="true"></span>
+    <span class="h-2 w-2 rounded-full border border-accent bg-gradient-to-r from-accent from-50% to-transparent to-50%"
+          aria-hidden="true"></span>
     <span class="sr-only">partially translated</span>
   {% endif %}
   {{ code|upper }}
