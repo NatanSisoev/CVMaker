@@ -92,3 +92,18 @@ class User(AbstractUser):
 
     def get_display_name(self) -> str:
         return self.display_name or self.username or self.email.split("@", 1)[0]
+
+
+class WaitlistEntry(models.Model):
+    """An email collected while ``SIGNUP_MODE == "waitlist"`` (Phase 6)."""
+
+    email = models.EmailField(_("email address"), unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("created_at",)
+        verbose_name = _("waitlist entry")
+        verbose_name_plural = _("waitlist")
+
+    def __str__(self) -> str:
+        return self.email

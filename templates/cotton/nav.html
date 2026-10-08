@@ -46,7 +46,13 @@
         </form>
       {% else %}
         <c-button href="{% url 'login' %}" variant="ghost" size="sm">Log in</c-button>
-        <c-button href="{% url 'signup' %}" variant="primary" size="sm">Sign up</c-button>
+        <c-button href="{% url 'signup' %}" variant="primary" size="sm">
+        {% if signup_mode == "waitlist" %}
+          Join waitlist
+        {% else %}
+          Sign up
+        {% endif %}
+        </c-button>
       {% endif %}
     </div>
   </div>

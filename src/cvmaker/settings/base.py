@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 # ----------------------------------------------------------------------
 # Paths
@@ -133,6 +134,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "core.context_processors.site",
             ],
             "loaders": [
                 (
@@ -370,3 +372,10 @@ PERMISSIONS_POLICY = (
     "camera=(), microphone=(), geolocation=(), payment=(), usb=(), "
     "accelerometer=(), gyroscope=(), magnetometer=(), interest-cohort=()"
 )
+
+
+# "open": anyone can sign up. "waitlist": the signup page collects emails
+# instead (accounts.WaitlistEntry) and no account can be created.
+SIGNUP_MODE = env("SIGNUP_MODE", default="open")
+if SIGNUP_MODE not in ("open", "waitlist"):
+    raise ImproperlyConfigured(f"SIGNUP_MODE must be 'open' or 'waitlist', got {SIGNUP_MODE!r}")

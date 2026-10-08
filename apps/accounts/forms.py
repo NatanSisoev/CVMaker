@@ -98,3 +98,12 @@ class DeleteAccountForm(forms.Form):
         if email.strip().lower() != self.user.email.lower():
             raise forms.ValidationError("That doesn't match your account's email.")
         return email
+
+
+class WaitlistForm(forms.Form):
+    email = forms.EmailField(
+        label="Email", widget=forms.EmailInput(attrs={"autocomplete": "email"})
+    )
+
+    def clean_email(self) -> str:
+        return self.cleaned_data["email"].strip().lower()

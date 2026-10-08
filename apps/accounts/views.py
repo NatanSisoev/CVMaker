@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
@@ -17,14 +18,35 @@ from django.views.generic import CreateView
 from django_ratelimit.decorators import ratelimit
 from rest_framework.authtoken.models import Token
 
-from .forms import DeleteAccountForm, ProfileForm, SignUpForm
+from .forms import DeleteAccountForm, ProfileForm, SignUpForm, WaitlistForm
 from .gdpr import delete_account, export_user_data
+from .models import WaitlistEntry
 
 
 class SignUpView(CreateView):
+    """Account creation -- or, with ``SIGNUP_MODE = "waitlist"``, a waitlist form.
+
+    In waitlist mode no account can be created (not even by POSTing the signup
+    fields directly). Joining twice looks the same as joining once, so the
+    form doesn't reveal who is already on the list.
+    """
+
     form_class = SignUpForm
     success_url = reverse_lazy("login")
     template_name = "accounts/signup.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if settings.SIGNUP_MODE == "waitlist":
+            return self._waitlist(request)
+        return super().dispatch(request, *args, **kwargs)
+
+    def _waitlist(self, request):
+        form = WaitlistForm(request.POST or None)
+        if request.method == "POST" and form.is_valid():
+            WaitlistEntry.objects.get_or_create(email=form.cleaned_data["email"])
+            messages.success(request, "You're on the list. We'll email you when signups open.")
+            return redirect("homepage")
+        return render(request, "accounts/waitlist.html", {"form": form})
 
 
 @method_decorator(ratelimit(key="user", rate="10/m", method="POST"), name="post")

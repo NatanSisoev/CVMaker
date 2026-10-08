@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Join the waitlist{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-md px-4 py-16">
+  <c-card>
+    <c-slot name="header">
+      <h1 class="font-display text-2xl">Join the waitlist</h1>
+    </c-slot>
+    <p class="mb-6 text-sm text-text-muted">
+      CVMaker isn't open for signups yet. Leave your email and we'll let you know
+      as soon as it is.
+    </p>
+    <form method="post" novalidate class="cv-form flex flex-col gap-6">
+      {% csrf_token %}
+      {% include 'includes/form_fields.html' %}
+      <c-button type="submit" variant="primary" full="true">Join the waitlist</c-button>
+    </form>
+    <c-slot name="footer">
+      <div class="text-center">
+        Already have an account? <a href="{% url 'login' %}" class="hover:text-text">Log in</a>.
+      </div>
+    </c-slot>
+  </c-card>
+</section>
+{% endblock %}
