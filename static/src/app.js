@@ -103,8 +103,20 @@ Alpine.data('palette', () => ({
   open: false,
   active: -1,
   activeId: null,
+  // Typed but results not refreshed yet: Enter waits for them instead of
+  // opening a stale option.
+  stale: false,
+  queued: false,
   init() {
-    this.$el.addEventListener('htmx:afterSwap', () => this.reset());
+    this.$refs.input.addEventListener('input', () => { this.stale = true; });
+    this.$el.addEventListener('htmx:afterSwap', () => {
+      this.stale = false;
+      this.reset();
+      if (this.queued) {
+        this.queued = false;
+        this.go();
+      }
+    });
   },
   options() {
     return [...this.$refs.results.querySelectorAll('[role=option]')];
@@ -125,6 +137,7 @@ Alpine.data('palette', () => ({
   },
   hide() {
     this.open = false;
+    this.queued = false;
   },
   reset() {
     this.options().forEach((opt, i) => { opt.id = `palette-opt-${i}`; });
@@ -142,6 +155,10 @@ Alpine.data('palette', () => ({
     if (count) this.select((this.active + delta + count) % count);
   },
   go() {
+    if (this.stale) {
+      this.queued = true;
+      return;
+    }
     const opt = this.options()[this.active];
     if (opt) window.location.assign(opt.dataset.url);
   },

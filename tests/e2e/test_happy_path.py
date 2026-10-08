@@ -10,48 +10,17 @@ skipped otherwise.
 
 from __future__ import annotations
 
-import os
 import re
-from pathlib import Path
 
 import pytest
 
 pytestmark = [pytest.mark.e2e, pytest.mark.slow]
 
-# Playwright's sync API runs an event loop in this thread; Django refuses ORM
-# calls from such a context unless told it's fine (the ORM isn't really async).
-os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
-
-_BUNDLE = Path(__file__).resolve().parents[2] / "static" / "dist" / "app.js"
-if not _BUNDLE.exists():
-    pytest.skip("static/dist/app.js missing -- run `npm run build`", allow_module_level=True)
-
 EMAIL = "ada@example.com"
 PASSWORD = "Analytical-Engine-1843"
 
 
-@pytest.fixture
-def inline_renders(monkeypatch):
-    """Run render jobs synchronously inside the request instead of via Redis."""
-    from rendering import services, tasks
-
-    monkeypatch.setattr(services, "_dispatch_render_job", lambda render: tasks.render_cv(render.id))
-
-
-@pytest.fixture
-def app(live_server, page, inline_renders):
-    page.set_default_timeout(15_000)
-
-    def go(path: str):
-        page.goto(live_server.url + path)
-
-    return go
-
-
-def test_signup_build_edit_render_download(app, page, live_server):
-    errors: list[str] = []
-    page.on("pageerror", lambda exc: errors.append(str(exc)))
-
+def test_signup_build_edit_render_download(app, page, live_server, js_errors):
     # --- signup + login ---------------------------------------------------
     app("/accounts/signup/")
     page.fill("input[name=email]", EMAIL)
@@ -124,4 +93,4 @@ def test_signup_build_edit_render_download(app, page, live_server):
     assert response.headers["content-type"] == "application/pdf"
     assert response.body()[:4] == b"%PDF"
 
-    assert errors == [], f"JavaScript errors: {errors}"
+    assert js_errors == [], f"JavaScript errors: {js_errors}"
