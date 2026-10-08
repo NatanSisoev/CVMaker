@@ -11,7 +11,9 @@ from __future__ import annotations
 
 from .base import *  # noqa: F403
 from .base import (  # type: ignore[attr-defined]
+    ANYMAIL,
     AWS_STORAGE_BUCKET_NAME,
+    EMAIL_PROVIDER,
     LOGGING,
     _s3_storage_options,
     env,
@@ -75,12 +77,13 @@ CACHES = {
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 # ----------------------------------------------------------------------
-# Email — plug in anymail provider in Phase 6
+# Email -- EMAIL_PROVIDER (base.py) must be a real provider with its key.
 # ----------------------------------------------------------------------
-EMAIL_BACKEND = env(
-    "DJANGO_EMAIL_BACKEND",
-    default="django.core.mail.backends.smtp.EmailBackend",
-)
+_PROVIDER_KEYS = {"resend": "RESEND_API_KEY", "postmark": "POSTMARK_SERVER_TOKEN"}
+if EMAIL_PROVIDER == "console":
+    raise RuntimeError("EMAIL_PROVIDER=console in production: set smtp, resend or postmark.")
+if EMAIL_PROVIDER in _PROVIDER_KEYS and not ANYMAIL[_PROVIDER_KEYS[EMAIL_PROVIDER]]:
+    raise RuntimeError(f"EMAIL_PROVIDER={EMAIL_PROVIDER} needs {_PROVIDER_KEYS[EMAIL_PROVIDER]}.")
 
 # ----------------------------------------------------------------------
 # Logging — JSON for log aggregators

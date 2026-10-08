@@ -65,6 +65,7 @@ dependencies = [
     "drf-spectacular>=0.28,<1",
     "django-ratelimit>=4.1,<5",
     "django-allauth[mfa]>=65.0,<66",
+    "django-anymail>=13,<14",
 ]
 
 # -------------------------------------------------------------------

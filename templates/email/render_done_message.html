@@ -1,0 +1,36 @@
+{% extends "email/base.html" %}
+{% block content %}
+  {% if render.status == 'done' %}
+    <p style="margin:0 0 24px 0;">
+      Your CV <strong>{{ render.cv.alias }}</strong>
+      {% if render.language %}({{ render.language|upper }}){% endif %}
+      has finished rendering.
+    </p>
+    <p style="margin:0 0 24px 0;">
+      <a href="{{ pdf_url }}"
+         style="display:inline-block;
+                background:#C2410C;
+                color:#FFFFFF;
+                text-decoration:none;
+                padding:12px 20px;
+                border-radius:6px;
+                font-weight:600">Download PDF</a>
+    </p>
+  {% else %}
+    <p style="margin:0 0 12px 0;">
+      Rendering your CV <strong>{{ render.cv.alias }}</strong> failed:
+    </p>
+    <pre style="margin:0 0 24px 0;
+                white-space:pre-wrap;
+                font-size:13px;
+                background:#F4F2EE;
+                padding:12px;
+                border-radius:6px">{{ render.error }}</pre>
+  {% endif %}
+  <p style="margin:0 0 16px 0;">
+    <a href="{{ editor_url }}" style="color:#C2410C;">Open the editor</a>
+  </p>
+  <p style="margin:0;font-size:13px;color:#6B6862;">
+    You get these emails because "Email me when a render finishes" is on in Settings.
+  </p>
+{% endblock content %}

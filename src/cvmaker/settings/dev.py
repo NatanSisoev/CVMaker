@@ -74,7 +74,7 @@ DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": "cvmaker.settings.dev._show_too
 # ----------------------------------------------------------------------
 # Email — log to console in dev, no external SMTP
 # ----------------------------------------------------------------------
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# EMAIL_PROVIDER (base.py) defaults to the console backend here.
 
 # ----------------------------------------------------------------------
 # Cache — dummy cache in dev so stale entries never bite you

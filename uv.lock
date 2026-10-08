@@ -467,6 +467,7 @@ dependencies = [
     { name = "dj-database-url" },
     { name = "django" },
     { name = "django-allauth", extra = ["mfa"] },
+    { name = "django-anymail" },
     { name = "django-cotton" },
     { name = "django-environ" },
     { name = "django-model-utils" },
@@ -513,6 +514,7 @@ requires-dist = [
     { name = "dj-database-url", specifier = ">=2.3,<3" },
     { name = "django", specifier = ">=5.1,<5.2" },
     { name = "django-allauth", extras = ["mfa"], specifier = ">=65.0,<66" },
+    { name = "django-anymail", specifier = ">=13,<14" },
     { name = "django-cotton", specifier = ">=1.4,<2" },
     { name = "django-environ", specifier = ">=0.11,<1" },
     { name = "django-model-utils", specifier = ">=5.0,<6" },
@@ -615,6 +617,20 @@ wheels = [
 mfa = [
     { name = "fido2" },
     { name = "qrcode" },
+]
+
+[[package]]
+name = "django-anymail"
+version = "13.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "requests" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a3/a5/258d7b7bc1b0ca91791c25c704fa4c2d500727d0c3e29843c182f9f9c4be/django_anymail-13.1.tar.gz", hash = "sha256:b51783176f8a8382e958808151551558e4a46d1375fbc343742d1ebd06ce8e9e", size = 96518, upload-time = "2025-09-03T20:00:21.071Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c9/ba/d34a011cb8da04ed4a7c60b9a7aa25eed61348d1f6113af66ba725b56ae4/django_anymail-13.1-py3-none-any.whl", hash = "sha256:63e48402ec8258f17640eb73c8c64141f16d2f8ae7d448d0fb1c66e82b7cbcf6", size = 134063, upload-time = "2025-09-03T20:00:19.427Z" },
 ]
 
 [[package]]

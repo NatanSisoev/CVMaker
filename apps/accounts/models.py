@@ -75,6 +75,13 @@ class User(AbstractUser):
         help_text=_("BCP-47 tag. Used for the UI and as the default CV language."),
     )
 
+    # Notifications
+    notify_on_render = models.BooleanField(
+        _("email me when a render finishes"),
+        default=False,
+        help_text=_("Sends the PDF link (or the error) when a queued render completes."),
+    )
+
     # Timestamps (superseding AbstractUser's date_joined for consistency)
     updated_at = models.DateTimeField(auto_now=True)
 

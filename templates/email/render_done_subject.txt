@@ -1,0 +1,1 @@
+{% if render.status == 'done' %}Your CV "{{ render.cv.alias }}" is ready{% else %}Rendering "{{ render.cv.alias }}" failed{% endif %}

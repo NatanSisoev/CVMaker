@@ -25,7 +25,7 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ("display_name", "preferred_language")
+        fields = ("display_name", "preferred_language", "notify_on_render")
         widgets: ClassVar[dict[str, forms.Widget]] = {
             "preferred_language": forms.TextInput(attrs={"maxlength": 5, "placeholder": "en"}),
         }

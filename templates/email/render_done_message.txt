@@ -1,0 +1,13 @@
+{% autoescape off %}Hi,
+
+{% if render.status == 'done' %}Your CV "{{ render.cv.alias }}"{% if render.language %} ({{ render.language|upper }}){% endif %} has finished rendering.
+
+Download the PDF: {{ pdf_url }}{% else %}Rendering your CV "{{ render.cv.alias }}" failed:
+
+{{ render.error }}{% endif %}
+
+Open the editor: {{ editor_url }}
+
+You get these emails because "Email me when a render finishes" is on in Settings.
+-- CVMaker
+{% endautoescape %}

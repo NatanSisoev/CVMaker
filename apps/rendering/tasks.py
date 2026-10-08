@@ -62,7 +62,7 @@ def render_cv(render_id) -> None:
     after a worker crash), exits without touching anything.
     """
     try:
-        render = Render.objects.select_related("cv", "cv__locale").get(pk=render_id)
+        render = Render.objects.select_related("cv", "cv__locale", "requested_by").get(pk=render_id)
     except Render.DoesNotExist:
         logger.warning("render_cv: Render %s gone before worker pickup", render_id)
         return
@@ -91,6 +91,7 @@ def render_cv(render_id) -> None:
         render.error = str(exc)
         render.completed_at = timezone.now()
         render.save(update_fields=["status", "error", "completed_at"])
+        _notify(render)
         return
     except Exception:  # last-resort
         # Anything that escaped the inner handler is a genuine bug --
@@ -104,6 +105,7 @@ def render_cv(render_id) -> None:
         )
         render.completed_at = timezone.now()
         render.save(update_fields=["status", "error", "completed_at"])
+        _notify(render)
         # Re-raise so RQ records the failure for ops dashboards.
         raise
 
@@ -114,12 +116,38 @@ def render_cv(render_id) -> None:
     render.status = RenderStatus.DONE
     render.completed_at = timezone.now()
     render.save(update_fields=["pdf_file", "status", "completed_at"])
+    _notify(render)
     logger.info("render_cv: Render %s done in %s", render_id, render.completed_at)
 
 
 # ---------------------------------------------------------------------------
 # Internals
 # ---------------------------------------------------------------------------
+def _notify(render) -> None:
+    """Email the requester if they opted in (Settings). Never fails a render."""
+    user = render.requested_by
+    if user is None or not user.notify_on_render or not user.email:
+        return
+    from django.conf import settings
+    from django.urls import reverse
+
+    from core.email import send_templated_email
+
+    try:
+        send_templated_email(
+            user.email,
+            "email/render_done",
+            {
+                "render": render,
+                "pdf_url": settings.SITE_URL
+                + reverse("rendering:pdf", kwargs={"render_id": render.pk}),
+                "editor_url": settings.SITE_URL + reverse("cv-editor", args=[render.cv_id]),
+            },
+        )
+    except Exception:  # email trouble must not turn a finished render into a failed job
+        logger.exception("render_cv: could not send notification for Render %s", render.pk)
+
+
 class _RenderError(RuntimeError):
     """Raised by ``_render_payload_to_pdf`` for user-readable failures.
 

@@ -1,0 +1,15 @@
+{% extends "email/base.html" %}
+{% block content %}
+  <p style="margin:0 0 16px 0;">Your email is confirmed and your CVMaker account is ready.</p>
+  <p style="margin:0 0 24px 0;">Write your experience once, translate it, and render a CV in any language and style.</p>
+  <p style="margin:0;">
+    <a href="{{ site_url }}/cv/"
+       style="display:inline-block;
+              background:#C2410C;
+              color:#FFFFFF;
+              text-decoration:none;
+              padding:12px 20px;
+              border-radius:6px;
+              font-weight:600">Go to my CVs</a>
+  </p>
+{% endblock content %}

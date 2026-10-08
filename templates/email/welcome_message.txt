@@ -1,0 +1,9 @@
+{% autoescape off %}Hi,
+
+Your email is confirmed and your CVMaker account is ready.
+
+Write your experience once, translate it, and render a CV in any language and style:
+{{ site_url }}/cv/
+
+-- CVMaker
+{% endautoescape %}

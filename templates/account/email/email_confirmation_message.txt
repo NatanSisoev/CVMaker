@@ -1,0 +1,6 @@
+{% extends "account/email/base_message.txt" %}
+{% block content %}{% autoescape off %}Please confirm that this email address belongs to your CVMaker account.
+
+{% if code %}Your code: {{ code }}{% else %}Confirm here: {{ activate_url }}{% endif %}
+
+If you didn't ask for this, you can ignore this email.{% endautoescape %}{% endblock content %}

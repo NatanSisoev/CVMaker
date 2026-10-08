@@ -70,6 +70,7 @@ THIRD_PARTY_APPS = [
     "django_cotton",  # Component templates (Phase 4)
     "django_rq",  # Render queue (Phase 3)
     "django_ratelimit",  # auth / render rate limits (Phase 6)
+    "anymail",  # transactional email providers (Phase 6)
     "allauth",  # accounts: login/signup/verification/reset (Phase 6)
     "allauth.account",
     "allauth.mfa",  # TOTP + recovery codes
@@ -272,13 +273,34 @@ def _s3_storage_options() -> dict:
 
 
 # ----------------------------------------------------------------------
-# Email
-# dev.py defaults to the console backend; prod.py flips to SMTP/anymail.
+# Email (Phase 6). EMAIL_PROVIDER picks the backend:
+#   console  -- print to stdout (dev default)
+#   smtp     -- Django's SMTP backend (EMAIL_HOST etc.)
+#   resend   -- anymail + Resend (RESEND_API_KEY)
+#   postmark -- anymail + Postmark (POSTMARK_SERVER_TOKEN)
+# DJANGO_EMAIL_BACKEND, if set, still wins (escape hatch for anything else).
 # ----------------------------------------------------------------------
-EMAIL_BACKEND = env(
-    "DJANGO_EMAIL_BACKEND",
-    default="django.core.mail.backends.console.EmailBackend",
+EMAIL_BACKENDS_BY_PROVIDER = {
+    "console": "django.core.mail.backends.console.EmailBackend",
+    "smtp": "django.core.mail.backends.smtp.EmailBackend",
+    "resend": "anymail.backends.resend.EmailBackend",
+    "postmark": "anymail.backends.postmark.EmailBackend",
+}
+EMAIL_PROVIDER = env("EMAIL_PROVIDER", default="console")
+if EMAIL_PROVIDER not in EMAIL_BACKENDS_BY_PROVIDER:
+    raise ImproperlyConfigured(
+        f"EMAIL_PROVIDER must be one of {sorted(EMAIL_BACKENDS_BY_PROVIDER)}, got {EMAIL_PROVIDER!r}"
+    )
+# An empty DJANGO_EMAIL_BACKEND counts as unset.
+EMAIL_BACKEND = (
+    env("DJANGO_EMAIL_BACKEND", default="") or EMAIL_BACKENDS_BY_PROVIDER[EMAIL_PROVIDER]
 )
+ANYMAIL = {
+    "RESEND_API_KEY": env("RESEND_API_KEY", default=""),
+    "POSTMARK_SERVER_TOKEN": env("POSTMARK_SERVER_TOKEN", default=""),
+}
+# Absolute links in emails (renders finish in a worker, outside any request).
+SITE_URL = env("SITE_URL", default="http://localhost:8000").rstrip("/")
 DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="CVMaker <noreply@cvmaker.local>")
 
 # ----------------------------------------------------------------------
