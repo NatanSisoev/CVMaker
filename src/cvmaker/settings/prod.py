@@ -92,3 +92,7 @@ LOGGING["formatters"]["json"] = {
     ),
 }
 LOGGING["handlers"]["console"]["formatter"] = "json"
+
+# django-ratelimit lists only django-redis as "official"; Django's built-in
+# RedisCache implements atomic incr(), which is all rate limiting needs.
+SILENCED_SYSTEM_CHECKS = ["django_ratelimit.W001"]

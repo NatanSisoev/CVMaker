@@ -91,6 +91,9 @@ def test_signup_build_edit_render_download(app, page, live_server, js_errors):
     response = page.request.get(live_server.url + pdf_url)
     assert response.ok
     assert response.headers["content-type"] == "application/pdf"
+    # The preview <iframe> needs same-origin framing (global policy is DENY).
+    # Headless Chromium has no PDF viewer, so assert the header, not the frame.
+    assert response.headers["x-frame-options"] == "SAMEORIGIN"
     assert response.body()[:4] == b"%PDF"
 
     assert js_errors == [], f"JavaScript errors: {js_errors}"

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import json
+
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.http import require_GET
@@ -80,3 +83,19 @@ def palette_view(request):
             groups.append(("Entries", entry_items))
 
     return render(request, "core/_palette_results.html", {"groups": groups, "q": q})
+
+
+def ratelimited(request, exception=None):
+    """429 for django-ratelimit (``RATELIMIT_VIEW``).
+
+    HTMX callers get a toast via ``HX-Trigger`` (HTMX doesn't swap 4xx bodies);
+    API callers get JSON; everyone else gets a page.
+    """
+    message = "Too many requests. Please wait a minute and try again."
+    if request.path.startswith("/api/"):
+        return JsonResponse({"detail": message}, status=429)
+    response = render(request, "429.html", {"message": message}, status=429)
+    if request.headers.get("HX-Request") == "true":
+        response["HX-Trigger"] = json.dumps({"toast": {"message": message, "variant": "error"}})
+    response["Retry-After"] = "60"
+    return response

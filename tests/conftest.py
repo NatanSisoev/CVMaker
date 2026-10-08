@@ -92,3 +92,13 @@ def experience_entry(db, user):
 @pytest.fixture
 def bullet_entry(db, user):
     return BulletEntryFactory(user=user)
+
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limits():
+    """Rate-limit counters live in a process-wide cache; isolate every test."""
+    from django.core.cache import caches
+
+    caches["ratelimit"].clear()
+    caches["default"].clear()  # DRF throttles count here
+    yield

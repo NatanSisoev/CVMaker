@@ -11,6 +11,7 @@ from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 
 from cv.models import CV
 from entries.models import BaseEntry
@@ -30,6 +31,7 @@ from .serializers import (
 class CVViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = CV.objects.none()  # schema introspection only; see get_queryset
     serializer_class = CVSerializer
+    throttle_scope: str | None = None  # set per-action (render); DRF needs the attribute
 
     def get_queryset(self):
         return (
@@ -45,7 +47,12 @@ class CVViewSet(viewsets.ReadOnlyModelViewSet):
             202: OpenApiResponse(RenderSerializer, description="Queued; poll the render."),
         },
     )
-    @action(detail=True, methods=["post"])
+    @action(
+        detail=True,
+        methods=["post"],
+        throttle_classes=[ScopedRateThrottle],
+        throttle_scope="render",
+    )
     def render(self, request, pk=None):
         """Render the CV (optionally in another language/style). Identical
         inputs are served from cache."""

@@ -11,8 +11,10 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import CreateView
+from django_ratelimit.decorators import ratelimit
 from rest_framework.authtoken.models import Token
 
 from .forms import DeleteAccountForm, ProfileForm, SignUpForm
@@ -25,6 +27,7 @@ class SignUpView(CreateView):
     template_name = "accounts/signup.html"
 
 
+@method_decorator(ratelimit(key="user", rate="10/m", method="POST"), name="post")
 class AccountSettingsView(LoginRequiredMixin, View):
     """Profile + password on one page. Each form posts its own ``action``.
 

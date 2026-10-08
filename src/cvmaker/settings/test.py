@@ -85,3 +85,11 @@ STORAGES = {
 # ----------------------------------------------------------------------
 for _q in RQ_QUEUES.values():  # noqa: F405 — RQ_QUEUES comes from base via *
     _q["ASYNC"] = False
+
+# Rate limits count in process memory here (single process); prod uses Redis.
+CACHES["ratelimit"] = {
+    "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    "LOCATION": "ratelimit",
+}
+RATELIMIT_USE_CACHE = "ratelimit"
+SILENCED_SYSTEM_CHECKS = [*globals().get("SILENCED_SYSTEM_CHECKS", []), "django_ratelimit.E003"]

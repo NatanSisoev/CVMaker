@@ -25,7 +25,9 @@ from __future__ import annotations
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_GET, require_POST
+from django_ratelimit.decorators import ratelimit
 
 from cv.models import CV
 
@@ -38,6 +40,7 @@ from .services import enqueue_render
 # ---------------------------------------------------------------------------
 @login_required
 @require_POST
+@ratelimit(group="render", key="user", rate="30/m")
 def enqueue_render_view(request, cv_id):
     cv = get_object_or_404(CV, pk=cv_id, user=request.user)
 
@@ -88,6 +91,9 @@ def render_status_view(request, render_id):
 # ---------------------------------------------------------------------------
 # GET -> stream the PDF
 # ---------------------------------------------------------------------------
+# The editor previews the PDF in an <iframe>; the global X-Frame-Options:
+# DENY would blank it, so allow same-origin framing for this view only.
+@xframe_options_sameorigin
 @login_required
 @require_GET
 def render_pdf_view(request, render_id):

@@ -68,6 +68,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "django_cotton",  # Component templates (Phase 4)
     "django_rq",  # Render queue (Phase 3)
+    "django_ratelimit",  # auth / render rate limits (Phase 6)
     "rest_framework",  # /api/v1 (Phase 5)
     "rest_framework.authtoken",  # personal API tokens
     "drf_spectacular",  # OpenAPI schema
@@ -104,6 +105,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "core.middleware.PermissionsPolicyMiddleware",
+    "django_ratelimit.middleware.RatelimitMiddleware",  # Ratelimited -> 429 view
 ]
 
 ROOT_URLCONF = "cvmaker.urls"
@@ -337,6 +340,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    # Render is the expensive endpoint; DRF's throttle returns a proper 429.
+    "DEFAULT_THROTTLE_RATES": {"render": "30/min"},
     "PAGE_SIZE": 50,
 }
 
@@ -350,3 +355,18 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
 }
+
+
+# ---------------------------------------------------------------------------
+# Rate limiting (Phase 6) -- django-ratelimit on login/signup/render/settings.
+# Needs a shared, atomic cache: Redis in prod. dev/test point RATELIMIT_USE_CACHE
+# at a local-memory cache and silence the "not shared" check there only.
+# ---------------------------------------------------------------------------
+RATELIMIT_USE_CACHE = "default"
+RATELIMIT_VIEW = "core.views.ratelimited"
+
+# Browser features this app never uses; sent on every response.
+PERMISSIONS_POLICY = (
+    "camera=(), microphone=(), geolocation=(), payment=(), usb=(), "
+    "accelerometer=(), gyroscope=(), magnetometer=(), interest-cohort=()"
+)
