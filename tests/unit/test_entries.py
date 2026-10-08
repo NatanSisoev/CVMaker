@@ -71,7 +71,8 @@ def test_bullet_serialize_shape():
 
 def test_text_serialize_shape():
     entry = TextEntryFactory(text="Long-form narrative.")
-    assert entry.serialize() == {"text": "Long-form narrative."}
+    # rendercv's TextEntry is a bare string, not a mapping.
+    assert entry.serialize() == "Long-form narrative."
 
 
 def test_publication_serialize_drops_blanks():

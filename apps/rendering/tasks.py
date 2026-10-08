@@ -36,6 +36,7 @@ from typing import TYPE_CHECKING
 from django.core.files.base import ContentFile
 from django.utils import timezone
 
+from core.rendercv import format_validation_errors
 from cv.services import build_render_payload
 
 from .models import Render, RenderStatus
@@ -143,15 +144,6 @@ def _to_rendercv_2x(payload: dict, style: str = "") -> dict:
     return data
 
 
-def _validation_message(exc) -> str:
-    """Flatten rendercv validation errors into one readable string."""
-    lines = []
-    for err in exc.validation_errors:
-        where = " -> ".join(str(part) for part in (err.schema_location or ()))
-        lines.append(f"{where}: {err.message}" if where else err.message)
-    return "The CV data is not valid for rendering:\n" + "\n".join(lines)
-
-
 def _render_payload_to_pdf(payload: dict, style: str = "") -> bytes:
     """Hand a render payload to rendercv 2.x, return PDF bytes.
 
@@ -194,7 +186,9 @@ def _render_payload_to_pdf(payload: dict, style: str = "") -> bytes:
             typst_path = generate_typst(model)
             pdf_path = generate_pdf(model, typst_path)
         except RenderCVUserValidationError as exc:
-            raise _RenderError(_validation_message(exc)) from exc
+            raise _RenderError(
+                format_validation_errors(exc, "The CV data is not valid for rendering:")
+            ) from exc
         except RenderCVUserError as exc:
             raise _RenderError(exc.message or "rendercv rejected this CV.") from exc
         except jinja2.TemplateSyntaxError as exc:

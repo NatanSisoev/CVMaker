@@ -376,7 +376,8 @@ class PublicationEntry(BaseEntry):
     def serialize(self, language: str | None = None) -> dict:
         info = {
             "title": self.get_field("title", language=language),
-            "authors": self.authors,
+            # rendercv 2.x requires a list; the column stores "A, B, C".
+            "authors": [a.strip() for a in self.authors.split(",") if a.strip()] or None,
             "doi": self.doi if self.doi else None,
             "url": self.url if self.url else None,
             "journal": self.get_field("journal", language=language) or None,
@@ -466,8 +467,9 @@ class TextEntry(BaseEntry):
     def __str__(self) -> str:
         return f"[Text({self.text})]"
 
-    def serialize(self, language: str | None = None) -> dict:
-        return {"text": self.get_field("text", language=language)}
+    def serialize(self, language: str | None = None) -> str:  # type: ignore[override]
+        # rendercv's TextEntry is a bare string, not a mapping.
+        return self.get_field("text", language=language)
 
 
 # ---------------------------------------------------------------------------

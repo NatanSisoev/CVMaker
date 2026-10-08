@@ -123,7 +123,7 @@ class TestSerializeWithLanguage:
             canonical_language="en",
             translations={"fr": {"text": "Résumé narratif."}},
         )
-        assert entry.serialize(language="fr") == {"text": "Résumé narratif."}
+        assert entry.serialize(language="fr") == "Résumé narratif."
 
     def test_experience_translates_position_and_summary(self):
         entry = ExperienceEntryFactory(
@@ -150,7 +150,7 @@ class TestSerializeWithLanguage:
         es = entry.serialize(language="es")
         assert es["title"] == "Un Artículo Sobre Cosas"
         # Authors stay canonical (not in TRANSLATABLE_FIELDS).
-        assert es["authors"] == "Alice Author, Bob Builder"
+        assert es["authors"] == ["Alice Author", "Bob Builder"]
 
     def test_highlights_parse_runs_after_translation(self):
         entry = EducationEntryFactory(

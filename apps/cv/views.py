@@ -1,6 +1,6 @@
 import uuid
 
-import yaml
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
@@ -8,9 +8,9 @@ from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from sections.models import CVSection, Section
-from sections.services import import_sections_from_data_model
 
 from .forms import CVDesignForm, CVForm, CVInfoForm, CVLocaleForm, CVSettingsForm
+from .importer import CVImportError, import_cv_from_yaml
 from .models import CV, CVDesign, CVInfo, CVLocale, CVSettings
 from .services import language_status
 
@@ -97,61 +97,37 @@ class CVCreateView(LoginRequiredMixin, _SectionOrderMixin, CreateView):
 
 
 class CVUploadView(LoginRequiredMixin, View):
-    """Handle YAML file uploads and convert them to CV instances"""
+    """Import a rendercv YAML file as a new CV, then open it in the editor.
 
-    # TODO: finish
+    Problems (bad YAML, rendercv validation errors, values our columns can't
+    hold) come back as an error toast on the dashboard; nothing is saved.
+    """
+
+    MAX_BYTES = 512 * 1024
 
     def post(self, request, *args, **kwargs):
-        if "yaml_file" not in request.FILES:
+        upload = request.FILES.get("yaml_file")
+        if upload is None:
+            messages.error(request, "Choose a rendercv YAML file to import.")
+            return redirect("cv-list")
+        if upload.size > self.MAX_BYTES:
+            messages.error(request, "That file is too large to be a CV (512 KB max).")
+            return redirect("cv-list")
+        try:
+            text = upload.read().decode("utf-8")
+        except UnicodeDecodeError:
+            messages.error(request, "That file isn't UTF-8 text. Export it as YAML and retry.")
             return redirect("cv-list")
 
-        yaml_file = request.FILES["yaml_file"]
-        yaml_data = yaml.safe_load(yaml_file.read().decode("utf-8"))
+        alias = upload.name.rsplit(".", 1)[0]
+        try:
+            cv = import_cv_from_yaml(request.user, text, alias)
+        except CVImportError as exc:
+            messages.error(request, str(exc))
+            return redirect("cv-list")
 
-        # Use the rendercv function to validate and parse the YAML
-        data_model = data.validate_input_dictionary_and_return_the_data_model(yaml_data)
-
-        # Create CV from data model
-        cv = self.create_cv_from_data(request.user, data_model, yaml_file)
-
-        return redirect("cv-detail", cv_id=cv.id)
-
-    def create_cv_from_data(self, user, data_model, file):
-        """
-        Create a CV and all related objects from a RenderCVDataModel instance.
-
-        Args:
-            user: The user who owns the CV
-            data_model: An instance of RenderCVDataModel containing parsed YAML data
-            file: The uploaded file object
-
-        Returns:
-            CV: The created CV instance
-        """
-        filename = "uploaded"  # you might derive this from the file if needed
-
-        # Create main CV pieces using their custom managers
-        # Each manager extracts what it needs from the data_model
-        cv_info = CVInfo.objects.create_from_data_model(user, data_model, alias=filename)
-        # cv_design = CVDesign.objects.create_from_data_model(user, data_model, file, alias=filename)
-        cv_design = CVDesign.objects.all()[0]
-        cv_locale = CVLocale.objects.create_from_data_model(user, data_model, alias=filename)
-        cv_settings = CVSettings.objects.create_from_data_model(user, data_model, alias=filename)
-
-        # Create the main CV object
-        cv = CV.objects.create(
-            user=user,
-            alias=filename,
-            design=cv_design,
-            locale=cv_locale,
-            info=cv_info,
-            settings=cv_settings,
-        )
-
-        # Process sections via the import service.
-        import_sections_from_data_model(user=user, cv=cv, data_model=data_model, alias=filename)
-
-        return cv
+        messages.success(request, f"Imported {cv.alias}.")
+        return redirect("cv-editor", cv_id=cv.id)
 
 
 ################################################### VIEW ###############################################################
@@ -429,30 +405,3 @@ class CVSettingsDeleteView(LoginRequiredMixin, UserIsOwnerMixin, DeleteView):
     template_name = "cv/cvsettings_confirm_delete.html"
     success_url = reverse_lazy("cvsettings-list")
     pk_url_kwarg = "settings_id"
-
-
-# --- rendercv 2.x stopgap (Phase 1, see scripts/fix_rendercv_imports.py) ---
-# rendercv 2.x removed the ``data`` module and reorganized ``renderer``.
-# The views in this file were written against the 1.x private-ish API and
-# will be rewritten in Phase 3 when PDF rendering is wired up for real.
-# Until then, keep the module importable so makemigrations / reverse() work,
-# and fail loudly if anyone actually tries to render a CV.
-class _RendercvUnavailable:
-    def __init__(self, what):
-        self._what = what
-
-    def _boom(self):
-        raise NotImplementedError(
-            "rendercv." + self._what + " is not wired up yet. "
-            "PDF rendering is deferred to Phase 3 -- see ROADMAP.md."
-        )
-
-    def __getattr__(self, name):
-        self._boom()
-
-    def __call__(self, *args, **kwargs):
-        self._boom()
-
-
-data = _RendercvUnavailable("data")
-# --- end rendercv 2.x stopgap ---
