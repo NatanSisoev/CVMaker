@@ -26,6 +26,36 @@
     </c-card>
   </form>
 
+  <c-card class="mt-8">
+    <c-slot name="header">API token</c-slot>
+    <p class="text-sm text-text-muted mb-4">
+      For scripts and the CLI: send <code class="font-mono">Authorization: Token &lt;key&gt;</code>
+      to <code class="font-mono">/api/v1/</code>. Treat it like a password.
+    </p>
+    {% if api_token %}
+      <label for="api-token" class="text-sm font-medium text-text">Your token</label>
+      <input id="api-token" type="text" readonly value="{{ api_token.key }}"
+             class="mt-1 mb-4 h-10 w-full rounded-sm border border-border bg-surface-2 px-3 font-mono text-sm text-text"
+             x-data x-on:focus="$el.select()">
+    {% endif %}
+    <div class="flex items-center gap-2">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="token-create">
+        <c-button type="submit" variant="{% if api_token %}secondary{% else %}primary{% endif %}">
+          {% if api_token %}Regenerate token{% else %}Create token{% endif %}
+        </c-button>
+      </form>
+      {% if api_token %}
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="token-revoke">
+          <c-button type="submit" variant="danger">Revoke</c-button>
+        </form>
+      {% endif %}
+    </div>
+  </c-card>
+
   <p class="mt-8 text-sm text-text-muted">
     Account deletion and data export arrive with the GDPR work in Phase 6.
   </p>

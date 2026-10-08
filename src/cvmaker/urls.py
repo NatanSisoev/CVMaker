@@ -45,6 +45,7 @@ def _placeholder(page_title: str, page_description: str | None = None):
 urlpatterns: list[URLPattern | URLResolver] = [
     path("", HomePageView.as_view(), name="homepage"),
     path("admin/", admin.site.urls),
+    path("api/v1/", include("api.urls", namespace="api")),
     path("palette/", palette_view, name="palette"),
     # Domain apps
     path("cv/", include("cv.urls")),

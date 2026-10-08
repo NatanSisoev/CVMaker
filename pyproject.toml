@@ -29,45 +29,40 @@ dependencies = [
     "django-cotton>=1.4,<2",              # Phase 4: component-template system
     "django-environ>=0.11,<1",
     "django-model-utils>=5.0,<6",         # InheritanceManager for polymorphic entries
-
     # --- Database ---
     "dj-database-url>=2.3,<3",
     "psycopg[binary]>=3.2,<4",            # psycopg3 — native async, supersedes psycopg2
-
     # --- Server ---
     "gunicorn>=23,<24",
     "uvicorn[standard]>=0.34,<1",         # ASGI for async + HTMX
     "whitenoise>=6.9,<7",                 # static serving (Phase 8 may move to CDN)
-
     # --- Rendering: rendercv 2.x compiles Typst in-process via typst-py ---
     # The `full` extra is what pulls in `typst` (needed by renderer.pdf_png).
     "rendercv[full]>=2.8,<3",
     "rendercv-fonts>=0.5,<1",
-
     # --- YAML parsing ---
     # Used directly in apps/cv/models.py as a stand-in for rendercv 1.x's
     # `read_a_yaml_file`, which was removed in rendercv 2.x. Already a
     # transitive dep via rendercv; pinned here so the direct use is explicit.
     "pyyaml>=6.0,<7",
-
     # --- Images ---
     # Required by Django's ImageField (apps/cv/models.py: CVInfo.photo).
     # Django's system check hints but doesn't install it for us.
     "pillow>=11,<12",
-
     # --- Background work / rendering pipeline (Phase 3) ---
     # RQ over Redis for the Typst render queue. ADR-0007 covers why RQ
     # over Celery: smaller surface, no broker-side scheduling logic
     # needed at this scale, fits in our existing Redis instance.
     "django-rq>=3.0,<4",
     "rq>=2.0,<3",
-
     # --- Object storage (Phase 3.5) ---
     # Rendered PDFs land on S3 in prod, MinIO in dev (compose). The
     # bucket name + endpoint URL come from AWS_* env vars; see the
     # ``Object storage`` section of the README.
     "django-storages[s3]>=1.14,<2",
     "boto3>=1.35,<2",
+    "djangorestframework>=3.15,<4",
+    "drf-spectacular>=0.28,<1",
 ]
 
 # -------------------------------------------------------------------

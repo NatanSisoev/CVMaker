@@ -1,0 +1,549 @@
+openapi: 3.0.3
+info:
+  title: CVMaker API
+  version: 1.0.0
+  description: 'Read your CVs, sections and entries; render a CV and download the
+    PDF. Authenticate with `Authorization: Token <key>` (create a key under Settings).'
+paths:
+  /api/v1/cvs/:
+    get:
+      operationId: cvs_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - cvs
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCVList'
+          description: ''
+  /api/v1/cvs/{id}/:
+    get:
+      operationId: cvs_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this cv.
+        required: true
+      tags:
+      - cvs
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CV'
+          description: ''
+  /api/v1/cvs/{id}/render/:
+    post:
+      operationId: cvs_render_create
+      description: |-
+        Render the CV (optionally in another language/style). Identical
+        inputs are served from cache.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this cv.
+        required: true
+      tags:
+      - cvs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenderRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RenderRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RenderRequestRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Render'
+          description: 'Cache hit: already rendered.'
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Render'
+          description: Queued; poll the render.
+  /api/v1/entries/:
+    get:
+      operationId: entries_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - entries
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEntryList'
+          description: ''
+  /api/v1/entries/{id}/:
+    get:
+      operationId: entries_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this base entry.
+        required: true
+      tags:
+      - entries
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entry'
+          description: ''
+  /api/v1/renders/:
+    get:
+      operationId: renders_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - renders
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRenderList'
+          description: ''
+  /api/v1/renders/{id}/:
+    get:
+      operationId: renders_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this render.
+        required: true
+      tags:
+      - renders
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Render'
+          description: ''
+  /api/v1/renders/{id}/pdf/:
+    get:
+      operationId: renders_pdf_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this render.
+        required: true
+      tags:
+      - renders
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: The rendered PDF.
+        '404':
+          description: Not found, or not done yet.
+  /api/v1/sections/:
+    get:
+      operationId: sections_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - sections
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSectionList'
+          description: ''
+  /api/v1/sections/{id}/:
+    get:
+      operationId: sections_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this section.
+        required: true
+      tags:
+      - sections
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Section'
+          description: ''
+components:
+  schemas:
+    BlankEnum:
+      enum:
+      - ''
+    CV:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        alias:
+          type: string
+          description: Alias for the curriculum vitae
+          maxLength: 20
+        theme:
+          type: string
+          nullable: true
+          readOnly: true
+        created_date:
+          type: string
+          format: date-time
+          readOnly: true
+        modified_date:
+          type: string
+          format: date-time
+          readOnly: true
+        sections:
+          type: array
+          items:
+            type: string
+            format: uuid
+          readOnly: true
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/LanguageStatus'
+          readOnly: true
+      required:
+      - created_date
+      - id
+      - languages
+      - modified_date
+      - sections
+      - theme
+    Entry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        alias:
+          type: string
+          description: Alias for the CV entry
+          maxLength: 20
+        type:
+          type: string
+          readOnly: true
+        canonical_language:
+          type: string
+          description: ISO 639-1 code identifying the language the canonical columns
+            are written in.
+          maxLength: 2
+        translations:
+          description: 'Per-language field overrides keyed by ISO 639-1 code, e.g.
+            {"es": {"summary": "..."}, "fr": {"summary": "..."}}'
+        content:
+          description: The entry in rendercv's shape, in its canonical language.
+          readOnly: true
+      required:
+      - alias
+      - content
+      - id
+      - type
+    LanguageStatus:
+      type: object
+      properties:
+        code:
+          type: string
+        done:
+          type: integer
+        total:
+          type: integer
+      required:
+      - code
+      - done
+      - total
+    PaginatedCVList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CV'
+    PaginatedEntryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Entry'
+    PaginatedRenderList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Render'
+    PaginatedSectionList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Section'
+    Render:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        cv:
+          type: string
+          format: uuid
+          description: The CV being rendered.
+        language:
+          type: string
+          description: ISO 639-1 code; empty string means 'use the CV's CVLocale.language'.
+          maxLength: 2
+        style:
+          type: string
+          description: Theme/style override; empty string means 'use the CV's CVDesign'.
+          maxLength: 50
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        error:
+          type: string
+          description: Captured stderr/exception text when status == 'failed'.
+        requested_at:
+          type: string
+          format: date-time
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        pdf_url:
+          type: string
+          nullable: true
+          description: Absolute URL of the PDF once the render is done, else null.
+          readOnly: true
+      required:
+      - cv
+      - id
+      - pdf_url
+      - requested_at
+    RenderRequestRequest:
+      type: object
+      properties:
+        language:
+          type: string
+          minLength: 1
+          default: ''
+          pattern: ^([a-z]{2})?$
+        style:
+          default: ''
+          oneOf:
+          - $ref: '#/components/schemas/StyleEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+    Section:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          description: Name of the section
+          maxLength: 50
+        alias:
+          type: string
+          description: Alias for the section
+          maxLength: 20
+        entries:
+          type: array
+          items:
+            type: string
+            format: uuid
+          readOnly: true
+      required:
+      - entries
+      - id
+      - title
+    StatusEnum:
+      enum:
+      - queued
+      - running
+      - done
+      - failed
+      type: string
+      description: |-
+        * `queued` - Queued
+        * `running` - Running
+        * `done` - Done
+        * `failed` - Failed
+    StyleEnum:
+      enum:
+      - classic
+      - sb2nov
+      - engineeringresumes
+      - engineeringclassic
+      - moderncv
+      type: string
+      description: |-
+        * `` - CV default
+        * `classic` - Classic
+        * `sb2nov` - Sb2Nov
+        * `engineeringresumes` - EngineeringResumes
+        * `engineeringclassic` - EngineeringClassic
+        * `moderncv` - ModernCV
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication with required prefix "Token"

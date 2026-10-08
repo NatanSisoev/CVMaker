@@ -10,6 +10,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView
+from rest_framework.authtoken.models import Token
 
 from .forms import ProfileForm, SignUpForm
 
@@ -36,6 +37,7 @@ class AccountSettingsView(LoginRequiredMixin, View):
             {
                 "profile_form": profile_form or ProfileForm(instance=request.user),
                 "password_form": password_form or PasswordChangeForm(request.user),
+                "api_token": Token.objects.filter(user=request.user).first(),
             },
         )
 
@@ -59,4 +61,14 @@ class AccountSettingsView(LoginRequiredMixin, View):
                 messages.success(request, "Password changed.")
                 return redirect("profile")
             return self._render(request, password_form=form)
+        if action == "token-create":
+            # Regenerating invalidates the old key immediately.
+            Token.objects.filter(user=request.user).delete()
+            Token.objects.create(user=request.user)
+            messages.success(request, "New API token created. The previous one no longer works.")
+            return redirect("profile")
+        if action == "token-revoke":
+            Token.objects.filter(user=request.user).delete()
+            messages.success(request, "API token revoked.")
+            return redirect("profile")
         return self._render(request)

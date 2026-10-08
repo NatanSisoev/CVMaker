@@ -68,10 +68,14 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "django_cotton",  # Component templates (Phase 4)
     "django_rq",  # Render queue (Phase 3)
+    "rest_framework",  # /api/v1 (Phase 5)
+    "rest_framework.authtoken",  # personal API tokens
+    "drf_spectacular",  # OpenAPI schema
 ]
 
 LOCAL_APPS = [
     "core",  # shared mixins / base models (apps/core)
+    "api",  # REST API v1 (apps/api)
     "accounts",  # custom User (apps/accounts)
     "cv",  # CV aggregate + Info / Design / Locale / Settings
     # Template tags in cv/templatetags/ are auto-discovered because `cv`
@@ -318,4 +322,31 @@ LOGGING = {
         "django.request": {"handlers": ["console"], "level": "WARNING", "propagate": False},
         "cvmaker": {"handlers": ["console"], "level": "INFO", "propagate": False},
     },
+}
+
+
+# ---------------------------------------------------------------------------
+# REST API (Phase 5) -- /api/v1
+# ---------------------------------------------------------------------------
+REST_FRAMEWORK = {
+    # Personal tokens for scripts/CLI; the session for the browser (CSRF-checked).
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 50,
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "CVMaker API",
+    "DESCRIPTION": (
+        "Read your CVs, sections and entries; render a CV and download the PDF. "
+        "Authenticate with `Authorization: Token <key>` (create a key under Settings)."
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
 }
