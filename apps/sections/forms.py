@@ -95,22 +95,38 @@ class SectionForm(forms.ModelForm):
         return ids
 
     def save(self, commit=True):
+        # super().save(commit=False) sets ``self.save_m2m = self._save_m2m``,
+        # so the entry write must live in ``_save_m2m`` (an override of a
+        # ``save_m2m`` method would be shadowed by that instance attribute).
         section = super().save(commit=False)
         section.user = self.user
         if commit:
             section.save()
-            self.save_m2m()
+            self._save_m2m()
         return section
 
-    def save_m2m(self):
-        # Reset and re-add. Cheap because each user has at most a few
-        # entries per section; Phase 4 swaps this for an HTMX reorder UI.
-        self.instance.section_entries.all().delete()
+    def _save_m2m(self):
+        super()._save_m2m()
+        self._sync_entries()
 
-        entry_ids = self.cleaned_data.get("entries", [])
-        for order, entry_id in enumerate(entry_ids):
-            SectionEntry.objects.create(
-                section=self.instance,
-                entry_id=uuid.UUID(entry_id),
-                order=order,
-            )
+    def _sync_entries(self):
+        """Make the section hold exactly the checked entries.
+
+        Entries that stay keep their row and their order (set by drag-reorder
+        in the Editor); newly checked ones are appended; unchecked ones go.
+        """
+        wanted = [uuid.UUID(entry_id) for entry_id in self.cleaned_data.get("entries", [])]
+        current = {se.entry_id: se for se in self.instance.section_entries.all()}
+
+        for entry_id, section_entry in current.items():
+            if entry_id not in wanted:
+                section_entry.delete()
+
+        kept_orders = [se.order for eid, se in current.items() if eid in wanted]
+        next_order = max(kept_orders, default=-1) + 1
+        for entry_id in wanted:
+            if entry_id not in current:
+                SectionEntry.objects.create(
+                    section=self.instance, entry_id=entry_id, order=next_order
+                )
+                next_order += 1
