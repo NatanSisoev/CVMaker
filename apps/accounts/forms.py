@@ -69,3 +69,32 @@ class ProfileForm(forms.ModelForm):
         if not _LANGUAGE_TAG_RE.match(tag):
             raise forms.ValidationError("Use a language code like en, es or pt-BR.")
         return tag
+
+
+class DeleteAccountForm(forms.Form):
+    """Deletion is irreversible: require the password and the typed email."""
+
+    password = forms.CharField(
+        label="Current password",
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+    )
+    confirm_email = forms.EmailField(
+        label="Type your email to confirm",
+        widget=forms.EmailInput(attrs={"autocomplete": "off"}),
+    )
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_password(self) -> str:
+        password = self.cleaned_data["password"]
+        if not self.user.check_password(password):
+            raise forms.ValidationError("That password is not correct.")
+        return password
+
+    def clean_confirm_email(self) -> str:
+        email = self.cleaned_data["confirm_email"]
+        if email.strip().lower() != self.user.email.lower():
+            raise forms.ValidationError("That doesn't match your account's email.")
+        return email

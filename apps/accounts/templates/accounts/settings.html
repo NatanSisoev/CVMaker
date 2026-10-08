@@ -56,8 +56,27 @@
     </div>
   </c-card>
 
-  <p class="mt-8 text-sm text-text-muted">
-    Account deletion and data export arrive with the GDPR work in Phase 6.
-  </p>
+  <c-card class="mt-8">
+    <c-slot name="header">Your data</c-slot>
+    <p class="text-sm text-text-muted mb-4">
+      Download everything you have written here (CVs, sections, entries, translations,
+      settings) as one JSON file.
+    </p>
+    <c-button href="{% url 'account-export' %}" variant="secondary">Download my data</c-button>
+  </c-card>
+
+  <form method="post" novalidate class="cv-form mt-8">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="delete-account">
+    <c-card class="border-danger">
+      <c-slot name="header"><span class="text-danger">Delete account</span></c-slot>
+      <p class="text-sm text-text-muted mb-4">
+        Permanently deletes your account, every CV, section, entry and rendered PDF.
+        This cannot be undone. Download your data first if you want a copy.
+      </p>
+      {% include 'includes/form_fields.html' with form=delete_form %}
+      <div class="mt-6"><c-button type="submit" variant="danger">Delete my account</c-button></div>
+    </c-card>
+  </form>
 </section>
 {% endblock %}

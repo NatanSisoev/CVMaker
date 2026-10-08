@@ -3,16 +3,20 @@
 from __future__ import annotations
 
 from django.contrib import messages
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.serializers.json import DjangoJSONEncoder
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView
 from rest_framework.authtoken.models import Token
 
-from .forms import ProfileForm, SignUpForm
+from .forms import DeleteAccountForm, ProfileForm, SignUpForm
+from .gdpr import delete_account, export_user_data
 
 
 class SignUpView(CreateView):
@@ -30,7 +34,7 @@ class AccountSettingsView(LoginRequiredMixin, View):
 
     template_name = "accounts/settings.html"
 
-    def _render(self, request, profile_form=None, password_form=None):
+    def _render(self, request, profile_form=None, password_form=None, delete_form=None):
         return render(
             request,
             self.template_name,
@@ -38,6 +42,7 @@ class AccountSettingsView(LoginRequiredMixin, View):
                 "profile_form": profile_form or ProfileForm(instance=request.user),
                 "password_form": password_form or PasswordChangeForm(request.user),
                 "api_token": Token.objects.filter(user=request.user).first(),
+                "delete_form": delete_form or DeleteAccountForm(request.user),
             },
         )
 
@@ -67,8 +72,31 @@ class AccountSettingsView(LoginRequiredMixin, View):
             Token.objects.create(user=request.user)
             messages.success(request, "New API token created. The previous one no longer works.")
             return redirect("profile")
+        if action == "delete-account":
+            form = DeleteAccountForm(request.user, request.POST)
+            if not form.is_valid():
+                return self._render(request, delete_form=form)
+            user = request.user
+            logout(request)  # end the session before the row disappears
+            delete_account(user)
+            messages.success(request, "Your account and all of its data were deleted.")
+            return redirect("homepage")
         if action == "token-revoke":
             Token.objects.filter(user=request.user).delete()
             messages.success(request, "API token revoked.")
             return redirect("profile")
         return self._render(request)
+
+
+class ExportDataView(LoginRequiredMixin, View):
+    """GDPR data export: everything you authored, as one JSON download."""
+
+    def get(self, request):
+        stamp = timezone.now().strftime("%Y-%m-%d")
+        response = JsonResponse(
+            export_user_data(request.user),
+            encoder=DjangoJSONEncoder,
+            json_dumps_params={"indent": 2, "ensure_ascii": False},
+        )
+        response["Content-Disposition"] = f'attachment; filename="cvmaker-export-{stamp}.json"'
+        return response
