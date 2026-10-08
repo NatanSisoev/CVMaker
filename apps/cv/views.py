@@ -1,10 +1,7 @@
-import os
 import uuid
 
 import yaml
-from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views import View
@@ -160,7 +157,7 @@ class CVUploadView(LoginRequiredMixin, View):
 ################################################### VIEW ###############################################################
 
 
-class CVDetailView(DetailView):
+class CVDetailView(LoginRequiredMixin, DetailView):
     model = CV
     template_name = "cv/detail.html"
     context_object_name = "cv"
@@ -221,53 +218,14 @@ class CVEditorView(LoginRequiredMixin, DetailView):
 ################################################# DELETE ###############################################################
 
 
-class CVDeleteView(DeleteView):
+class CVDeleteView(LoginRequiredMixin, DeleteView):
     model = CV
 
     def get_object(self, queryset=None):
-        return get_object_or_404(CV, id=self.kwargs["cv_id"])
+        return get_object_or_404(CV, id=self.kwargs["cv_id"], user=self.request.user)
 
     def get_success_url(self):
         return reverse_lazy("cv-list")
-
-
-################################################ PREVIEW ###############################################################
-
-
-def preview_cv(request, cv_id):
-    cv = get_object_or_404(CV, id=cv_id, user=request.user)
-    return render(request, "cv_detail.html", {"cv": cv})
-
-
-############################################### DOWNLOAD ###############################################################
-
-
-def download_cv(request, cv_id):
-    # TODO: cv.photo location
-    cv = CV.objects.get(id=cv_id, user=request.user)
-    data_model = data.validate_input_dictionary_and_return_the_data_model(cv.serialize())
-
-    render_command_settings: data.models.RenderCommandSettings = (
-        data_model.rendercv_settings.render_command
-    )
-    if not render_command_settings or not render_command_settings.output_folder_name:
-        return HttpResponse("Invalid render command settings", status=400)
-
-    output_directory = settings.MEDIA_ROOT / render_command_settings.output_folder_name
-
-    typst_file_path_in_output_folder = renderer.create_a_typst_file_and_copy_theme_files(
-        data_model, output_directory
-    )
-    pdf_file_path_in_output_folder = renderer.render_a_pdf_from_typst(
-        typst_file_path_in_output_folder
-    )
-
-    if os.path.exists(pdf_file_path_in_output_folder):
-        return FileResponse(
-            open(pdf_file_path_in_output_folder, "rb"), content_type="application/pdf"
-        )
-    else:
-        return HttpResponse("File not found", status=404)
 
 
 ################################################ MODULES ###############################################################
@@ -279,8 +237,13 @@ class UserIsOwnerMixin(UserPassesTestMixin):
         return obj.user == self.request.user
 
 
-# Helper Mixin to assign user & alias automatically
-class AssignUserAndAliasMixin:
+# Helper Mixin to assign user & alias automatically. Requires login, and
+# scopes object lookups to the current user so an update can never reach (and,
+# via the user assignment below, take over) someone else's row -- 404 instead.
+class AssignUserAndAliasMixin(LoginRequiredMixin):
+    def get_queryset(self):
+        return super().get_queryset().filter(user=self.request.user)
+
     def form_valid(self, form):
         form.instance.user = self.request.user
         if not form.instance.alias:
@@ -492,5 +455,4 @@ class _RendercvUnavailable:
 
 
 data = _RendercvUnavailable("data")
-renderer = _RendercvUnavailable("renderer")
 # --- end rendercv 2.x stopgap ---

@@ -28,8 +28,6 @@ from .views import (
     CVSettingsUpdateView,
     CVUpdateView,
     CVUploadView,
-    download_cv,
-    preview_cv,
 )
 
 urlpatterns = [
@@ -39,9 +37,7 @@ urlpatterns = [
     path("<uuid:cv_id>/", CVDetailView.as_view(), name="cv-detail"),
     path("<uuid:cv_id>/edit/", CVUpdateView.as_view(), name="cv-edit"),
     path("<uuid:cv_id>/editor/", CVEditorView.as_view(), name="cv-editor"),
-    path("<uuid:cv_id>/download/", download_cv, name="cv-download"),
     path("<uuid:cv_id>/delete/", CVDeleteView.as_view(), name="cv-delete"),
-    path("<uuid:cv_id>/preview/", preview_cv, name="cv-preview"),
 ]
 
 urlpatterns += [
