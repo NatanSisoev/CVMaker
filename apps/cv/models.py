@@ -69,14 +69,16 @@ class CV(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
 
-    def serialize(self) -> dict:
-        # Phase 2.2: pull the active language from CVLocale and thread it
-        # through to every entry's serializer. ``None`` falls back to each
-        # entry's canonical_language (no translation lookup).
-        language = getattr(self.locale, "language", None) if self.locale else None
+    def serialize(self, language: str | None = None) -> dict:
+        # The active language: an explicit override (editor's language picker),
+        # else the CVLocale's, else None -- each entry's canonical language.
+        if language is None and self.locale:
+            language = self.locale.language
 
         cv = self.info.serialize() if self.info else {}
-        for section in self.sections.all():
+        # A plain M2M .all() ignores the through table's ``order``; rendercv
+        # renders sections in dict insertion order, so order explicitly.
+        for section in self.sections.order_by("cvsection__order"):
             if "sections" not in cv:
                 cv["sections"] = {}
             cv["sections"][section.title] = section.serialize(language=language)
@@ -112,24 +114,11 @@ class CVInfoManager(models.Manager):
             social_networks=data.get("social_networks"),
         )
 
-    def create_from_data_model(self, user, data_model, alias: str):
-        """Create a CVInfo instance from a RenderCVDataModel"""
-        cv_data = data_model.cv.dict()
-        info = cv_data.get("sections_input", {})
-
-        return self.create_from_data(user, info, alias)
-
 
 class CVDesignManager(models.Manager):
     def create_from_data(self, user, file, alias: str):
         # Keep existing method for backward compatibility
         return self.create(user=user, alias=alias, theme="custom", design_file=file)
-
-    def create_from_data_model(self, user, data_model, file, alias: str):
-        """Create a CVDesign instance from a RenderCVDataModel"""
-        # If there's design data in the model, we could use it here
-        # For now, just use the file as in the original method
-        return self.create_from_data(user, file, alias)
 
 
 class CVLocaleManager(models.Manager):
@@ -155,27 +144,9 @@ class CVLocaleManager(models.Manager):
 
         return self.create(user=user, alias=alias, **data)
 
-    def create_from_data_model(self, user, data_model, alias: str):
-        """Create a CVLocale instance from a RenderCVDataModel"""
-        locale_data = data_model.locale.dict()
-        return self.create_from_data(user, locale_data, alias)
-
 
 class CVSettingsManager(models.Manager):
-    def create_from_data_model(self, user, data_model, alias: str):
-        """Create a CVSettings instance from a RenderCVDataModel"""
-        # Extract settings data if present in the model
-        settings_data = {}
-        if hasattr(data_model, "rendercv_settings"):
-            settings_data = data_model.rendercv_settings.dict()
-
-        return self.create(
-            user=user,
-            alias=alias,
-            date=timezone.now(),  # Default to current date or extract from settings
-            bold_keywords=settings_data.get("bold_keywords", []),
-            # Add other settings as needed
-        )
+    """Plain manager (its rendercv 1.x import helper was removed 2026-10-08)."""
 
 
 ########################################################################################################################

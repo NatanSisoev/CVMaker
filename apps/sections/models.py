@@ -153,4 +153,4 @@ def _promote_in_order(entry_ids: Iterable) -> list[BaseEntry]:
 
 
 # SectionManager moved to apps/sections/services.py as
-# ``import_sections_from_data_model`` in Phase 2.3.
+# ``import_sections_from_data_model`` in Phase 2.3 (itself replaced by cv.importer).

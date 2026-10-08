@@ -8,13 +8,9 @@ Coverage targets:
     are shared, ordering is preserved.
   - ``sections.services.reorder_sections`` and ``reorder_entries`` --
     the CVSection / SectionEntry order columns get rewritten exactly.
-  - ``sections.services.import_sections_from_data_model`` -- happy-path
-    walk over a synthetic data model.
 """
 
 from __future__ import annotations
-
-from types import SimpleNamespace
 
 import pytest
 
@@ -22,7 +18,6 @@ from cv.models import CVInfo
 from cv.services import build_render_payload, clone_cv
 from sections.models import CVSection, SectionEntry
 from sections.services import (
-    import_sections_from_data_model,
     reorder_entries,
     reorder_sections,
 )
@@ -167,48 +162,6 @@ class TestReorderEntries:
             .values_list("entry_id", flat=True)
         )
         assert ordered == [entries[2].id, entries[0].id, entries[1].id]
-
-
-# ---------------------------------------------------------------------------
-# import_sections_from_data_model
-# ---------------------------------------------------------------------------
-class TestImportSectionsFromDataModel:
-    """Spot-check the happy path. The full integration with rendercv's
-    real data model is exercised in the YAML import view tests (Phase
-    1.6 e2e / Phase 3 once the renderer ships)."""
-
-    def test_skips_when_no_sections_attribute(self):
-        user = UserFactory()
-        cv = CVFactory(user=user)
-        # Data model whose .cv has no .sections attribute.
-        data_model = SimpleNamespace(cv=SimpleNamespace())
-        import_sections_from_data_model(user, cv, data_model, alias="test")
-        assert not CVSection.objects.filter(cv=cv).exists()
-
-    def test_creates_sections_with_entries(self):
-        user = UserFactory()
-        cv = CVFactory(user=user)
-        # Synthesize a minimal data model with one BulletEntry section.
-        bullet_data = SimpleNamespace(dict=lambda: {"bullet": "Imported bullet."})
-        section_data = SimpleNamespace(
-            title="Highlights",
-            entry_type="BulletEntry",
-            entries=[bullet_data],
-        )
-        data_model = SimpleNamespace(cv=SimpleNamespace(sections=[section_data]))
-
-        import_sections_from_data_model(user, cv, data_model, alias="imported")
-
-        cv_links = list(CVSection.objects.filter(cv=cv))
-        assert len(cv_links) == 1
-        section = cv_links[0].section
-        assert section.title == "Highlights"
-        assert section.alias == "imported"
-        # One SectionEntry pointing at one BulletEntry.
-        section_entries = list(SectionEntry.objects.filter(section=section))
-        assert len(section_entries) == 1
-        bullet = section_entries[0].real_entry
-        assert bullet.bullet == "Imported bullet."
 
 
 class TestSectionFormEntryKinds:

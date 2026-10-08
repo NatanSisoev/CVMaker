@@ -52,23 +52,11 @@ def build_render_payload(
     style : str, optional
         Phase 3 plug-point for design overrides. Currently ignored.
 
-    The function is side-effect free apart from the ``pprint`` debug
-    line in ``CV.serialize`` (Phase 3 strips that). Cache safe -- two
-    calls with the same args should produce equal dicts.
+    Side-effect free and cache safe: two calls with the same arguments
+    produce equal dicts. The language override is passed straight to
+    ``CV.serialize`` -- it works whether or not the CV has a CVLocale.
     """
-    # Allow callers to override the CV's default language without saving
-    # CVLocale changes. Useful for "preview in Spanish" buttons.
-    if language is not None:
-        # Temporarily shadow cv.locale.language. We don't save -- just
-        # let CV.serialize observe the override through the locale FK.
-        original = getattr(cv.locale, "language", None) if cv.locale else None
-        if cv.locale and original != language:
-            cv.locale.language = language
-            try:
-                return cv.serialize()
-            finally:
-                cv.locale.language = original
-    return cv.serialize()
+    return cv.serialize(language=language)
 
 
 # ---------------------------------------------------------------------------
