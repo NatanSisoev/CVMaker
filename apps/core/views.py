@@ -99,3 +99,22 @@ def ratelimited(request, exception=None):
         response["HX-Trigger"] = json.dumps({"toast": {"message": message, "variant": "error"}})
     response["Retry-After"] = "60"
     return response
+
+
+@require_GET
+def healthz(request):
+    """Liveness: the process is up and serving. No dependencies touched."""
+    return JsonResponse({"status": "ok"})
+
+
+@require_GET
+def readyz(request):
+    """Readiness: the database answers. 503 tells the load balancer to wait."""
+    from django.db import connection
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+    except Exception:
+        return JsonResponse({"status": "unavailable", "database": "down"}, status=503)
+    return JsonResponse({"status": "ok", "database": "up"})

@@ -16,7 +16,7 @@ from django.shortcuts import render
 from django.urls import URLPattern, URLResolver, include, path
 from django.views.generic import TemplateView
 
-from core.views import palette_view
+from core.views import healthz, palette_view, readyz
 from cv.views import HomePageView
 
 
@@ -46,6 +46,8 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("", HomePageView.as_view(), name="homepage"),
     path("admin/", admin.site.urls),
     path("api/v1/", include("api.urls", namespace="api")),
+    path("healthz", healthz, name="healthz"),
+    path("readyz", readyz, name="readyz"),
     path("palette/", palette_view, name="palette"),
     # Domain apps
     path("cv/", include("cv.urls")),
