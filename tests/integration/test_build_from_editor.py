@@ -183,3 +183,28 @@ def test_nav_links_the_library_for_signed_in_users(client, user):
     client.force_login(user)
     body = client.get(reverse("cv-list")).content.decode()
     assert f'href="{reverse("section-list")}"' in body and f'href="{reverse("entry-list")}"' in body
+
+
+# ---------------------------------------------------------------------------
+# Library pages: friendly kind names and usage
+# ---------------------------------------------------------------------------
+def test_entries_list_shows_friendly_kinds_and_usage(client, user, section):
+    used = BulletEntryFactory(user=user, alias="used-one")
+    BulletEntryFactory(user=user, alias="orphan")
+    append_entry_to_section(section, used)
+    client.force_login(user)
+
+    body = client.get(reverse("entry-list")).content.decode()
+
+    assert "BulletEntry" not in body and "Bullet ·" in body
+    assert "used in 1 section" in body
+    assert "not in any section yet" in body  # exactly the orphan
+    assert body.count("not in any section yet") == 1
+
+
+def test_sections_pages_use_friendly_kind_names(client, user, section):
+    append_entry_to_section(section, EducationEntryFactory(user=user))
+    client.force_login(user)
+    for url in (reverse("section-list"), reverse("section-detail", args=[section.id])):
+        body = client.get(url).content.decode()
+        assert "Education" in body and "EducationEntry" not in body, url

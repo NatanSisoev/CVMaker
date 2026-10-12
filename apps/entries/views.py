@@ -3,6 +3,7 @@ import json
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views import View
@@ -161,7 +162,11 @@ class EntryListView(EntryBaseView, ListView):
     context_object_name = "entries"
 
     def get_queryset(self):
-        return BaseEntry.objects.filter(user=self.request.user).select_subclasses()
+        return (
+            BaseEntry.objects.filter(user=self.request.user)
+            .select_subclasses()
+            .annotate(uses=Count("section_entries", distinct=True))
+        )
 
 
 ################################################## VIEW ################################################################

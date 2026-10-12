@@ -30,7 +30,7 @@
       {% for entry in section.section_entries.all %}
         <li class="flex items-center justify-between rounded-md border border-border bg-surface-2 px-3 py-2">
           <div class="flex items-center gap-2">
-            <c-badge>{{ entry.real_entry|class_name|remove_underscores }}</c-badge>
+            <c-badge>{{ entry.real_entry|kind_label }}</c-badge>
             <span class="text-text">{{ entry.entry.alias }}</span>
           </div>
           <div class="flex items-center gap-1">

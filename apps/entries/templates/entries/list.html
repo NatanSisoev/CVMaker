@@ -26,7 +26,14 @@
               </div>
             </div>
           </c-slot>
-          <p class="mb-2 text-xs uppercase tracking-wide text-text-muted">{{ entry|class_name }}</p>
+          <p class="mb-2 text-xs text-text-muted">
+            {{ entry|kind_label }} ·
+            {% if entry.uses %}
+              used in {{ entry.uses }} section{{ entry.uses|pluralize }}
+            {% else %}
+              <span class="text-accent">not in any section yet</span>
+            {% endif %}
+          </p>
           <ul class="space-y-1 text-sm text-text-muted">
             {% if entry|class_name == 'EducationEntry' %}
               <li><strong class="text-text">Institution:</strong> {{ entry.institution }}</li>

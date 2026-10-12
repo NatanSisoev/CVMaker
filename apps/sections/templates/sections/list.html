@@ -32,7 +32,7 @@
           <div class="flex flex-wrap gap-2">
             {% for entry in section.section_entries.all %}
               <c-chip>
-                {{ entry.real_entry|class_name|remove_underscores }}
+                {{ entry.real_entry|kind_label }}
                 <span class="ml-1 text-text-muted">· {{ entry.entry.alias }}</span>
               </c-chip>
             {% empty %}

@@ -1,4 +1,5 @@
 import os
+import re
 
 from django import template
 
@@ -26,3 +27,12 @@ def split_highlights(value):
 @register.filter
 def class_name(obj):
     return obj.__class__.__name__
+
+
+@register.filter
+def kind_label(obj) -> str:
+    """A friendly entry-kind name: ``OneLineEntry`` -> "One line"."""
+    name = obj if isinstance(obj, str) else obj.__class__.__name__
+    name = name.removesuffix("Entry")
+    words = re.sub(r"(?<!^)(?=[A-Z])", " ", name).split()
+    return " ".join(w.lower() if i else w for i, w in enumerate(words)) or "Entry"

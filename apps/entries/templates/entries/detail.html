@@ -8,7 +8,7 @@
   <c-card>
     <c-slot name="header">
       <div class="flex items-center justify-between">
-        <span>{{ entry|class_name }} - {{ entry.alias }}</span>
+        <span>{{ entry|kind_label }} entry: {{ entry.alias }}</span>
         <div class="flex items-center gap-1">
           <c-icon-button label="Edit" href="{% url 'entry-edit' entry.id %}">✎</c-icon-button>
           <c-icon-button label="Delete" variant="danger"
