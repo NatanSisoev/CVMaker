@@ -498,3 +498,4 @@ _Each session appends a short note here: date, phase worked, what shipped, what'
 
 ### 2026-10-12 (cont. 9)
 - `manage.py prune_data [--render-days 90] [--link-grace-days 30] [--dry-run]`: removes long-expired/revoked share links and old renders (keeps each CV's newest finished render and anything with a live share link). Needs a scheduler to run it (owner/hosting).
+- Entries page: search by name (`?q=`) and "Not in any section" filter (`?unused=1`).

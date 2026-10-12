@@ -208,3 +208,26 @@ def test_sections_pages_use_friendly_kind_names(client, user, section):
     for url in (reverse("section-list"), reverse("section-detail", args=[section.id])):
         body = client.get(url).content.decode()
         assert "Education" in body and "EducationEntry" not in body, url
+
+
+def test_entries_list_search_and_unused_filter(client, user, section):
+    append_entry_to_section(section, BulletEntryFactory(user=user, alias="alpha-used"))
+    BulletEntryFactory(user=user, alias="alpha-loose")
+    BulletEntryFactory(user=user, alias="beta-loose")
+    BulletEntryFactory(alias="alpha-someone-elses")
+    client.force_login(user)
+    url = reverse("entry-list")
+
+    def aliases(query=""):
+        body = client.get(url + query).content.decode()
+        return {
+            a
+            for a in ("alpha-used", "alpha-loose", "beta-loose", "alpha-someone-elses")
+            if a in body
+        }
+
+    assert aliases() == {"alpha-used", "alpha-loose", "beta-loose"}
+    assert aliases("?q=ALPHA") == {"alpha-used", "alpha-loose"}
+    assert aliases("?unused=1") == {"alpha-loose", "beta-loose"}
+    assert aliases("?q=alpha&unused=1") == {"alpha-loose"}
+    assert "No entries match" in client.get(url + "?q=zzz").content.decode()

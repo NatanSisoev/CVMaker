@@ -162,11 +162,23 @@ class EntryListView(EntryBaseView, ListView):
     context_object_name = "entries"
 
     def get_queryset(self):
-        return (
+        entries = (
             BaseEntry.objects.filter(user=self.request.user)
             .select_subclasses()
             .annotate(uses=Count("section_entries", distinct=True))
         )
+        query = self.request.GET.get("q", "").strip()
+        if query:
+            entries = entries.filter(alias__icontains=query)
+        if self.request.GET.get("unused") == "1":
+            entries = entries.filter(uses=0)
+        return entries
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["q"] = self.request.GET.get("q", "").strip()
+        context["unused"] = self.request.GET.get("unused") == "1"
+        return context
 
 
 ################################################## VIEW ################################################################

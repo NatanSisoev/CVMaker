@@ -11,6 +11,17 @@
     <c-button href="{% url 'entry-create' %}" variant="primary" size="sm">+ New Entry</c-button>
   </div>
 
+  <form method="get" class="mb-6 flex flex-wrap items-center gap-3" role="search">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search entries by name"
+           aria-label="Search entries"
+           class="w-64 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text">
+    <label class="flex items-center gap-2 text-sm text-text-muted">
+      <input type="checkbox" name="unused" value="1" {% if unused %}checked{% endif %}> Not in any section
+    </label>
+    <c-button type="submit" variant="secondary" size="sm">Filter</c-button>
+    {% if q or unused %}<a class="text-sm text-accent underline" href="{% url 'entry-list' %}">Clear</a>{% endif %}
+  </form>
+
   {% if entries %}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {% for entry in entries %}
@@ -76,9 +87,14 @@
   {% else %}
     <c-card>
       <div class="text-center py-12">
-        <h2 class="font-display text-2xl text-text mb-2">No entries yet</h2>
-        <p class="text-text-muted mb-6">Start by adding your first entry to your CV.</p>
-        <c-button href="{% url 'entry-create' %}" variant="primary">Create an entry →</c-button>
+        {% if q or unused %}
+          <h2 class="font-display text-2xl text-text mb-2">No entries match</h2>
+          <p class="text-text-muted">Try a different search, or clear the filter.</p>
+        {% else %}
+          <h2 class="font-display text-2xl text-text mb-2">No entries yet</h2>
+          <p class="text-text-muted mb-6">Start by adding your first entry to your CV.</p>
+          <c-button href="{% url 'entry-create' %}" variant="primary">Create an entry →</c-button>
+        {% endif %}
       </div>
     </c-card>
   {% endif %}
