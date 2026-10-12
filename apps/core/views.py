@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.http import require_GET
+from django_ratelimit.decorators import ratelimit
 
 from cv.models import CV
 from entries.models import BaseEntry
@@ -177,3 +178,38 @@ def sitemap_xml(request):
     urls = "".join(f"<url><loc>{request.build_absolute_uri(p)}</loc></url>" for p in paths)
     xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
     return HttpResponse(xml, content_type="application/xml")
+
+
+@ratelimit(key="ip", rate="5/h", method="POST", block=False)
+def contact_view(request):
+    """Public contact form: stored always, emailed when CONTACT_EMAIL is set."""
+    from django.conf import settings
+    from django.contrib import messages
+    from django.core.mail import send_mail
+    from django.shortcuts import redirect
+
+    from .forms import ContactForm
+
+    if request.method == "POST":
+        if getattr(request, "limited", False):
+            return ratelimited(request)
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            if not form.cleaned_data["website"]:  # honeypot: bots fill it, people don't
+                msg = form.save()
+                if settings.CONTACT_EMAIL:
+                    send_mail(
+                        f"{settings.ACCOUNT_EMAIL_SUBJECT_PREFIX}Contact from {msg.name}",
+                        f"From: {msg.name} <{msg.email}>\n\n{msg.message}",
+                        settings.DEFAULT_FROM_EMAIL,
+                        [settings.CONTACT_EMAIL],
+                        fail_silently=True,
+                    )
+            messages.success(request, "Thanks, your message was sent.")
+            return redirect("contact")
+    else:
+        initial = {}
+        if request.user.is_authenticated:
+            initial = {"name": request.user.get_display_name(), "email": request.user.email}
+        form = ContactForm(initial=initial)
+    return render(request, "contact.html", {"form": form})

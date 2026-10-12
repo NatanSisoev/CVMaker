@@ -300,6 +300,8 @@ ANYMAIL = {
     "POSTMARK_SERVER_TOKEN": env("POSTMARK_SERVER_TOKEN", default=""),
 }
 # Absolute links in emails (renders finish in a worker, outside any request).
+# Where Contact-form messages are emailed (empty: stored in the admin only).
+CONTACT_EMAIL = env("CONTACT_EMAIL", default="")
 SITE_URL = env("SITE_URL", default="http://localhost:8000").rstrip("/")
 DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="CVMaker <noreply@cvmaker.local>")
 

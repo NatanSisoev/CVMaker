@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Contact{% endblock %}
+{% block content %}
+  <section class="mx-auto max-w-xl px-4 py-16">
+    <h1 class="font-display text-3xl text-text mb-2">Contact</h1>
+    <p class="mb-6 text-sm text-text-muted">Questions, bugs or ideas? Write to us and we'll reply by email.</p>
+    <form method="post" novalidate class="cv-form">
+      {% csrf_token %}
+      <c-card>
+      <div class="flex flex-col gap-4">
+        {% for field in form.visible_fields %}
+          {% if field.name != 'website' %}
+            {% include 'includes/form_field.html' with field=field %}
+          {% endif %}
+        {% endfor %}
+      </div>
+      <div class="hidden" aria-hidden="true">{{ form.website }}</div>
+      </c-card>
+      <div class="mt-6">
+        <c-button type="submit" variant="primary">Send message</c-button>
+      </div>
+    </form>
+  </section>
+{% endblock %}

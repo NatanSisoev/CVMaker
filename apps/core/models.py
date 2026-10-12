@@ -36,3 +36,18 @@ class UUIDTimestampedModel(UUIDModel, TimestampedModel):
 
     class Meta:
         abstract = True
+
+
+class ContactMessage(UUIDTimestampedModel):
+    """A message sent through the public Contact form (also emailed to CONTACT_EMAIL)."""
+
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    message = models.TextField(max_length=4000)
+    handled = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self) -> str:
+        return f"{self.name} <{self.email}>"

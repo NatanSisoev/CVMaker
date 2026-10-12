@@ -500,3 +500,6 @@ _Each session appends a short note here: date, phase worked, what shipped, what'
 - `manage.py prune_data [--render-days 90] [--link-grace-days 30] [--dry-run]`: removes long-expired/revoked share links and old renders (keeps each CV's newest finished render and anything with a live share link). Needs a scheduler to run it (owner/hosting).
 - Entries page: search by name (`?q=`) and "Not in any section" filter (`?unused=1`).
 - Dashboard cards link the latest finished PDF and the render history. `/robots.txt` (blocks app/API/share paths) and `/sitemap.xml` (static pages + published profiles).
+
+### 2026-10-12 (cont. 10)
+- Real `/contact/` form: `ContactMessage` model (core migration 0001, admin), honeypot, 5/h per IP, emailed to `CONTACT_EMAIL` when set (owner must set it).
