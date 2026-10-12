@@ -20,6 +20,7 @@ import uuid
 from typing import TYPE_CHECKING
 
 from django.db import transaction
+from django.db.models import Max
 
 from .models import CVSection, Section, SectionEntry
 
@@ -66,3 +67,47 @@ def _coerce_uuid(value) -> uuid.UUID:
     if isinstance(value, uuid.UUID):
         return value
     return uuid.UUID(str(value))
+
+
+# ---------------------------------------------------------------------------
+# Building a CV from the Editor
+# ---------------------------------------------------------------------------
+def _next_order(queryset) -> int:
+    last = queryset.aggregate(last=Max("order"))["last"]
+    return 0 if last is None else last + 1
+
+
+@transaction.atomic
+def attach_section_to_cv(cv: CV, section: Section) -> CVSection:
+    """Append ``section`` to ``cv`` (no-op if it is already attached)."""
+    link, _ = CVSection.objects.get_or_create(
+        cv=cv,
+        section=section,
+        defaults={"order": _next_order(CVSection.objects.filter(cv=cv))},
+    )
+    return link
+
+
+@transaction.atomic
+def append_entry_to_section(section: Section, entry) -> SectionEntry:
+    """Append ``entry`` to ``section`` (no-op if it is already in it)."""
+    link, _ = SectionEntry.objects.get_or_create(
+        section=section,
+        entry=entry,
+        defaults={"order": _next_order(SectionEntry.objects.filter(section=section))},
+    )
+    return link
+
+
+def section_entry_kind(section: Section) -> str | None:
+    """The ``type`` slug ("education", "bullet", ...) of the section's entries,
+    or None while it is empty. rendercv allows one kind per section."""
+    from entries.models import BaseEntry
+
+    first = (
+        BaseEntry.objects.filter(section_entries__section=section)
+        .select_subclasses()
+        .order_by("section_entries__order")
+        .first()
+    )
+    return first.type if first else None

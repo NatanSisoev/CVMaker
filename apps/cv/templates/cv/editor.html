@@ -1,84 +1,77 @@
 {% extends 'base.html' %}
-
 {% block title %}Editor - {{ cv.alias }}{% endblock %}
-
 {% block content %}
-<div class="mx-auto max-w-[96rem] px-4 py-4"
-     x-data="{
-       pct: 38,
-       drag: false,
-       move(e) {
-         const r = $refs.wrap.getBoundingClientRect();
-         this.pct = Math.min(70, Math.max(25, ((e.clientX - r.left) / r.width) * 100));
-       },
-     }"
-     x-on:pointermove.window="drag && move($event)"
-     x-on:pointerup.window="drag = false">
-
-  {# Top bar: title, language + style switchers, render #}
-  <form class="mb-4 flex flex-wrap items-end gap-3"
-        hx-post="{% url 'rendering:enqueue' cv_id=cv.id %}"
-        hx-target="#preview"
-        hx-swap="innerHTML"
-        hx-disabled-elt="find button[type=submit]">
-    <input type="hidden" name="preview" value="1">
-    <h1 class="mr-auto font-display text-2xl text-text">{{ cv.alias }}</h1>
-
-    <c-select name="language" label="Language" id="editor-language" x-ref="lang">
+  <div class="mx-auto max-w-[96rem] px-4 py-4"
+       x-data="{ pct: 38, drag: false, move(e) { const r = $refs.wrap.getBoundingClientRect(); this.pct = Math.min(70, Math.max(25, ((e.clientX - r.left) / r.width) * 100)); }, }"
+       x-on:pointermove.window="drag && move($event)"
+       x-on:pointerup.window="drag = false">
+    {# Top bar: title, language + style switchers, render #}
+    <form class="mb-4 flex flex-wrap items-end gap-3"
+          hx-post="{% url 'rendering:enqueue' cv_id=cv.id %}"
+          hx-target="#preview"
+          hx-swap="innerHTML"
+          hx-disabled-elt="find button[type=submit]">
+      <input type="hidden" name="preview" value="1">
+      <h1 class="mr-auto font-display text-2xl text-text">{{ cv.alias }}</h1>
+      <c-select name="language" label="Language" id="editor-language" x-ref="lang">
       {% for status in language_status %}
         <option value="{{ status.code }}"{% if forloop.first %} selected{% endif %}>{{ status.code|upper }}</option>
       {% empty %}
         <option value="">Default</option>
       {% endfor %}
-    </c-select>
-
-    <c-select name="style" label="Style" id="editor-style">
+      </c-select>
+      <c-select name="style" label="Style" id="editor-style">
       {% for value, label in styles %}
-        <option value="{{ value }}"{% if value == current_style %} selected{% endif %}>{{ label }}</option>
+        <option value="{{ value }}"
+                {% if value == current_style %}selected{% endif %}>{{ label }}</option>
       {% endfor %}
-    </c-select>
-
-    <c-button type="submit" variant="primary">Render preview</c-button>
-    <c-button href="{% url 'cv-edit' cv.id %}" variant="secondary">CV settings</c-button>
-
-    {% if language_status %}
-      <div class="flex w-full flex-wrap items-center gap-2" aria-label="Translation status">
-        {% for status in language_status %}
-          <c-language-chip code="{{ status.code }}" done="{{ status.done }}" total="{{ status.total }}"
-                           x-on:click="$refs.lang.value = '{{ status.code }}'" />
-        {% endfor %}
-      </div>
-    {% endif %}
-  </form>
-
-  <div x-ref="wrap"
-       class="flex min-h-[32rem] flex-col gap-4 md:flex-row md:gap-0"
-       :style="{ '--w': pct + '%' }"
-       :class="drag && 'select-none'">
-
-    {# Left: outline of sections and entries #}
-    <aside class="w-full overflow-y-auto md:max-h-[calc(100vh-12rem)] md:w-[var(--w)] md:pr-3"
-           aria-label="CV outline"
-           x-on:sortable-saved="$dispatch('toast', { message: 'Order saved. Render again to update the preview.', variant: 'success' })">
-      {% if sections %}
-        <div class="flex flex-col gap-3" x-sortable="{% url 'cv-reorder-sections' cv_id=cv.id %}">
-          {% for section in sections %}
-            <c-card data-id="{{ section.id }}">
+      </c-select>
+      <c-button type="submit" variant="primary">Render preview</c-button>
+      <c-button href="{% url 'cv-edit' cv.id %}" variant="secondary">CV settings</c-button>
+      {% if language_status %}
+        <div class="flex w-full flex-wrap items-center gap-2"
+             aria-label="Translation status">
+          {% for status in language_status %}
+            <c-language-chip code="{{ status.code }}" done="{{ status.done }}" total="{{ status.total }}" x-on:click="$refs.lang.value = '{{ status.code }}'" />
+          {% endfor %}
+        </div>
+      {% endif %}
+    </form>
+    <div x-ref="wrap"
+         class="flex min-h-[32rem] flex-col gap-4 md:flex-row md:gap-0"
+         :style="{ '--w': pct + '%' }"
+         :class="drag && 'select-none'">
+      {# Left: outline of sections and entries #}
+      <aside class="w-full overflow-y-auto md:max-h-[calc(100vh-12rem)] md:w-[var(--w)] md:pr-3"
+             aria-label="CV outline"
+             x-on:sortable-saved="$dispatch('toast', { message: 'Order saved. Render again to update the preview.', variant: 'success' })">
+        <div class="mb-3 flex flex-wrap items-center gap-2">
+          <c-button href="{% url 'section-create' %}?cv={{ cv.id }}" variant="secondary" size="sm">+ Add section</c-button>
+          <a class="text-sm text-text-muted underline hover:text-text"
+             href="{% url 'cv-edit' cv.id %}">Use an existing section</a>
+        </div>
+        {% if sections %}
+          <div class="flex flex-col gap-3"
+               x-sortable="{% url 'cv-reorder-sections' cv_id=cv.id %}">
+            {% for section in sections %}
+              <c-card data-id="{{ section.id }}">
               <c-slot name="header">
-                <div class="flex items-center gap-2">
-                  <button type="button" data-drag-handle
-                          class="cursor-grab px-1 text-text-muted hover:text-text"
-                          aria-label="Drag to reorder section {{ section.title }}">⠿</button>
-                  <span class="mr-auto">{{ section.title }}</span>
-                  <c-icon-button label="Edit section" size="sm" href="{% url 'section-edit' section.id %}">✎</c-icon-button>
-                </div>
+              <div class="flex items-center gap-2">
+                <button type="button"
+                        data-drag-handle
+                        class="cursor-grab px-1 text-text-muted hover:text-text"
+                        aria-label="Drag to reorder section {{ section.title }}">⠿</button>
+                <span class="mr-auto">{{ section.title }}</span>
+                <c-icon-button label="Edit section" size="sm" href="{% url 'section-edit' section.id %}">✎</c-icon-button>
+              </div>
               </c-slot>
               <ul class="flex flex-col gap-1 text-sm"
                   x-sortable="{% url 'section-reorder-entries' section_id=section.id %}">
                 {% for section_entry in section.section_entries.all %}
                   <li data-id="{{ section_entry.entry_id }}" x-data="{ open: false }">
                     <div class="flex items-center gap-1">
-                      <button type="button" data-drag-handle
+                      <button type="button"
+                              data-drag-handle
                               class="cursor-grab px-1 text-text-muted hover:text-text"
                               aria-label="Drag to reorder {{ section_entry.entry.alias }}">⠿</button>
                       <button type="button"
@@ -103,38 +96,45 @@
                   <li class="px-2 py-1 text-text-muted">No entries yet.</li>
                 {% endfor %}
               </ul>
-            </c-card>
-          {% endfor %}
-        </div>
-      {% else %}
-        <c-card>
+              <div class="mt-3 border-t border-border pt-2">
+                <a class="text-sm text-accent underline"
+                   href="{% url 'entry-create' %}?section={{ section.id }}&cv={{ cv.id }}">+ New entry</a>
+              </div>
+              </c-card>
+            {% endfor %}
+          </div>
+        {% else %}
+          <c-card>
           <p class="text-text-muted">
-            This CV has no sections yet.
-            <a class="text-accent underline" href="{% url 'cv-edit' cv.id %}">Add some</a>.
+            This CV has no sections yet. A <strong class="text-text">section</strong> (Experience,
+            Education...) groups entries of one kind. Use <strong class="text-text">+ Add section</strong>
+            above, then add entries to it.
           </p>
-        </c-card>
-      {% endif %}
-    </aside>
-
-    {# Drag handle: pointer-draggable, keyboard-resizable with arrow keys #}
-    <div class="hidden w-2 shrink-0 cursor-col-resize items-stretch justify-center md:flex"
-         role="separator" aria-orientation="vertical" aria-label="Resize panes"
-         :aria-valuenow="Math.round(pct)" aria-valuemin="25" aria-valuemax="70"
-         tabindex="0"
-         x-on:pointerdown.prevent="drag = true"
-         x-on:keydown.left.prevent="pct = Math.max(25, pct - 2)"
-         x-on:keydown.right.prevent="pct = Math.min(70, pct + 2)">
-      <div class="w-px bg-border" :class="drag && 'bg-accent'"></div>
-    </div>
-
-    {# Right: live preview #}
-    <section class="min-w-0 flex-1 md:pl-3" aria-label="PDF preview">
-      <div id="preview" aria-live="polite">
-        <div class="rounded-md border border-dashed border-border p-12 text-center text-text-muted">
-          Pick a language and style, then press <strong class="text-text">Render preview</strong>.
-        </div>
+          </c-card>
+        {% endif %}
+      </aside>
+      {# Drag handle: pointer-draggable, keyboard-resizable with arrow keys #}
+      <div class="hidden w-2 shrink-0 cursor-col-resize items-stretch justify-center md:flex"
+           role="separator"
+           aria-orientation="vertical"
+           aria-label="Resize panes"
+           :aria-valuenow="Math.round(pct)"
+           aria-valuemin="25"
+           aria-valuemax="70"
+           tabindex="0"
+           x-on:pointerdown.prevent="drag = true"
+           x-on:keydown.left.prevent="pct = Math.max(25, pct - 2)"
+           x-on:keydown.right.prevent="pct = Math.min(70, pct + 2)">
+        <div class="w-px bg-border" :class="drag && 'bg-accent'"></div>
       </div>
-    </section>
+      {# Right: live preview #}
+      <section class="min-w-0 flex-1 md:pl-3" aria-label="PDF preview">
+        <div id="preview" aria-live="polite">
+          <div class="rounded-md border border-dashed border-border p-12 text-center text-text-muted">
+            Pick a language and style, then press <strong class="text-text">Render preview</strong>.
+          </div>
+        </div>
+      </section>
+    </div>
   </div>
-</div>
 {% endblock %}

@@ -60,8 +60,8 @@ links appear in the server log. The Django debug toolbar is opt-in
 
 | Where | What |
 |---|---|
-| `/cv/` | Dashboard. *Import YAML* takes a rendercv file. |
-| `/cv/<id>/editor/` | Resize panes; pick language + style, **Render preview**; drag ⠿ handles to reorder; click an entry to edit it inline and add translations. |
+| `/cv/` | Dashboard. *Import YAML* takes a rendercv file. Nav links: **Sections** and **Entries** hold your reusable library. |
+| `/cv/<id>/editor/` | **Build a CV here:** *+ Add section*, then *+ New entry* inside it. Resize panes; pick language + style, **Render preview**; drag ⠿ handles to reorder; click an entry to edit it inline and add translations. |
 | `Ctrl/⌘ + K` | Command palette. |
 | `/accounts/profile/` | Settings: profile, API token, data export, account deletion. |
 | `/accounts/signup/` | Real signup with email verification (link is in the server log). |

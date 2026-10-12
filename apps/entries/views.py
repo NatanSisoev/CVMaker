@@ -1,10 +1,16 @@
 import json
 
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import DeleteView, DetailView, ListView, UpdateView
+
+from cv.models import CV
+from sections.models import Section
+from sections.services import append_entry_to_section, section_entry_kind
 
 from .forms import (
     LANGUAGE_CODE_RE,
@@ -56,30 +62,76 @@ class EntryBaseView(LoginRequiredMixin):
 
 
 class EntryCreateView(EntryBaseView, View):
+    """Create an entry in two steps (pick a kind, fill the form).
+
+    With ``?section=<id>&cv=<id>`` (from the Editor) the entry is appended to
+    that section and you return to the Editor. A section that already holds
+    entries fixes the kind, because rendercv allows one kind per section.
+    """
+
     template_name = "entries/form.html"
 
+    def _owned(self, model, key):
+        raw = self.request.GET.get(key, "")
+        try:
+            return model.objects.filter(user=self.request.user, pk=raw).first() if raw else None
+        except (ValueError, ValidationError):  # not a UUID
+            return None
+
+    def _context(self):
+        section = self._owned(Section, "section")
+        cv = self._owned(CV, "cv")
+        return {
+            "target_section": section,
+            "from_cv": cv,
+            "locked_type": section_entry_kind(section) if section else None,
+        }
+
+    def _back(self):
+        """Where to go after saving (or abandoning) an add-to-section flow."""
+        ctx = self._context()
+        if ctx["from_cv"]:
+            return reverse("cv-editor", args=[ctx["from_cv"].id])
+        if ctx["target_section"]:
+            return reverse("section-detail", args=[ctx["target_section"].id])
+        return reverse("entry-create")
+
     def get(self, request):
-        entry_type = request.GET.get("entry_type")
+        ctx = self._context()
+        entry_type = request.GET.get("entry_type") or ctx["locked_type"]
 
         if not entry_type:  # Step 1: Select Entry Type
-            return render(request, self.template_name, {"step": 1, "entry_types": ENTRY_TYPES})
+            return render(
+                request, self.template_name, {"step": 1, "entry_types": ENTRY_TYPES, **ctx}
+            )
 
         # Step 2: Fill in Entry Details
         form_class = ENTRY_FORMS.get(entry_type)
         if not form_class:
-            return redirect(reverse_lazy("entry-create"))  # Redirect if invalid type
+            return redirect(request.get_full_path().split("?")[0])  # invalid type
 
-        form = form_class()
         return render(
-            request, self.template_name, {"step": 2, "form": form, "entry_type": entry_type}
+            request,
+            self.template_name,
+            {"step": 2, "form": form_class(), "entry_type": entry_type, **ctx},
         )
 
     def post(self, request):
+        ctx = self._context()
         entry_type = request.POST.get("entry_type")
         form_class = ENTRY_FORMS.get(entry_type)
 
         if not form_class:
-            return redirect(reverse_lazy("entry-create"))  # Redirect if invalid type
+            return redirect(request.get_full_path().split("?")[0])  # invalid type
+
+        section = ctx["target_section"]
+        if ctx["locked_type"] and ctx["locked_type"] != entry_type:
+            messages.error(
+                request,
+                f"Section {section.title} holds {ctx['locked_type']} entries; "
+                f"a {entry_type} entry can't go in it.",
+            )
+            return redirect(self._back())
 
         form = form_class(request.POST)
 
@@ -87,10 +139,17 @@ class EntryCreateView(EntryBaseView, View):
             entry = form.save(commit=False)
             entry.user = request.user
             entry.save()
+            if section:
+                append_entry_to_section(section, entry)
+                messages.success(request, f"Added {entry.alias} to {section.title}.")
+                return redirect(self._back())
+            messages.success(request, f"Saved {entry.alias}. Add another, or open Sections.")
             return redirect(reverse_lazy("entry-create"))  # Redirect to create another entry
 
         return render(
-            request, self.template_name, {"step": 2, "form": form, "entry_type": entry_type}
+            request,
+            self.template_name,
+            {"step": 2, "form": form, "entry_type": entry_type, **ctx},
         )
 
 

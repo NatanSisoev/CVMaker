@@ -1,41 +1,69 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
-
-{% block title %}{% if form.instance.pk %}Edit{% else %}Create{% endif %} Section{% endblock %}
-
+{% block title %}
+  {% if form.instance.pk %}
+    Edit
+  {% else %}
+    Create
+  {% endif %}
+  Section
+{% endblock %}
 {% block content %}
-<section class="mx-auto max-w-4xl px-4 py-12">
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="font-display text-3xl text-text">{% if form.instance.pk %}Edit{% else %}Create{% endif %} Section</h1>
-    <c-button href="{% url 'section-list' %}" variant="ghost" size="sm">← Back to List</c-button>
-  </div>
-
-  <form method="post" class="cv-form">
-    {% csrf_token %}
-    <c-card>
+  <section class="mx-auto max-w-4xl px-4 py-12">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="font-display text-3xl text-text">
+        {% if form.instance.pk %}
+          Edit
+        {% else %}
+          Create
+        {% endif %}
+        Section
+      </h1>
+      {% if from_cv %}
+        <c-button href="{% url 'cv-editor' from_cv.id %}" variant="ghost" size="sm">← Back to the editor</c-button>
+      {% else %}
+        <c-button href="{% url 'section-list' %}" variant="ghost" size="sm">← Back to List</c-button>
+      {% endif %}
+    </div>
+    {% if from_cv %}
+      <p class="mb-4 text-sm text-text-muted">
+        This section will be added to <strong>{{ from_cv.alias }}</strong>. Tick existing entries below,
+        or save it empty and add entries from the editor.
+      </p>
+    {% endif %}
+    <form method="post" class="cv-form">
+      {% csrf_token %}
+      <c-card>
       <c-slot name="header">Section Configuration</c-slot>
       {{ form.non_field_errors }}
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {% include 'includes/form_field.html' with field=form.title %}
         {% include 'includes/form_field.html' with field=form.alias %}
       </div>
-
       <h2 class="text-sm font-medium text-text mb-2">Select Entries to Include</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {% for value, label in form.entries.field.choices %}
           <label for="entry-{{ value }}"
                  class="flex cursor-pointer items-center gap-2 rounded-sm border border-border bg-surface-2 px-3 py-2 text-sm text-text hover:bg-surface">
-            <input type="checkbox" name="{{ form.entries.name }}" value="{{ value }}" id="entry-{{ value }}"
+            <input type="checkbox"
+                   name="{{ form.entries.name }}"
+                   value="{{ value }}"
+                   id="entry-{{ value }}"
                    {% if value in form.entries.value %}checked{% endif %}>
             {{ label|title|remove_underscores }}
           </label>
         {% endfor %}
       </div>
-    </c-card>
-
-    <div class="mt-6">
-      <c-button type="submit" variant="primary">{% if form.instance.pk %}Update{% else %}Create{% endif %} Section</c-button>
-    </div>
-  </form>
-</section>
+      </c-card>
+      <div class="mt-6">
+        <c-button type="submit" variant="primary">
+        {% if form.instance.pk %}
+          Update
+        {% else %}
+          Create
+        {% endif %}
+        Section</c-button>
+      </div>
+    </form>
+  </section>
 {% endblock %}

@@ -1,36 +1,61 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
-
 {% block title %}Create New Entry{% endblock %}
-
 {% block content %}
-<section class="mx-auto max-w-3xl px-4 py-12">
-  <h1 class="font-display text-3xl text-text mb-6">Create New Entry</h1>
-
-  {% if step == 1 %}
-    <c-card>
+  <section class="mx-auto max-w-3xl px-4 py-12">
+    <h1 class="font-display text-3xl text-text mb-2">
+      {% if target_section %}
+        Add an entry to {{ target_section.title }}
+      {% else %}
+        Create New Entry
+      {% endif %}
+    </h1>
+    <p class="mb-6 text-sm text-text-muted">
+      {% if target_section %}
+        {% if locked_type %}
+          This section holds <strong>{{ locked_type }}</strong> entries, so that kind is preselected.
+        {% endif %}
+        After saving you'll go back to
+        {% if from_cv %}
+          <a class="text-accent underline" href="{% url 'cv-editor' from_cv.id %}">the editor</a>
+        {% else %}
+          the section
+        {% endif %}
+        .
+      {% else %}
+        Entries are the building blocks: write each once, then put them into sections.
+        <a class="text-accent underline" href="{% url 'section-create' %}">Sections</a> group entries; CVs list sections.
+      {% endif %}
+    </p>
+    {% if step == 1 %}
+      <c-card>
       <c-slot name="header">Select Entry Type</c-slot>
-      <form method="get" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+      <form method="get"
+            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+        {% if target_section %}<input type="hidden" name="section" value="{{ target_section.id }}">{% endif %}
+        {% if from_cv %}<input type="hidden" name="cv" value="{{ from_cv.id }}">{% endif %}
         {% for type in entry_types %}
-          <button type="submit" name="entry_type" value="{{ type }}"
+          <button type="submit"
+                  name="entry_type"
+                  value="{{ type }}"
                   class="h-10 rounded-md border border-border bg-surface-2 px-4 text-text font-medium transition hover:bg-surface focus:outline-none focus-visible:shadow-focus">
             {{ type|title|remove_underscores }}
           </button>
         {% endfor %}
       </form>
-    </c-card>
-  {% elif step == 2 %}
-    <form method="post" class="cv-form">
-      {% csrf_token %}
-      <input type="hidden" name="entry_type" value="{{ entry_type }}">
-      <c-card>
+      </c-card>
+    {% elif step == 2 %}
+      <form method="post" class="cv-form">
+        {% csrf_token %}
+        <input type="hidden" name="entry_type" value="{{ entry_type }}">
+        <c-card>
         <c-slot name="header">Fill in the Entry Details</c-slot>
         {% include 'includes/form_fields.html' %}
-      </c-card>
-      <div class="mt-6">
-        <c-button type="submit" variant="primary">Save Entry</c-button>
-      </div>
-    </form>
-  {% endif %}
-</section>
+        </c-card>
+        <div class="mt-6">
+          <c-button type="submit" variant="primary">Save Entry</c-button>
+        </div>
+      </form>
+    {% endif %}
+  </section>
 {% endblock %}

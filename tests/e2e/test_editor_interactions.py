@@ -125,3 +125,44 @@ def test_palette_enter_right_after_typing_waits_for_fresh_results(app, page, cv,
     page.keyboard.press("Enter")  # before the debounced results arrive
     page.wait_for_url(re.compile(rf"/cv/{cv.id}/editor/$"))
     assert js_errors == []
+
+
+def test_build_a_cv_from_the_editor_alone(app, page, logged_in, js_errors):
+    """An empty CV -> + Add section -> + New entry, never leaving the editor flow."""
+    from cv.models import CVInfo
+    from tests.factories import CVFactory
+
+    info = CVInfo.objects.create(user=logged_in, alias="me", name="Grace Hopper")
+    cv = CVFactory(user=logged_in, alias="from-scratch", info=info)
+    app(f"/cv/{cv.id}/editor/")
+    assert "no sections yet" in page.inner_text("aside")
+
+    # + Add section
+    page.click("text=+ Add section")
+    page.fill("input[name=title]", "Highlights")
+    page.fill("input[name=alias]", "highlights")
+    page.click("form.cv-form button[type=submit]")
+    page.wait_for_url(f"**/cv/{cv.id}/editor/")
+    page.wait_for_selector("text=Added section Highlights.")
+    assert "No entries yet." in page.inner_text("aside")
+
+    # + New entry (empty section, so the kind is chosen)
+    page.click("text=+ New entry")
+    page.click("button[value=bullet]")
+    page.fill("input[name=alias]", "first-bullet")
+    page.fill("[name=bullet]", "Found the first computer bug")
+    page.click("form.cv-form button[type=submit]")
+    page.wait_for_url(f"**/cv/{cv.id}/editor/")
+    page.wait_for_selector("text=Added first-bullet to Highlights.")
+    assert "first-bullet" in page.inner_text("aside")
+
+    # The section is now locked to bullets: the next entry skips the kind picker.
+    page.click("text=+ New entry")
+    page.wait_for_selector("text=holds bullet entries")
+    assert page.locator("[name=bullet]").count() == 1
+
+    # And it renders.
+    app(f"/cv/{cv.id}/editor/")
+    page.click("text=Render preview")
+    page.wait_for_selector("#preview iframe", timeout=60000)
+    assert js_errors == []

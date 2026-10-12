@@ -8,13 +8,14 @@ where it's testable without an HTTP round-trip.
 
 from __future__ import annotations
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
@@ -22,7 +23,7 @@ from cv.models import CV
 
 from .forms import SectionForm
 from .models import Section
-from .services import reorder_entries, reorder_sections
+from .services import attach_section_to_cv, reorder_entries, reorder_sections
 
 
 class SectionBaseView(LoginRequiredMixin):
@@ -44,17 +45,38 @@ class SectionListView(SectionBaseView, ListView):
 
 
 class SectionCreateView(SectionBaseView, CreateView):
+    """Create a section. With ``?cv=<id>`` (from the Editor) the new section is
+    also attached to that CV and you return to the Editor afterwards."""
+
     form_class = SectionForm
     template_name = "sections/form.html"
+
+    def _cv(self):
+        raw = self.request.GET.get("cv", "")
+        try:
+            return CV.objects.filter(user=self.request.user, pk=raw).first() if raw else None
+        except (ValueError, ValidationError):  # not a UUID
+            return None
 
     def form_valid(self, form):
         form.instance.user = self.request.user
         # SectionForm.save_m2m handles entry creation + ordering; this view
         # just stamps the user and lets Django's standard ModelForm flow run.
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        cv = self._cv()
+        if cv:
+            attach_section_to_cv(cv, self.object)
+            messages.success(self.request, f"Added section {self.object.title}.")
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["from_cv"] = self._cv()
+        return context
 
     def get_success_url(self):
-        return reverse_lazy("section-list")
+        cv = self._cv()
+        return reverse("cv-editor", args=[cv.id]) if cv else reverse("section-list")
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
