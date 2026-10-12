@@ -10,6 +10,7 @@
           hx-post="{% url 'rendering:enqueue' cv_id=cv.id %}"
           hx-target="#preview"
           hx-swap="innerHTML"
+          {% if autorender %}hx-trigger="submit, load"{% endif %}
           hx-disabled-elt="find button[type=submit]">
       <input type="hidden" name="preview" value="1">
       <h1 class="mr-auto font-display text-2xl text-text">{{ cv.alias }}</h1>

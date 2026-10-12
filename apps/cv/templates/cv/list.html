@@ -29,10 +29,7 @@
               <div class="flex items-center gap-1">
                 <c-icon-button label="View" href="{% url 'cv-detail' cv.id %}">👁</c-icon-button>
                 <c-icon-button label="Open editor" href="{% url 'cv-editor' cv.id %}">✎</c-icon-button>
-                <form method="post" action="{% url 'rendering:enqueue' cv_id=cv.id %}" class="inline">
-                  {% csrf_token %}
-                  <c-icon-button type="submit" label="Render PDF" variant="primary">↓</c-icon-button>
-                </form>
+                <c-icon-button label="Render PDF" href="{% url 'cv-editor' cv.id %}?render=1">↓</c-icon-button>
                 <c-icon-button label="Delete" variant="danger"
                                x-on:click="$dispatch('open-modal', 'delete-cv-{{ cv.id }}')">×</c-icon-button>
               </div>

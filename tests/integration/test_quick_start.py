@@ -166,3 +166,40 @@ def test_starter_cv_renders_once_it_has_a_section(user):
     SectionEntry.objects.create(section=section, entry=BulletEntryFactory(user=user), order=0)
     attach_section_to_cv(cv, section)
     assert tasks._render_payload_to_pdf(build_render_payload(cv)).startswith(b"%PDF")
+
+
+# ---------------------------------------------------------------------------
+# "Render PDF" from the dashboard/detail page opens the editor and renders
+# ---------------------------------------------------------------------------
+def test_dashboard_and_detail_render_links_open_the_editor(client, user):
+    cv = create_starter_cv(user, "A")
+    client.force_login(user)
+    target = f"{reverse('cv-editor', args=[cv.id])}?render=1"
+    for url in (reverse("cv-list"), reverse("cv-detail", args=[cv.id])):
+        body = client.get(url).content.decode()
+        assert target in body, url
+        assert "/renders/cv/" not in body  # no more bare-fragment POST form
+
+
+def test_editor_autorenders_only_when_asked(client, user):
+    cv = create_starter_cv(user, "A")
+    client.force_login(user)
+    url = reverse("cv-editor", args=[cv.id])
+    assert 'hx-trigger="submit, load"' in client.get(f"{url}?render=1").content.decode()
+    assert (
+        "hx-trigger"
+        not in client.get(url)
+        .content.decode()
+        .split('id="preview"')[0]
+        .split("<form")[1]
+        .split(">")[0]
+    )
+
+
+def test_quiet_danger_icon_button(client, user):
+    create_starter_cv(user, "A")
+    client.force_login(user)
+    body = client.get(reverse("cv-list")).content.decode()
+    # The delete icon is a text-coloured ghost; solid red is kept for the confirm button.
+    icon = body.split('aria-label="Delete"')[1].split(">")[0]
+    assert "text-danger hover:bg-surface-2" in icon and "bg-danger" not in icon

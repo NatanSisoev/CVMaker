@@ -252,6 +252,8 @@ class CVEditorView(LoginRequiredMixin, DetailView):
         cv = self.object
         context["language_status"] = language_status(cv)
         context["needs_info"] = not (cv.info_id and cv.info.name)
+        # ?render=1 (dashboard "Render PDF"): start rendering as soon as the page loads.
+        context["autorender"] = self.request.GET.get("render") == "1"
         context["styles"] = [c for c in CVDesign.THEME_CHOICES if c[0] != "custom"]
         context["current_style"] = cv.design.theme if cv.design_id else "classic"
         context["sections"] = cv.sections.prefetch_related("section_entries__entry").order_by(

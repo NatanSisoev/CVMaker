@@ -200,3 +200,11 @@ def test_new_cv_to_pdf_without_leaving_the_guided_flow(app, page, logged_in, js_
     page.click("text=Render preview")
     page.wait_for_selector("#preview iframe", timeout=60000)
     assert js_errors == []
+
+
+def test_dashboard_render_button_opens_editor_and_renders(app, page, cv, js_errors):
+    app("/cv/")
+    page.click("[aria-label='Render PDF']")
+    page.wait_for_url(re.compile(r"/editor/\?render=1$"))
+    page.wait_for_selector("#preview iframe", timeout=60000)
+    assert js_errors == []
