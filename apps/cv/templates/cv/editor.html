@@ -45,6 +45,28 @@
       <aside class="w-full overflow-y-auto md:max-h-[calc(100vh-12rem)] md:w-[var(--w)] md:pr-3"
              aria-label="CV outline"
              x-on:sortable-saved="$dispatch('toast', { message: 'Order saved. Render again to update the preview.', variant: 'success' })">
+      {# Personal details: opened automatically while the name is still empty. #}
+      <c-card class="mb-3" padded="false" x-data="{ open: {% if needs_info %}true{% else %}false{% endif %} }">
+        <c-slot name="header">
+          <button type="button"
+                  class="flex w-full items-center justify-between text-left"
+                  x-on:click="open = !open"
+                  :aria-expanded="open"
+                  aria-controls="info-panel">
+            <span>Personal details</span>
+            <span class="text-sm text-text-muted">
+              <span id="info-summary">{{ cv.info.name|default:"Add your name" }}</span>
+              <span aria-hidden="true" x-text="open ? '▾' : '▸'">▸</span>
+            </span>
+          </button>
+        </c-slot>
+        <div id="info-panel" x-show="open" x-cloak class="p-4">
+          <div hx-get="{% url 'cv-info-inline' cv_id=cv.id %}" hx-trigger="intersect once" hx-swap="outerHTML">
+            <p class="text-sm text-text-muted">Loading...</p>
+          </div>
+        </div>
+      </c-card>
+
         <div class="mb-3 flex flex-wrap items-center gap-2">
           <c-button href="{% url 'section-create' %}?cv={{ cv.id }}" variant="secondary" size="sm">+ Add section</c-button>
           <a class="text-sm text-text-muted underline hover:text-text"

@@ -1,3 +1,4 @@
+import json
 import uuid
 
 from django.contrib import messages
@@ -9,10 +10,18 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 
 from sections.models import CVSection, Section
 
-from .forms import CVDesignForm, CVForm, CVInfoForm, CVLocaleForm, CVSettingsForm
+from .forms import (
+    CVDesignForm,
+    CVForm,
+    CVInfoForm,
+    CVInfoQuickForm,
+    CVLocaleForm,
+    CVSettingsForm,
+    QuickCVForm,
+)
 from .importer import CVImportError, import_cv_from_yaml
 from .models import CV, CVDesign, CVInfo, CVLocale, CVSettings
-from .services import language_status
+from .services import create_starter_cv, language_status
 
 ################################################## HOME ################################################################
 
@@ -165,6 +174,65 @@ class CVUpdateView(LoginRequiredMixin, _SectionOrderMixin, UpdateView):
         return kwargs
 
 
+class CVQuickCreateView(LoginRequiredMixin, View):
+    """Start a CV by naming it, then land in the Editor."""
+
+    template_name = "cv/new.html"
+
+    def get(self, request):
+        return render(request, self.template_name, {"form": QuickCVForm()})
+
+    def post(self, request):
+        form = QuickCVForm(request.POST)
+        if not form.is_valid():
+            return render(request, self.template_name, {"form": form})
+        cv = create_starter_cv(request.user, form.cleaned_data["alias"])
+        messages.success(
+            request, f"Created {cv.alias}. Fill in your details, then add your first section."
+        )
+        return redirect("cv-editor", cv_id=cv.id)
+
+
+class CVInfoInlineView(LoginRequiredMixin, View):
+    """HTMX fragment: the CV's personal details, edited inside the Editor.
+
+    Creates the record (and attaches it) if the CV has none. A save re-renders
+    the form, fires a toast, and refreshes the summary line out of band.
+    """
+
+    template_name = "cv/_info_inline.html"
+
+    def _cv(self, request, cv_id):
+        return get_object_or_404(CV.objects.select_related("info"), pk=cv_id, user=request.user)
+
+    def _render(self, request, cv, form, saved=False):
+        response = render(request, self.template_name, {"cv": cv, "form": form, "saved": saved})
+        if saved:
+            response["HX-Trigger"] = json.dumps(
+                {"toast": {"message": "Personal details saved.", "variant": "success"}}
+            )
+        return response
+
+    def get(self, request, cv_id):
+        cv = self._cv(request, cv_id)
+        return self._render(request, cv, CVInfoQuickForm(instance=cv.info))
+
+    def post(self, request, cv_id):
+        cv = self._cv(request, cv_id)
+        form = CVInfoQuickForm(request.POST, instance=cv.info)
+        if not form.is_valid():
+            return self._render(request, cv, form)
+        info = form.save(commit=False)
+        info.user = request.user
+        if cv.info_id is None:  # a brand-new record: name it after the CV
+            info.alias = cv.alias
+        info.save()
+        if cv.info_id != info.id:
+            cv.info = info
+            cv.save(update_fields=["info"])
+        return self._render(request, cv, CVInfoQuickForm(instance=info), saved=True)
+
+
 class CVEditorView(LoginRequiredMixin, DetailView):
     """Split-pane editor: outline on the left, live PDF preview on the right."""
 
@@ -183,6 +251,7 @@ class CVEditorView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         cv = self.object
         context["language_status"] = language_status(cv)
+        context["needs_info"] = not (cv.info_id and cv.info.name)
         context["styles"] = [c for c in CVDesign.THEME_CHOICES if c[0] != "custom"]
         context["current_style"] = cv.design.theme if cv.design_id else "classic"
         context["sections"] = cv.sections.prefetch_related("section_entries__entry").order_by(

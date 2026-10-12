@@ -16,7 +16,7 @@
       </p>
       <div class="mt-4 flex flex-col gap-3 md:flex-row">
         {% if user.is_authenticated %}
-          <c-button href="{% url 'cv-create' %}" variant="primary" size="lg">
+          <c-button href="{% url 'cv-new' %}" variant="primary" size="lg">
           Create a CV →
           </c-button>
           <c-button href="{% url 'cv-list' %}" variant="secondary" size="lg">

@@ -19,7 +19,7 @@ PER_GROUP = 5
 # (label, url name) -- static actions offered by the palette.
 _ACTIONS = (
     ("My CVs", "cv-list"),
-    ("New CV", "cv-create"),
+    ("New CV", "cv-new"),
     ("New entry", "entry-create"),
     ("New section", "section-create"),
     ("All entries", "entry-list"),

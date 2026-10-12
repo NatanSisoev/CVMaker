@@ -162,3 +162,19 @@ def language_status(cv: CV) -> list[dict]:
 def available_languages(cv: CV) -> list[str]:
     """ISO 639-1 codes the CV can be rendered in, active locale first."""
     return [status["code"] for status in language_status(cv)]
+
+
+@transaction.atomic
+def create_starter_cv(user, alias: str) -> CV:
+    """A ready-to-edit CV: personal details pre-filled from the account and the
+    classic design, so the Editor is usable (and renderable once a section
+    exists) without visiting any setup page first."""
+    alias = alias.strip()[:20] or "My CV"
+    info = CVInfo.objects.create(
+        user=user,
+        alias=alias,
+        name=user.display_name or "",
+        email=user.email,
+    )
+    design = CVDesign.objects.create(user=user, alias=alias, theme="classic")
+    return CV.objects.create(user=user, alias=alias, info=info, design=design)

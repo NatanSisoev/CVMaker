@@ -13,6 +13,7 @@ from .views import (
     CVInfoCreateView,
     CVInfoDeleteView,
     CVInfoDetailView,
+    CVInfoInlineView,
     CVInfoListView,
     CVInfoUpdateView,
     CVListView,
@@ -21,6 +22,7 @@ from .views import (
     CVLocaleDetailView,
     CVLocaleListView,
     CVLocaleUpdateView,
+    CVQuickCreateView,
     CVSettingsCreateView,
     CVSettingsDeleteView,
     CVSettingsDetailView,
@@ -32,11 +34,13 @@ from .views import (
 
 urlpatterns = [
     path("", CVListView.as_view(), name="cv-list"),
+    path("new/", CVQuickCreateView.as_view(), name="cv-new"),
     path("create/", CVCreateView.as_view(), name="cv-create"),
     path("upload/", CVUploadView.as_view(), name="cv-upload"),
     path("<uuid:cv_id>/", CVDetailView.as_view(), name="cv-detail"),
     path("<uuid:cv_id>/edit/", CVUpdateView.as_view(), name="cv-edit"),
     path("<uuid:cv_id>/editor/", CVEditorView.as_view(), name="cv-editor"),
+    path("<uuid:cv_id>/info/inline/", CVInfoInlineView.as_view(), name="cv-info-inline"),
     path("<uuid:cv_id>/delete/", CVDeleteView.as_view(), name="cv-delete"),
 ]
 

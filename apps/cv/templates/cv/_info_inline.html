@@ -1,0 +1,14 @@
+{# Personal details form (HTMX fragment, swapped in place by the Editor). #}
+<div id="info-form" class="cv-form">
+  <form hx-post="{% url 'cv-info-inline' cv_id=cv.id %}"
+        hx-target="#info-form"
+        hx-swap="outerHTML"
+        hx-disabled-elt="find button[type=submit]">
+    {% include 'includes/form_fields.html' %}
+    <div class="mt-4"><c-button type="submit" variant="primary" size="sm">Save details</c-button></div>
+  </form>
+  {# Keep the card's summary line in step without reloading the page. #}
+  {% if saved %}
+    <span id="info-summary" hx-swap-oob="true">{{ cv.info.name|default:"Add your name" }}</span>
+  {% endif %}
+</div>

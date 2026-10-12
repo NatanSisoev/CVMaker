@@ -166,3 +166,37 @@ def test_build_a_cv_from_the_editor_alone(app, page, logged_in, js_errors):
     page.click("text=Render preview")
     page.wait_for_selector("#preview iframe", timeout=60000)
     assert js_errors == []
+
+
+def test_new_cv_to_pdf_without_leaving_the_guided_flow(app, page, logged_in, js_errors):
+    """Dashboard -> New CV -> name it -> details -> section -> entry -> render."""
+    app("/cv/")
+    page.click("text=+ New CV")
+    page.fill("input[name=alias]", "Guided")
+    page.click("form.cv-form button[type=submit]")
+    page.wait_for_selector("text=Created Guided.")
+
+    # The account's name pre-fills the details, so the card starts collapsed.
+    assert "Personal details" in page.inner_text("aside")
+    assert not page.is_visible("#info-panel")
+    page.click("text=Personal details")
+    page.wait_for_selector("#info-form input[name=name]")
+    page.fill("#info-form input[name=name]", "Grace Hopper")
+    page.click("#info-form button[type=submit]")
+    page.wait_for_selector("text=Personal details saved.")
+    assert "Grace Hopper" in page.inner_text("#info-summary")
+
+    page.click("text=+ Add section")
+    page.fill("input[name=title]", "Highlights")
+    page.fill("input[name=alias]", "highlights")
+    page.click("form.cv-form button[type=submit]")
+    page.click("text=+ New entry")
+    page.click("button[value=bullet]")
+    page.fill("input[name=alias]", "bug")
+    page.fill("[name=bullet]", "Found the first computer bug")
+    page.click("form.cv-form button[type=submit]")
+    page.wait_for_selector("text=Added bug to Highlights.")
+
+    page.click("text=Render preview")
+    page.wait_for_selector("#preview iframe", timeout=60000)
+    assert js_errors == []

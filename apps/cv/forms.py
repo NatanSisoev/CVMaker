@@ -84,3 +84,22 @@ class CVSettingsForm(forms.ModelForm):
             "bold_keywords": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
             "settings_file": forms.FileInput(attrs={"class": "form-control-file"}),
         }
+
+
+class QuickCVForm(forms.Form):
+    """The only thing you must decide to start a CV: what to call it."""
+
+    alias = forms.CharField(
+        label="Name your CV",
+        max_length=20,
+        initial="My CV",
+        help_text="Just for you, e.g. Data engineer or Academic. You can rename it later.",
+    )
+
+
+class CVInfoQuickForm(forms.ModelForm):
+    """Personal details as edited inside the Editor (no photo/social JSON)."""
+
+    class Meta:
+        model = CVInfo
+        fields = ("name", "email", "phone", "location", "website")

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}New CV{% endblock %}
+{% block content %}
+  <section class="mx-auto max-w-lg px-4 py-16">
+    <h1 class="font-display text-3xl text-text mb-2">Start a new CV</h1>
+    <p class="mb-6 text-sm text-text-muted">
+      You'll build it in the editor: your details first, then sections (Experience, Education...)
+      and the entries inside them.
+    </p>
+    <form method="post" novalidate class="cv-form">
+      {% csrf_token %}
+      <c-card>
+        {% include 'includes/form_fields.html' %}
+      </c-card>
+      <div class="mt-6 flex items-center gap-2">
+        <c-button type="submit" variant="primary">Create and open editor</c-button>
+        <c-button href="{% url 'cv-list' %}" variant="ghost">Cancel</c-button>
+      </div>
+    </form>
+    <p class="mt-6 text-sm text-text-muted">
+      Already have a rendercv YAML file? Use <strong class="text-text">Import YAML</strong> on the
+      <a class="text-accent underline" href="{% url 'cv-list' %}">dashboard</a>.
+    </p>
+  </section>
+{% endblock %}
