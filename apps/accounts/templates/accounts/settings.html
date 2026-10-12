@@ -16,6 +16,11 @@
         <a class="text-accent underline" href="{% url 'account_email' %}">Change email</a> ·
         <a class="text-accent underline" href="{% url 'mfa_index' %}">Two-factor authentication</a>
       </p>
+      {% if user.public_handle and user.public_cv_id %}
+        <p class="mb-4 text-sm text-text-muted">
+          Your public page: <a class="text-accent underline" href="{% url 'public-profile' handle=user.public_handle %}">/@{{ user.public_handle }}/</a>
+        </p>
+      {% endif %}
       {% include 'includes/form_fields.html' with form=profile_form %}
       <div class="mt-6"><c-button type="submit" variant="primary">Save profile</c-button></div>
     </c-card>

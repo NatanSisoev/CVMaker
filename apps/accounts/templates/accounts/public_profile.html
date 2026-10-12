@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}{{ name }}{% endblock %}
+{% block content %}
+  <article class="mx-auto max-w-3xl px-4 py-12">
+    <header class="mb-10">
+      <h1 class="font-display text-4xl text-text">{{ name }}</h1>
+      <p class="mt-1 text-text-muted">
+        {{ location }}
+        {% if website %}· <a class="text-accent underline" rel="nofollow noopener" href="{{ website }}">{{ website }}</a>{% endif %}
+        {% for item in contact %}· {{ item }}{% endfor %}
+      </p>
+    </header>
+    {% for section in sections %}
+      <section class="mb-8">
+        <h2 class="mb-3 border-b border-border pb-1 font-display text-2xl text-text">{{ section.title }}</h2>
+        <ul class="flex flex-col gap-4">
+          {% for entry in section.entries %}
+            <li>
+              {% if entry.headline %}<div class="font-medium text-text">{{ entry.headline }}</div>{% endif %}
+              {% if entry.sub %}<div class="text-sm text-text-muted">{{ entry.sub }}</div>{% endif %}
+              {% if entry.bullets %}
+                <ul class="mt-1 list-disc pl-5 text-text-muted">
+                  {% for b in entry.bullets %}<li>{{ b }}</li>{% endfor %}
+                </ul>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endfor %}
+  </article>
+{% endblock %}

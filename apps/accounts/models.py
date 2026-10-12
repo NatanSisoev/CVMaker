@@ -82,6 +82,29 @@ class User(AbstractUser):
         help_text=_("Sends the PDF link (or the error) when a queued render completes."),
     )
 
+    # Public profile (opt-in): /@handle/ renders ``public_cv`` as HTML.
+    public_handle = models.CharField(
+        _("public handle"),
+        max_length=30,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text=_("Your public URL: /@handle/. Leave empty to keep your profile private."),
+    )
+    public_cv = models.ForeignKey(
+        "cv.CV",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("public CV"),
+        help_text=_("The CV shown on your public page."),
+    )
+    public_show_contact = models.BooleanField(
+        _("show email and phone publicly"),
+        default=False,
+    )
+
     # Timestamps (superseding AbstractUser's date_joined for consistency)
     updated_at = models.DateTimeField(auto_now=True)
 

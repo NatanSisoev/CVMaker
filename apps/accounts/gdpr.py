@@ -98,6 +98,9 @@ def export_user_data(user) -> dict[str, Any]:
             "username": user.username,
             "display_name": user.display_name,
             "preferred_language": user.preferred_language,
+            "public_handle": user.public_handle,
+            "public_cv": str(user.public_cv_id) if user.public_cv_id else None,
+            "public_show_contact": user.public_show_contact,
             "date_joined": user.date_joined,
             "email_addresses": [
                 {"email": e.email, "verified": e.verified, "primary": e.primary}

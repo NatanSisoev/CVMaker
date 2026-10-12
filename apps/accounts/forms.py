@@ -16,6 +16,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
+_HANDLE_RE = re.compile(r"^[a-z0-9_-]{3,30}$")
 _LANGUAGE_TAG_RE = re.compile(r"^[a-z]{2}(-[A-Z]{2})?$")
 
 
@@ -25,10 +26,36 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ("display_name", "preferred_language", "notify_on_render")
+        fields = (
+            "display_name",
+            "preferred_language",
+            "notify_on_render",
+            "public_handle",
+            "public_cv",
+            "public_show_contact",
+        )
         widgets: ClassVar[dict[str, forms.Widget]] = {
             "preferred_language": forms.TextInput(attrs={"maxlength": 5, "placeholder": "en"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["public_cv"].queryset = self.instance.cvs.all() if self.instance.pk else []
+        self.fields["public_cv"].empty_label = "(none)"
+
+    def clean_public_handle(self) -> str | None:
+        handle = (self.cleaned_data.get("public_handle") or "").strip().lower()
+        if not handle:
+            return None  # NULL, so many users can stay private despite the unique index
+        if not _HANDLE_RE.match(handle):
+            raise forms.ValidationError("3-30 characters: letters, digits, '-' or '_'.")
+        return handle
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("public_handle") and not cleaned.get("public_cv"):
+            self.add_error("public_cv", "Pick the CV to show on your public page.")
+        return cleaned
 
     def clean_preferred_language(self) -> str:
         tag = (self.cleaned_data.get("preferred_language") or "").strip()

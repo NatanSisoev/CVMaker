@@ -16,6 +16,7 @@ from django.shortcuts import render
 from django.urls import URLPattern, URLResolver, include, path
 from django.views.generic import TemplateView
 
+from accounts.public import public_profile_view
 from core.gallery import gallery_view, sample_pdf_view
 from core.views import healthz, palette_view, readyz, status_view
 from cv.views import HomePageView
@@ -47,6 +48,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("", HomePageView.as_view(), name="homepage"),
     path("admin/", admin.site.urls),
     path("api/v1/", include("api.urls", namespace="api")),
+    path("@<str:handle>/", public_profile_view, name="public-profile"),
     path("healthz", healthz, name="healthz"),
     path("readyz", readyz, name="readyz"),
     path("palette/", palette_view, name="palette"),
