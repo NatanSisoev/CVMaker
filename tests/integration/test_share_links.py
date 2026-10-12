@@ -85,3 +85,16 @@ def test_unfinished_render_cannot_be_shared(client):
 
 def test_unknown_token_404(client):
     assert client.get(reverse("rendering:shared", args=["nope"])).status_code == 404
+
+
+def test_dashboard_links_the_latest_finished_render(client, done_render):
+    client.force_login(done_render.cv.user)
+    body = client.get(reverse("cv-list")).content.decode()
+    assert reverse("rendering:pdf", args=[done_render.id]) in body and "Latest PDF" in body
+
+
+def test_dashboard_without_renders_has_no_pdf_link(client):
+    cv = CVFactory()
+    Render.objects.create(cv=cv, payload_hash="q", status=RenderStatus.FAILED)
+    client.force_login(cv.user)
+    assert "Latest PDF" not in client.get(reverse("cv-list")).content.decode()

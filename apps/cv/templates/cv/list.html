@@ -35,6 +35,13 @@
               </div>
             </div>
           </c-slot>
+          {% if cv.latest_render_id %}
+            <p class="mb-2 text-sm">
+              <a class="text-accent underline" href="{% url 'rendering:pdf' render_id=cv.latest_render_id %}">Latest PDF</a>
+              <span class="text-text-muted">· rendered {{ cv.latest_render_at|date:"M j" }}</span>
+              · <a class="text-text-muted underline" href="{% url 'rendering:history' cv_id=cv.id %}">History</a>
+            </p>
+          {% endif %}
           <div class="flex items-center justify-between">
             <p class="text-sm text-text-muted">
               Last updated {{ cv.modified_date|date:"M j, Y" }}

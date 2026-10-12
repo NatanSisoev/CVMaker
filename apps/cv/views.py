@@ -53,7 +53,17 @@ class CVListView(LoginRequiredMixin, ListView):
     context_object_name = "cvs"
 
     def get_queryset(self):
-        return CV.objects.filter(user=self.request.user)
+        from django.db.models import OuterRef, Subquery
+
+        from rendering.models import Render, RenderStatus
+
+        latest = Render.objects.filter(
+            cv=OuterRef("pk"), status=RenderStatus.DONE, pdf_file__gt=""
+        ).order_by("-requested_at")
+        return CV.objects.filter(user=self.request.user).annotate(
+            latest_render_id=Subquery(latest.values("id")[:1]),
+            latest_render_at=Subquery(latest.values("requested_at")[:1]),
+        )
 
 
 ################################################# CREATE ###############################################################

@@ -137,3 +137,43 @@ def status_view(request):
         {"checks": [{"name": "Web app", "ok": True}, {"name": "Database", "ok": database}]},
         status=200 if database else 503,
     )
+
+
+@require_GET
+def robots_txt(request):
+    """Public pages are indexable; app screens, API and share links are not."""
+    from django.http import HttpResponse
+
+    lines = [
+        "User-agent: *",
+        "Disallow: /admin/",
+        "Disallow: /api/",
+        "Disallow: /accounts/",
+        "Disallow: /cv/",
+        "Disallow: /section/",
+        "Disallow: /entry/",
+        "Disallow: /renders/",
+        "Disallow: /s/",
+        "Disallow: /palette/",
+        f"Sitemap: {request.build_absolute_uri('/sitemap.xml')}",
+    ]
+    return HttpResponse("\n".join(lines) + "\n", content_type="text/plain")
+
+
+@require_GET
+def sitemap_xml(request):
+    """Static pages plus every opted-in public profile."""
+    from django.http import HttpResponse
+    from django.urls import reverse as _reverse
+
+    from accounts.models import User
+
+    paths = [_reverse(n) for n in ("homepage", "templates", "help", "about")]
+    handles = User.objects.filter(public_cv__isnull=False, public_handle__isnull=False)
+    paths += [
+        _reverse("public-profile", args=[h])
+        for h in handles.values_list("public_handle", flat=True)
+    ]
+    urls = "".join(f"<url><loc>{request.build_absolute_uri(p)}</loc></url>" for p in paths)
+    xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
+    return HttpResponse(xml, content_type="application/xml")
