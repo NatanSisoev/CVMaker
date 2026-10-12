@@ -127,3 +127,14 @@ def test_social_metadata_present_and_json_ld_is_safe(client, published):
     body = client.get("/@grace/").content.decode()
     assert 'property="og:title"' in body and 'id="ld-person"' in body
     assert "</script><b>" not in body
+
+
+def test_settings_groups_public_fields_in_their_own_card_and_shows_errors(client, published):
+    client.force_login(published)
+    body = client.get(reverse("profile")).content.decode()
+    assert "Public profile" in body and "/@grace/" in body
+    bad = client.post(
+        reverse("profile"),
+        {"action": "profile", "preferred_language": "en", "public_handle": "x y"},
+    )
+    assert bad.status_code == 200 and "3-30 characters" in bad.content.decode()

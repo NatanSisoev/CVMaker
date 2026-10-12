@@ -9,21 +9,37 @@
   <form method="post" novalidate class="cv-form mb-8">
     {% csrf_token %}
     <input type="hidden" name="action" value="profile">
-    <c-card>
+    {% if profile_form.non_field_errors %}
+      <div class="mb-4 rounded-sm border border-danger px-3 py-2 text-sm text-danger" role="alert">{{ profile_form.non_field_errors }}</div>
+    {% endif %}
+    <c-card class="mb-4">
       <c-slot name="header">Profile</c-slot>
       <p class="mb-4 text-sm text-text-muted">
         Signed in as <strong class="text-text">{{ user.email }}</strong>.
         <a class="text-accent underline" href="{% url 'account_email' %}">Change email</a> ·
         <a class="text-accent underline" href="{% url 'mfa_index' %}">Two-factor authentication</a>
       </p>
-      {% if user.public_handle and user.public_cv_id %}
-        <p class="mb-4 text-sm text-text-muted">
-          Your public page: <a class="text-accent underline" href="{% url 'public-profile' handle=user.public_handle %}">/@{{ user.public_handle }}/</a>
-        </p>
-      {% endif %}
-      {% include 'includes/form_fields.html' with form=profile_form %}
-      <div class="mt-6"><c-button type="submit" variant="primary">Save profile</c-button></div>
+      <div class="flex flex-col gap-4">
+        {% include 'includes/form_field.html' with field=profile_form.display_name %}
+        {% include 'includes/form_field.html' with field=profile_form.preferred_language %}
+        {% include 'includes/form_field.html' with field=profile_form.notify_on_render %}
+      </div>
     </c-card>
+    <c-card>
+      <c-slot name="header">Public profile</c-slot>
+      <p class="mb-4 text-sm text-text-muted">
+        Optional. Publish one CV as a web page anyone can read, without logging in.
+        {% if user.public_handle and user.public_cv_id %}
+          Live at <a class="text-accent underline" href="{% url 'public-profile' handle=user.public_handle %}">/@{{ user.public_handle }}/</a>.
+        {% endif %}
+      </p>
+      <div class="flex flex-col gap-4">
+        {% include 'includes/form_field.html' with field=profile_form.public_handle %}
+        {% include 'includes/form_field.html' with field=profile_form.public_cv %}
+        {% include 'includes/form_field.html' with field=profile_form.public_show_contact %}
+      </div>
+    </c-card>
+    <div class="mt-6"><c-button type="submit" variant="primary">Save profile</c-button></div>
   </form>
 
   <form method="post" novalidate class="cv-form">

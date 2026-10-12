@@ -172,8 +172,8 @@ def _to_rendercv_2x(payload: dict, style: str = "") -> dict:
     return data
 
 
-def _render_payload_to_pdf(payload: dict, style: str = "") -> bytes:
-    """Hand a render payload to rendercv 2.x, return PDF bytes.
+def _render_payload_to_pdf(payload: dict, style: str = "", fmt: str = "pdf") -> bytes:
+    """Hand a render payload to rendercv 2.x, return PDF bytes (``fmt="png"``: page 1 as PNG).
 
     rendercv 2.x is file-oriented, so the payload is written as YAML into a
     scratch directory that is deleted afterwards. Only Typst + PDF are
@@ -187,7 +187,7 @@ def _render_payload_to_pdf(payload: dict, style: str = "") -> bytes:
     import jinja2
     import yaml
     from rendercv.exception import RenderCVUserError, RenderCVUserValidationError
-    from rendercv.renderer.pdf_png import generate_pdf
+    from rendercv.renderer.pdf_png import generate_pdf, generate_png
     from rendercv.renderer.typst import generate_typst
     from rendercv.schema.rendercv_model_builder import build_rendercv_dictionary_and_model
 
@@ -207,11 +207,16 @@ def _render_payload_to_pdf(payload: dict, style: str = "") -> bytes:
                 output_folder=scratch,
                 pdf_path=scratch / "cv.pdf",
                 typst_path=scratch / "cv.typ",
-                dont_generate_png=True,
+                dont_generate_png=fmt != "png",
                 dont_generate_html=True,
                 dont_generate_markdown=True,
             )
             typst_path = generate_typst(model)
+            if fmt == "png":
+                pngs = generate_png(model, typst_path)
+                if not pngs:
+                    raise _RenderError("Typst finished without producing an image.")
+                return pathlib.Path(pngs[0]).read_bytes()
             pdf_path = generate_pdf(model, typst_path)
         except RenderCVUserValidationError as exc:
             raise _RenderError(

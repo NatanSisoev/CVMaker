@@ -508,3 +508,4 @@ _Each session appends a short note here: date, phase worked, what shipped, what'
 
 ### 2026-10-12 (cont. 11) — Self-hosted fonts
 - Inter, Fraunces, JetBrains Mono (Latin variable WOFF2 via Fontsource, OFL) now live in `static/fonts/`; every page previously logged three 404s. Test asserts each `@font-face` URL resolves to a real WOFF2.
+- Gallery uses real PNG thumbnails (`/templates/<style>/sample.png`, page 1 via rendercv, cached) instead of PDF iframes, which render blank where no PDF viewer exists. Settings page splits "Public profile" into its own card.

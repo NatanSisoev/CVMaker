@@ -67,6 +67,23 @@ def gallery_view(request):
 
 
 @require_GET
+def sample_image_view(request, theme):
+    """Page 1 of the sample CV as a PNG thumbnail (works without a PDF viewer)."""
+    from rendering.tasks import _render_payload_to_pdf
+
+    if theme not in {s["value"] for s in styles()}:
+        raise Http404("unknown style")
+    key = f"gallery-sample-png-{theme}"
+    png = cache.get(key)
+    if png is None:
+        png = _render_payload_to_pdf(SAMPLE_CV, theme, fmt="png")
+        cache.set(key, png, CACHE_SECONDS)
+    response = HttpResponse(png, content_type="image/png")
+    response["Cache-Control"] = "public, max-age=3600"
+    return response
+
+
+@require_GET
 @xframe_options_sameorigin
 def sample_pdf_view(request, theme):
     from rendering.tasks import _render_payload_to_pdf
