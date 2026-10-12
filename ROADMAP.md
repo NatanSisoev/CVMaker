@@ -495,3 +495,6 @@ _Each session appends a short note here: date, phase worked, what shipped, what'
 
 ### 2026-10-12 (cont. 8) — Public profile pages
 - Opt-in `/@handle/` page rendering a chosen CV as HTML (`accounts/public.py`). New user fields `public_handle` (unique, NULL = private), `public_cv`, `public_show_contact` (default off: email/phone hidden); set in Settings with ownership/format validation. Included in the GDPR export. Includes OG tags and JSON-LD.
+
+### 2026-10-12 (cont. 9)
+- `manage.py prune_data [--render-days 90] [--link-grace-days 30] [--dry-run]`: removes long-expired/revoked share links and old renders (keeps each CV's newest finished render and anything with a live share link). Needs a scheduler to run it (owner/hosting).
