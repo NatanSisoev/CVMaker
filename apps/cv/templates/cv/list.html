@@ -35,9 +35,15 @@
               </div>
             </div>
           </c-slot>
-          <p class="text-sm text-text-muted">
-            Last updated {{ cv.modified_date|date:"M j, Y" }}
-          </p>
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-text-muted">
+              Last updated {{ cv.modified_date|date:"M j, Y" }}
+            </p>
+            <form action="{% url 'cv-duplicate' cv_id=cv.id %}" method="post">
+              {% csrf_token %}
+              <button type="submit" class="text-sm text-text-muted underline hover:text-text">Duplicate</button>
+            </form>
+          </div>
         </c-card>
 
         <c-modal id="delete-cv-{{ cv.id }}" title="Delete this CV?">

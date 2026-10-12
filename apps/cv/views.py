@@ -21,7 +21,7 @@ from .forms import (
 )
 from .importer import CVImportError, import_cv_from_yaml
 from .models import CV, CVDesign, CVInfo, CVLocale, CVSettings
-from .services import create_starter_cv, language_status
+from .services import clone_cv, create_starter_cv, language_status
 
 ################################################## HOME ################################################################
 
@@ -234,6 +234,17 @@ class CVInfoInlineView(LoginRequiredMixin, View):
             cv.info = info
             cv.save(update_fields=["info"])
         return self._render(request, cv, CVInfoQuickForm(instance=info), saved=True)
+
+
+class CVDuplicateView(LoginRequiredMixin, View):
+    """POST: copy a CV (own details/design, shared sections) and open the copy."""
+
+    def post(self, request, cv_id):
+        cv = get_object_or_404(CV, pk=cv_id, user=request.user)
+        suffix = " copy"
+        copy = clone_cv(cv, f"{cv.alias[: 20 - len(suffix)]}{suffix}")
+        messages.success(request, f"Duplicated {cv.alias}. Edit the copy freely.")
+        return redirect("cv-editor", cv_id=copy.id)
 
 
 class CVEditorView(LoginRequiredMixin, DetailView):
