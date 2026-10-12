@@ -494,4 +494,4 @@ _Each session appends a short note here: date, phase worked, what shipped, what'
 - `ShareLink` model (migration 0003): unguessable token, 1/7/30-day expiry, revoke, view counter. `/renders/cv/<id>/history/` lists past renders with Open/Share; public `/s/<token>/` serves the PDF (noindex, no-store; 404 when expired/revoked). Editor has a "History & sharing" button.
 
 ### 2026-10-12 (cont. 8) — Public profile pages
-- Opt-in `/@handle/` page rendering a chosen CV as HTML (`accounts/public.py`). New user fields `public_handle` (unique, NULL = private), `public_cv`, `public_show_contact` (default off: email/phone hidden); set in Settings with ownership/format validation. Included in the GDPR export. OG tags / JSON-LD still to do.
+- Opt-in `/@handle/` page rendering a chosen CV as HTML (`accounts/public.py`). New user fields `public_handle` (unique, NULL = private), `public_cv`, `public_show_contact` (default off: email/phone hidden); set in Settings with ownership/format validation. Included in the GDPR export. Includes OG tags and JSON-LD.

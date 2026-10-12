@@ -54,6 +54,13 @@ def public_profile_view(request, handle):
         "location": info.get("location", ""),
         "website": info.get("website", ""),
         "contact": contact,
+        "json_ld": {
+            "@context": "https://schema.org",
+            "@type": "Person",
+            "name": info.get("name") or user.get_display_name(),
+            **({"address": info["location"]} if info.get("location") else {}),
+            **({"url": info["website"]} if info.get("website") else {}),
+        },
         "sections": [
             {"title": title, "entries": [present_entry(e) for e in entries]}
             for title, entries in sections.items()

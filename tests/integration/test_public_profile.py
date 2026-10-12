@@ -119,3 +119,11 @@ def test_education_entries_present(client, published):
     append_entry_to_section(section, EducationEntryFactory(user=published))
     attach_section_to_cv(published.public_cv, section)
     assert "School" in client.get("/@grace/").content.decode()
+
+
+def test_social_metadata_present_and_json_ld_is_safe(client, published):
+    published.public_cv.info.name = "</script><b>x"
+    published.public_cv.info.save()
+    body = client.get("/@grace/").content.decode()
+    assert 'property="og:title"' in body and 'id="ld-person"' in body
+    assert "</script><b>" not in body
