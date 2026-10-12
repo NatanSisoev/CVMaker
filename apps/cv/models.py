@@ -36,6 +36,10 @@ def months_full_names_defaults():
 ########################################################################################################################
 
 
+class LimitExceeded(Exception):
+    """The account has hit a plan limit. Shown to the user as-is."""
+
+
 class CV(models.Model):
     # KEYS
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="cvs")
@@ -68,6 +72,19 @@ class CV(models.Model):
     # EXTRA
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        limit = settings.MAX_CVS_PER_USER
+        if (
+            self._state.adding
+            and limit
+            and CV.objects.filter(user_id=self.user_id).count() >= limit
+        ):
+            raise LimitExceeded(
+                f"You've reached the limit of {limit} CV{'s' if limit != 1 else ''}. "
+                "Delete one to make room."
+            )
+        super().save(*args, **kwargs)
 
     def serialize(self, language: str | None = None) -> dict:
         # The active language: an explicit override (editor's language picker),

@@ -113,6 +113,7 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "core.middleware.PermissionsPolicyMiddleware",
+    "core.middleware.LimitExceededMiddleware",
     "django_ratelimit.middleware.RatelimitMiddleware",  # Ratelimited -> 429 view
 ]
 
@@ -462,3 +463,6 @@ for _provider, _scope in (("google", ["profile", "email"]), ("github", ["user:em
 # Render jobs normally go to the RQ worker (Redis). RENDER_INLINE=true runs them
 # inside the web request instead -- for local demos without Redis. Never in prod.
 RENDER_INLINE = env.bool("RENDER_INLINE", default=False)
+
+# Plan cap: most CVs one account may own (0 = unlimited). A paid plan would override per user.
+MAX_CVS_PER_USER = env.int("MAX_CVS_PER_USER", default=0)
