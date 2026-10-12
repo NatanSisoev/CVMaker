@@ -259,7 +259,7 @@ Gut Bootstrap, install Tailwind + HTMX + Alpine, build the component system, the
 - [x] Delete `static/css/bootstrap.min.css`, `static/js/jquery-3.7.1.min.js`, `static/js/bootstrap.bundle.min.js`, `crispy_forms`, `widget_tweaks`. _(crispy-forms + widget_tweaks dropped from pyproject + INSTALLED_APPS; dead `{% load %}` tags stripped from 8 templates; static asset deletion runs in `scripts/phase4_1_setup.ps1`)_
 - [x] `npm init`, install `tailwindcss`, `@tailwindcss/typography`, `@tailwindcss/forms`, `htmx.org`, `alpinejs`, `esbuild`. _(package.json drafted, user runs `npm install` via setup script)_
 - [x] `tailwind.config.js` with the tokens from `DESIGN.md`.
-- [ ] Self-host Fraunces, Inter, JetBrains Mono in `static/fonts/`. _(@font-face stanzas land in app.css; WOFF2 files added manually by user -- the variable-font download URLs are too fragile to script)_
+- [x] Self-host Fraunces, Inter, JetBrains Mono in `static/fonts/`. _(@font-face stanzas land in app.css; WOFF2 files added manually by user -- the variable-font download URLs are too fragile to script)_
 - [x] Install `django-cotton` for component templates.
 - [x] `static/src/app.css` as Tailwind entry, `static/src/app.js` with HTMX + Alpine.
 - [x] Build pipeline: `npm run dev` watches, `npm run build` produces hashed output.
@@ -505,3 +505,6 @@ _Each session appends a short note here: date, phase worked, what shipped, what'
 - Real `/contact/` form: `ContactMessage` model (core migration 0001, admin), honeypot, 5/h per IP, emailed to `CONTACT_EMAIL` when set (owner must set it).
 - Plan cap plumbing: `MAX_CVS_PER_USER` (0 = unlimited). `CV.save()` raises `LimitExceeded` when adding past the cap; `LimitExceededMiddleware` turns it into a flash + redirect (403 JSON under `/api/`). Stripe/plans can later override per user.
 - Editor "Tailor to a job" card: paste a posting, get entries ranked by keyword overlap plus keywords no entry mentions (`cv/tailor.py`, pure keyword match, read-only; AI-assisted tailoring remains a Phase 9 idea).
+
+### 2026-10-12 (cont. 11) — Self-hosted fonts
+- Inter, Fraunces, JetBrains Mono (Latin variable WOFF2 via Fontsource, OFL) now live in `static/fonts/`; every page previously logged three 404s. Test asserts each `@font-face` URL resolves to a real WOFF2.
