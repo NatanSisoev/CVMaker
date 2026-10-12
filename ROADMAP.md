@@ -504,3 +504,4 @@ _Each session appends a short note here: date, phase worked, what shipped, what'
 ### 2026-10-12 (cont. 10)
 - Real `/contact/` form: `ContactMessage` model (core migration 0001, admin), honeypot, 5/h per IP, emailed to `CONTACT_EMAIL` when set (owner must set it).
 - Plan cap plumbing: `MAX_CVS_PER_USER` (0 = unlimited). `CV.save()` raises `LimitExceeded` when adding past the cap; `LimitExceededMiddleware` turns it into a flash + redirect (403 JSON under `/api/`). Stripe/plans can later override per user.
+- Editor "Tailor to a job" card: paste a posting, get entries ranked by keyword overlap plus keywords no entry mentions (`cv/tailor.py`, pure keyword match, read-only; AI-assisted tailoring remains a Phase 9 idea).

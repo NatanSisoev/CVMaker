@@ -246,6 +246,18 @@ class CVInfoInlineView(LoginRequiredMixin, View):
         return self._render(request, cv, CVInfoQuickForm(instance=info), saved=True)
 
 
+class CVTailorView(LoginRequiredMixin, View):
+    """HTMX fragment: rank a CV's entries against a pasted job description."""
+
+    def post(self, request, cv_id):
+        from .tailor import MAX_TEXT, tailor_cv
+
+        cv = get_object_or_404(CV, pk=cv_id, user=request.user)
+        posting = request.POST.get("posting", "").strip()[:MAX_TEXT]
+        result = tailor_cv(cv, posting) if posting else None
+        return render(request, "cv/_tailor_result.html", {"cv": cv, "result": result})
+
+
 class CVDuplicateView(LoginRequiredMixin, View):
     """POST: copy a CV (own details/design, shared sections) and open the copy."""
 

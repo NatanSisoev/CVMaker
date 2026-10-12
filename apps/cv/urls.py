@@ -29,6 +29,7 @@ from .views import (
     CVSettingsDetailView,
     CVSettingsListView,
     CVSettingsUpdateView,
+    CVTailorView,
     CVUpdateView,
     CVUploadView,
 )
@@ -41,6 +42,7 @@ urlpatterns = [
     path("<uuid:cv_id>/", CVDetailView.as_view(), name="cv-detail"),
     path("<uuid:cv_id>/edit/", CVUpdateView.as_view(), name="cv-edit"),
     path("<uuid:cv_id>/duplicate/", CVDuplicateView.as_view(), name="cv-duplicate"),
+    path("<uuid:cv_id>/tailor/", CVTailorView.as_view(), name="cv-tailor"),
     path("<uuid:cv_id>/editor/", CVEditorView.as_view(), name="cv-editor"),
     path("<uuid:cv_id>/info/inline/", CVInfoInlineView.as_view(), name="cv-info-inline"),
     path("<uuid:cv_id>/delete/", CVDeleteView.as_view(), name="cv-delete"),

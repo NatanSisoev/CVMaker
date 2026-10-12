@@ -1,0 +1,22 @@
+{% if not result %}
+  <p class="text-sm text-text-muted">Paste a posting first.</p>
+{% elif not result.ranked %}
+  <p class="text-sm text-text-muted">This CV has no entries to compare yet.</p>
+{% else %}
+  <p class="mb-2 text-xs text-text-muted">Keywords found: {{ result.keywords|slice:":15"|join:", " }}</p>
+  <ol class="flex flex-col gap-1 text-sm">
+    {% for r in result.ranked %}
+      <li class="rounded border border-border px-2 py-1">
+        <span class="text-text">{{ r.alias }}</span>
+        <span class="text-text-muted">· {{ r.section }} ·
+          {% if r.score %}{{ r.score }} match{{ r.score|pluralize:"es" }}: {{ r.matched|slice:":6"|join:", " }}{% else %}<em>no match - consider cutting</em>{% endif %}
+        </span>
+      </li>
+    {% endfor %}
+  </ol>
+  {% if result.missing %}
+    <p class="mt-3 text-xs text-text-muted">
+      Not mentioned anywhere in your entries: <strong class="text-text">{{ result.missing|slice:":12"|join:", " }}</strong>
+    </p>
+  {% endif %}
+{% endif %}
