@@ -29,6 +29,7 @@
       </c-select>
       <c-button type="submit" variant="primary">Render preview</c-button>
       <c-button href="{% url 'cv-edit' cv.id %}" variant="secondary">CV settings</c-button>
+      <c-button href="{% url 'rendering:history' cv_id=cv.id %}" variant="ghost">History &amp; sharing</c-button>
       {% if language_status %}
         <div class="flex w-full flex-wrap items-center gap-2"
              aria-label="Translation status">

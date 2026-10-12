@@ -124,3 +124,33 @@ class Render(models.Model):
     def is_terminal(self) -> bool:
         """True once the render has reached a final state (done or failed)."""
         return self.status in {RenderStatus.DONE, RenderStatus.FAILED}
+
+
+def _new_share_token() -> str:
+    import secrets
+
+    return secrets.token_urlsafe(24)
+
+
+class ShareLink(models.Model):
+    """An unguessable, expiring public URL for one finished render's PDF."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    render = models.ForeignKey(Render, on_delete=models.CASCADE, related_name="share_links")
+    token = models.CharField(max_length=64, unique=True, default=_new_share_token, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    revoked = models.BooleanField(default=False)
+    view_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self) -> str:
+        return f"ShareLink({self.render_id}, revoked={self.revoked})"
+
+    @property
+    def is_active(self) -> bool:
+        from django.utils import timezone
+
+        return not self.revoked and self.expires_at > timezone.now()

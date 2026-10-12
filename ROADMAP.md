@@ -489,3 +489,6 @@ _Each session appends a short note here: date, phase worked, what shipped, what'
 - `/templates/` is a public gallery: each style rendered from a sample CV (`core/gallery.py`, cached 24h) with "Use this style" → `/cv/new/?style=…`; quick-start form gained a Style select. Nav links Templates again.
 - Real `/status/` (web + database, 503 when DB down) and `/about/` pages. Contact stays a placeholder (needs the owner's address).
 - Dashboard "Duplicate" on each CV (`cv-duplicate`, POST, owner-scoped; uses `clone_cv`, sections shared).
+
+### 2026-10-12 (cont. 7) — Render history and share links
+- `ShareLink` model (migration 0003): unguessable token, 1/7/30-day expiry, revoke, view counter. `/renders/cv/<id>/history/` lists past renders with Open/Share; public `/s/<token>/` serves the PDF (noindex, no-store; 404 when expired/revoked). Editor has a "History & sharing" button.

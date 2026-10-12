@@ -130,3 +130,71 @@ def _get_owned_render(user, render_id) -> Render:
         return Render.objects.select_related("cv").get(pk=render_id, cv__user=user)
     except Render.DoesNotExist as exc:
         raise Http404("Render not found") from exc
+
+
+# ---------------------------------------------------------------------------
+# History and share links
+# ---------------------------------------------------------------------------
+SHARE_DURATIONS = {"1d": 1, "7d": 7, "30d": 30}
+
+
+@login_required
+@require_GET
+def history_view(request, cv_id):
+    cv = get_object_or_404(CV, pk=cv_id, user=request.user)
+    renders = cv.renders.prefetch_related("share_links")[:50]
+    return render(request, "rendering/history.html", {"cv": cv, "renders": renders})
+
+
+@login_required
+@require_POST
+def share_create_view(request, render_id):
+    from datetime import timedelta
+
+    from django.contrib import messages
+    from django.utils import timezone
+
+    from .models import ShareLink
+
+    render_row = _get_owned_render(request.user, render_id)
+    if render_row.status != RenderStatus.DONE or not render_row.pdf_file:
+        raise Http404("PDF not ready")
+    days = SHARE_DURATIONS.get(request.POST.get("duration", "7d"), 7)
+    ShareLink.objects.create(render=render_row, expires_at=timezone.now() + timedelta(days=days))
+    messages.success(request, f"Share link created; it expires in {days} day(s).")
+    return redirect("rendering:history", cv_id=render_row.cv_id)
+
+
+@login_required
+@require_POST
+def share_revoke_view(request, link_id):
+    from django.contrib import messages
+
+    from .models import ShareLink
+
+    link = get_object_or_404(ShareLink, pk=link_id, render__cv__user=request.user)
+    link.revoked = True
+    link.save(update_fields=["revoked"])
+    messages.success(request, "Share link revoked.")
+    return redirect("rendering:history", cv_id=link.render.cv_id)
+
+
+@require_GET
+def shared_pdf_view(request, token):
+    """Public: anyone holding a live token can read that one PDF."""
+    from django.db.models import F
+
+    from .models import ShareLink
+
+    link = get_object_or_404(ShareLink.objects.select_related("render__cv"), token=token)
+    if not link.is_active or not link.render.pdf_file:
+        raise Http404("This link has expired or was revoked.")
+    ShareLink.objects.filter(pk=link.pk).update(view_count=F("view_count") + 1)
+    response = FileResponse(
+        link.render.pdf_file.open("rb"),
+        content_type="application/pdf",
+        filename=f"{link.render.cv.alias or 'cv'}.pdf",
+    )
+    response["X-Robots-Tag"] = "noindex, nofollow"
+    response["Cache-Control"] = "private, no-store"
+    return response

@@ -21,4 +21,9 @@ urlpatterns = [
     path("renders/<uuid:render_id>/", views.render_status_view, name="status"),
     # GET -> stream the finished PDF.
     path("renders/<uuid:render_id>/pdf/", views.render_pdf_view, name="pdf"),
+    path("renders/cv/<uuid:cv_id>/history/", views.history_view, name="history"),
+    path("renders/<uuid:render_id>/share/", views.share_create_view, name="share-create"),
+    path("renders/share/<uuid:link_id>/revoke/", views.share_revoke_view, name="share-revoke"),
+    # Public, token-gated PDF.
+    path("s/<str:token>/", views.shared_pdf_view, name="shared"),
 ]
