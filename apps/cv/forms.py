@@ -95,6 +95,13 @@ class QuickCVForm(forms.Form):
         initial="My CV",
         help_text="Just for you, e.g. Data engineer or Academic. You can rename it later.",
     )
+    style = forms.ChoiceField(
+        label="Style",
+        choices=[c for c in CVDesign.THEME_CHOICES if c[0] != "custom"],
+        initial="classic",
+        required=False,
+        help_text="You can switch styles any time in the editor.",
+    )
 
 
 class CVInfoQuickForm(forms.ModelForm):

@@ -16,6 +16,7 @@ from django.shortcuts import render
 from django.urls import URLPattern, URLResolver, include, path
 from django.views.generic import TemplateView
 
+from core.gallery import gallery_view, sample_pdf_view
 from core.views import healthz, palette_view, readyz
 from cv.views import HomePageView
 
@@ -58,11 +59,8 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("accounts/", include("accounts.urls")),
     path("accounts/", include("allauth.urls")),  # login, signup, verify, reset, 2FA
     # Placeholder routes — linked from nav/footer, real content in Phase 6
-    path(
-        "templates/",
-        _placeholder("Templates", "A gallery of ready-made CV templates you can start from."),
-        name="templates",
-    ),
+    path("templates/", gallery_view, name="templates"),
+    path("templates/<str:theme>/sample.pdf", sample_pdf_view, name="template-sample"),
     path("import/", TemplateView.as_view(template_name="import.html"), name="import"),
     path("help/", TemplateView.as_view(template_name="help.html"), name="help"),
     path("contact/", _placeholder("Contact"), name="contact"),

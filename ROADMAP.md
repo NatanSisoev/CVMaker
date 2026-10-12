@@ -484,3 +484,6 @@ _Each session appends a short note here: date, phase worked, what shipped, what'
 ### 2026-10-12 (cont. 5) — Health probes
 - `/healthz` (liveness) and `/readyz` (DB check, 503 when down); exempt from the prod HTTPS redirect. Tests in `tests/integration/test_health.py`.
 - Production logs are now valid JSON (`cvmaker.logging_utils.JsonFormatter`, tracebacks included); optional Sentry via `SENTRY_DSN` (install `sentry-sdk` first).
+
+### 2026-10-12 (cont. 6) — Templates gallery
+- `/templates/` is a public gallery: each style rendered from a sample CV (`core/gallery.py`, cached 24h) with "Use this style" → `/cv/new/?style=…`; quick-start form gained a Style select. Nav links Templates again.

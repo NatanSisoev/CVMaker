@@ -57,8 +57,7 @@ def test_import_page_end_to_end(client, user):
     assert resp.redirect_chain[-1][0] == reverse("cv-editor", args=[cv.id])
 
 
-def test_nav_no_longer_links_the_templates_placeholder(client, user):
-    for visitor in (client,):
-        body = visitor.get(reverse("homepage")).content.decode()
-        assert f'href="{reverse("templates")}"' not in body
-        assert f'href="{reverse("help")}"' in body and f'href="{reverse("import")}"' in body
+def test_nav_links_templates_help_and_import(client):
+    body = client.get(reverse("homepage")).content.decode()
+    for name in ("templates", "help", "import"):
+        assert f'href="{reverse(name)}"' in body

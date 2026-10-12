@@ -165,7 +165,7 @@ def available_languages(cv: CV) -> list[str]:
 
 
 @transaction.atomic
-def create_starter_cv(user, alias: str) -> CV:
+def create_starter_cv(user, alias: str, theme: str = "classic") -> CV:
     """A ready-to-edit CV: personal details pre-filled from the account and the
     classic design, so the Editor is usable (and renderable once a section
     exists) without visiting any setup page first."""
@@ -176,5 +176,5 @@ def create_starter_cv(user, alias: str) -> CV:
         name=user.display_name or "",
         email=user.email,
     )
-    design = CVDesign.objects.create(user=user, alias=alias, theme="classic")
+    design = CVDesign.objects.create(user=user, alias=alias, theme=theme)
     return CV.objects.create(user=user, alias=alias, info=info, design=design)

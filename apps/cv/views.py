@@ -180,13 +180,16 @@ class CVQuickCreateView(LoginRequiredMixin, View):
     template_name = "cv/new.html"
 
     def get(self, request):
-        return render(request, self.template_name, {"form": QuickCVForm()})
+        initial = {"style": request.GET.get("style", "classic")}
+        return render(request, self.template_name, {"form": QuickCVForm(initial=initial)})
 
     def post(self, request):
         form = QuickCVForm(request.POST)
         if not form.is_valid():
             return render(request, self.template_name, {"form": form})
-        cv = create_starter_cv(request.user, form.cleaned_data["alias"])
+        cv = create_starter_cv(
+            request.user, form.cleaned_data["alias"], form.cleaned_data["style"] or "classic"
+        )
         messages.success(
             request, f"Created {cv.alias}. Fill in your details, then add your first section."
         )
