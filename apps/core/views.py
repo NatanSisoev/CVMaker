@@ -118,3 +118,22 @@ def readyz(request):
     except Exception:
         return JsonResponse({"status": "unavailable", "database": "down"}, status=503)
     return JsonResponse({"status": "ok", "database": "up"})
+
+
+@require_GET
+def status_view(request):
+    """Human-readable status page (same checks as the probes)."""
+    from django.db import connection
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        database = True
+    except Exception:
+        database = False
+    return render(
+        request,
+        "status.html",
+        {"checks": [{"name": "Web app", "ok": True}, {"name": "Database", "ok": database}]},
+        status=200 if database else 503,
+    )

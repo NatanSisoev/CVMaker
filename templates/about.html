@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}About{% endblock %}
+{% block content %}
+  <section class="mx-auto max-w-2xl px-4 py-16">
+    <h1 class="font-display text-3xl text-text mb-4">About CVMaker</h1>
+    <p class="mb-4 text-text-muted">
+      CVMaker keeps your career as reusable building blocks: entries (a job, a degree, a publication),
+      grouped into sections, assembled into as many CVs as you need. Each entry can carry translations,
+      so one CV renders in any language you have written for.
+    </p>
+    <p class="mb-8 text-text-muted">
+      PDFs are produced by <a class="text-accent underline" href="https://rendercv.com">rendercv</a> and Typst.
+      Your data is yours: export or delete it any time from Settings.
+    </p>
+    <c-button href="{% url 'help' %}" variant="secondary">How it works</c-button>
+  </section>
+{% endblock %}

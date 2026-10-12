@@ -17,7 +17,7 @@ from django.urls import URLPattern, URLResolver, include, path
 from django.views.generic import TemplateView
 
 from core.gallery import gallery_view, sample_pdf_view
-from core.views import healthz, palette_view, readyz
+from core.views import healthz, palette_view, readyz, status_view
 from cv.views import HomePageView
 
 
@@ -64,8 +64,8 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("import/", TemplateView.as_view(template_name="import.html"), name="import"),
     path("help/", TemplateView.as_view(template_name="help.html"), name="help"),
     path("contact/", _placeholder("Contact"), name="contact"),
-    path("status/", _placeholder("Status"), name="status"),
-    path("about/", _placeholder("About"), name="about"),
+    path("status/", status_view, name="status"),
+    path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
     # Cotton component kitchen-sink. View 404s outside DEBUG; URL stays
     # registered so tests can hit it under test settings.
     path("components/", _components_view, name="components"),
