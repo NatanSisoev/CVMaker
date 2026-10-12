@@ -483,3 +483,4 @@ _Each session appends a short note here: date, phase worked, what shipped, what'
 
 ### 2026-10-12 (cont. 5) — Health probes
 - `/healthz` (liveness) and `/readyz` (DB check, 503 when down); exempt from the prod HTTPS redirect. Tests in `tests/integration/test_health.py`.
+- Production logs are now valid JSON (`cvmaker.logging_utils.JsonFormatter`, tracebacks included); optional Sentry via `SENTRY_DSN` (install `sentry-sdk` first).

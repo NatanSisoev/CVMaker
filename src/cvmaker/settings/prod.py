@@ -90,13 +90,19 @@ if EMAIL_PROVIDER in _PROVIDER_KEYS and not ANYMAIL[_PROVIDER_KEYS[EMAIL_PROVIDE
 # ----------------------------------------------------------------------
 # Logging — JSON for log aggregators
 # ----------------------------------------------------------------------
-LOGGING["formatters"]["json"] = {
-    "()": "logging.Formatter",
-    "format": (
-        '{"time":"%(asctime)s","level":"%(levelname)s","logger":"%(name)s","msg":%(message)r}'
-    ),
-}
+LOGGING["formatters"]["json"] = {"()": "cvmaker.logging_utils.JsonFormatter"}
 LOGGING["handlers"]["console"]["formatter"] = "json"
+
+# Error tracking is opt-in: set SENTRY_DSN (and install sentry-sdk).
+if env("SENTRY_DSN", default=""):
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=env("SENTRY_DSN"),
+        environment=env("SENTRY_ENVIRONMENT", default="production"),
+        traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.0),
+        send_default_pii=False,
+    )
 
 # django-ratelimit lists only django-redis as "official"; Django's built-in
 # RedisCache implements atomic incr(), which is all rate limiting needs.
