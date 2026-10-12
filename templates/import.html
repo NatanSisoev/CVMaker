@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Import{% endblock %}
+{% block content %}
+  <section class="mx-auto max-w-xl px-4 py-16">
+    <h1 class="font-display text-3xl text-text mb-2">Import a CV</h1>
+    <p class="mb-6 text-sm text-text-muted">
+      Upload a <a class="text-accent underline" href="https://docs.rendercv.com/">rendercv</a> YAML file
+      (up to 512 KB). We create a CV with its sections and entries and open it in the editor.
+      Nothing is saved if the file has problems; you'll see what to fix.
+    </p>
+    {% if user.is_authenticated %}
+      <form action="{% url 'cv-upload' %}"
+            method="post"
+            enctype="multipart/form-data"
+            class="cv-form">
+        {% csrf_token %}
+        <c-card>
+        <label for="yaml_file" class="text-sm font-medium text-text">YAML file</label>
+        <input id="yaml_file"
+               type="file"
+               name="yaml_file"
+               accept=".yaml,.yml"
+               required
+               class="mt-2 block">
+        </c-card>
+        <div class="mt-6 flex items-center gap-2">
+          <c-button type="submit" variant="primary">Import</c-button>
+          <c-button href="{% url 'cv-list' %}" variant="ghost">Cancel</c-button>
+        </div>
+      </form>
+      <p class="mt-6 text-sm text-text-muted">
+        Starting from scratch instead? <a class="text-accent underline" href="{% url 'cv-new' %}">Create a new CV</a>.
+      </p>
+    {% else %}
+      <c-button href="{% url 'account_login' %}?next={% url 'import' %}" variant="primary">Log in to import</c-button>
+    {% endif %}
+  </section>
+{% endblock %}

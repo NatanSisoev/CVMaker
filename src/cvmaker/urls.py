@@ -61,10 +61,8 @@ urlpatterns: list[URLPattern | URLResolver] = [
         _placeholder("Templates", "A gallery of ready-made CV templates you can start from."),
         name="templates",
     ),
-    path(
-        "import/", _placeholder("Import", "Import from YAML, PDF, or LinkedIn URL."), name="import"
-    ),
-    path("help/", _placeholder("Help"), name="help"),
+    path("import/", TemplateView.as_view(template_name="import.html"), name="import"),
+    path("help/", TemplateView.as_view(template_name="help.html"), name="help"),
     path("contact/", _placeholder("Contact"), name="contact"),
     path("status/", _placeholder("Status"), name="status"),
     path("about/", _placeholder("About"), name="about"),

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Help{% endblock %}
+{% block content %}
+  <section class="mx-auto max-w-3xl px-4 py-12">
+    <h1 class="font-display text-4xl text-text mb-2">How CVMaker works</h1>
+    <p class="mb-10 text-text-muted">
+      Write each piece of your experience once, then assemble CVs from them in any language and style.
+    </p>
+    <h2 class="font-display text-2xl text-text mb-3">The three building blocks</h2>
+    <ol class="mb-10 flex flex-col gap-3">
+      <li class="rounded-md border border-border bg-surface p-4">
+        <strong class="text-text">1. Entries</strong>
+        <p class="text-sm text-text-muted mt-1">
+          One item: a job, a degree, a publication, a bullet point, a line of skills. Entries are reusable
+          and can carry translations.
+        </p>
+      </li>
+      <li class="rounded-md border border-border bg-surface p-4">
+        <strong class="text-text">2. Sections</strong>
+        <p class="text-sm text-text-muted mt-1">
+          A titled group of entries (Experience, Education, Publications). A section holds one
+          <em>kind</em> of entry, and the same section can appear on several CVs.
+        </p>
+      </li>
+      <li class="rounded-md border border-border bg-surface p-4">
+        <strong class="text-text">3. CVs</strong>
+        <p class="text-sm text-text-muted mt-1">
+          A CV lists sections in an order, plus your personal details and a style. You render it to a PDF
+          in any language you have entries for.
+        </p>
+      </li>
+    </ol>
+    <h2 class="font-display text-2xl text-text mb-3">Quick start</h2>
+    <ol class="mb-10 list-decimal pl-6 text-text-muted flex flex-col gap-2">
+      <li>
+        Click <strong class="text-text">+ New CV</strong> on your <a class="text-accent underline" href="{% url 'cv-list' %}">dashboard</a> and name it. The editor opens.
+      </li>
+      <li>
+        Open <strong class="text-text">Personal details</strong> and check your name and contact info.
+      </li>
+      <li>
+        Click <strong class="text-text">+ Add section</strong> (for example "Experience").
+      </li>
+      <li>
+        Inside the section, click <strong class="text-text">+ New entry</strong>, choose the kind and fill it in. Repeat.
+      </li>
+      <li>
+        Pick a language and style, then <strong class="text-text">Render preview</strong>. Download the PDF when you like it.
+      </li>
+    </ol>
+    <h2 class="font-display text-2xl text-text mb-3">In the editor</h2>
+    <ul class="mb-10 list-disc pl-6 text-text-muted flex flex-col gap-2">
+      <li>
+        Drag the <span aria-hidden="true">⠿</span> handles to reorder sections and the entries inside them (render again to see it in the PDF).
+      </li>
+      <li>
+        Click an entry to edit it in place. Under <strong class="text-text">Translations</strong>, add a language (for example <code class="font-mono">es</code>) and fill the translated fields next to the original text. A blank field falls back to the original.
+      </li>
+      <li>The language chips show how complete each translation is: filled, half-filled, or empty.</li>
+      <li>Drag the divider between the panes to resize them.</li>
+      <li>
+        Press <kbd class="font-mono">Ctrl</kbd>/<kbd class="font-mono">⌘</kbd> + <kbd class="font-mono">K</kbd> to jump to any CV, section or entry.
+      </li>
+    </ul>
+    <h2 class="font-display text-2xl text-text mb-3">Good to know</h2>
+    <ul class="mb-10 list-disc pl-6 text-text-muted flex flex-col gap-2">
+      <li>
+        <strong class="text-text">One kind per section.</strong> A section of jobs can't also hold bullets. Make a second section instead.
+      </li>
+      <li>
+        <strong class="text-text">Already have a CV?</strong> <a class="text-accent underline" href="{% url 'import' %}">Import a rendercv YAML file</a>.
+      </li>
+      <li>
+        <strong class="text-text">Your data is yours.</strong> Download everything as JSON, or delete your account, from <a class="text-accent underline" href="{% url 'profile' %}">Settings</a>.
+      </li>
+      <li>
+        <strong class="text-text">Scripts and the CLI.</strong> Create an API token in Settings and see the <a class="text-accent underline" href="{% url 'api:schema' %}">API schema</a>.
+      </li>
+    </ul>
+  </section>
+{% endblock %}
