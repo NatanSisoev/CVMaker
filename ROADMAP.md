@@ -343,8 +343,8 @@ Not selling anything yet, but the hooks need to exist so we don't have to retrof
 - [ ] Pick a host (Railway / Fly / Render / VPS) — deferred decision, locked in when we get here. See ADR-0007 when written.
 - [ ] Provision: 1 web dyno, 1 worker dyno, Postgres, Redis, S3-compatible object store, managed TLS on a custom domain.
 - [ ] `django-storages` with S3 backend for `MEDIA_ROOT`.
-- [ ] Structured logging (`structlog`) with JSON in prod, pretty in dev.
-- [ ] Sentry for errors (free tier).
+- [~] Structured logging (`structlog`) with JSON in prod, pretty in dev. _(71e1006: JSON logging in prod; structlog itself not adopted)_
+- [x] Sentry for errors (free tier). _(71e1006: opt-in via SENTRY_DSN)_
 - [ ] PostHog for product analytics (free self-hosted or cloud).
 - [ ] Uptime monitoring (Better Stack / UptimeRobot).
 - [ ] Backups: nightly pg_dump to S3, 30-day retention.
@@ -362,16 +362,16 @@ The fun column. Not ordered — pick as energy allows.
 
 - [ ] **AI-drafted translations.** "Translate this entry to Spanish" calls an LLM (Anthropic Claude via the API) with the user's own style guide (from existing translated entries) as context. User reviews + edits.
 - [ ] **AI-drafted entries.** Paste a job description and your profile; suggest highlights phrased for that role.
-- [ ] **Share links.** Signed, expiring, optional password, view analytics.
-- [ ] **Public profile pages** at `cvmaker.app/@natan` — opt-in, renders a chosen CV as HTML with OG tags and JSON-LD.
+- [~] **Share links.** Signed, expiring, optional password, view analytics. _(f30242e: expiring tokenised links + revoke; password and view analytics not done)_
+- [x] **Public profile pages** at `cvmaker.app/@natan` — opt-in, renders a chosen CV as HTML with OG tags and JSON-LD. _(9d56874, d16278c)_
 - [ ] **PDF import.** Upload an existing PDF, extract entries, populate the library.
 - [ ] **LinkedIn import.** Paste a public LinkedIn URL, we scrape the public data.
-- [ ] **Job-description tailor.** Paste a JD, we reorder + filter entries to match.
+- [~] **Job-description tailor.** Paste a JD, we reorder + filter entries to match. _(50f0ed8: keyword analysis in the editor; auto reorder/filter not done)_
 - [ ] **CLI** (`pip install cvmaker`) using the API token for "render from local YAML".
 - [ ] **VS Code extension** for editing entries in markdown.
 - [ ] **More themes.** Ship 3 custom Typst themes tuned for: academic, engineering, creative.
 - [ ] **Section snippets** — save a configured section as a reusable template across CVs.
-- [ ] **Version history** per CV — restore any previous render.
+- [x] **Version history** per CV — restore any previous render. _(f30242e: render history page)_
 - [ ] **Cover letter companion** — same building-block system for cover letters, referencing CV entries.
 
 ---
