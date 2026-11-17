@@ -123,9 +123,23 @@ def _redis_status() -> str:
     return "up"
 
 
+def _storage_status() -> str:
+    """ "up" / "down" for S3-backed storage; "skipped" for local or in-memory storage."""
+    from django.core.files.storage import default_storage
+
+    bucket = getattr(default_storage, "bucket_name", None)
+    if not bucket:
+        return "skipped"
+    try:
+        default_storage.connection.meta.client.head_bucket(Bucket=bucket)
+    except Exception:
+        return "down"
+    return "up"
+
+
 @require_GET
 def readyz(request):
-    """Readiness: database and Redis answer. 503 tells the load balancer to wait."""
+    """Readiness: database, Redis and object storage answer. 503 tells the load balancer to wait."""
     from django.db import connection
 
     try:
@@ -135,8 +149,14 @@ def readyz(request):
     except Exception:
         database = "down"
     redis = _redis_status()
-    ok = database == "up" and redis != "down"
-    body = {"status": "ok" if ok else "unavailable", "database": database, "redis": redis}
+    storage = _storage_status()
+    ok = database == "up" and "down" not in (redis, storage)
+    body = {
+        "status": "ok" if ok else "unavailable",
+        "database": database,
+        "redis": redis,
+        "storage": storage,
+    }
     return JsonResponse(body, status=200 if ok else 503)
 
 
