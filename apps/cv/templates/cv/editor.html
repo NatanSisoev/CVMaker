@@ -79,7 +79,7 @@
         </c-slot>
         <div id="tailor-panel" x-show="open" x-cloak class="p-4">
           <p class="mb-2 text-sm text-text-muted">
-            Paste a job posting to see which of your entries match its keywords. Nothing is changed.
+            Paste a job posting to see which of your entries match its keywords. Analysing changes nothing; reordering is a separate button.
           </p>
           <form hx-post="{% url 'cv-tailor' cv_id=cv.id %}" hx-target="#tailor-result" hx-swap="innerHTML"
                 hx-disabled-elt="find button[type=submit]">

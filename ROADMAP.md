@@ -366,7 +366,7 @@ The fun column. Not ordered — pick as energy allows.
 - [x] **Public profile pages** at `cvmaker.app/@natan` — opt-in, renders a chosen CV as HTML with OG tags and JSON-LD. _(9d56874, d16278c)_
 - [ ] **PDF import.** Upload an existing PDF, extract entries, populate the library.
 - [ ] **LinkedIn import.** Paste a public LinkedIn URL, we scrape the public data.
-- [~] **Job-description tailor.** Paste a JD, we reorder + filter entries to match. _(50f0ed8: keyword analysis in the editor; auto reorder/filter not done)_
+- [x] **Job-description tailor.** Paste a JD, we reorder + filter entries to match. _(50f0ed8: keyword analysis; 2026-11-17: "Put best matches first" reorders entries; filtering stays manual)_
 - [ ] **CLI** (`pip install cvmaker`) using the API token for "render from local YAML".
 - [ ] **VS Code extension** for editing entries in markdown.
 - [ ] **More themes.** Ship 3 custom Typst themes tuned for: academic, engineering, creative.

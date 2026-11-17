@@ -52,3 +52,29 @@ def test_editor_has_the_tailor_card(client, user, tailored):
     client.force_login(user)
     body = client.get(reverse("cv-editor", args=[tailored.id])).content.decode()
     assert "Tailor to a job" in body
+
+
+def test_apply_puts_best_matches_first(client, user, other_user, tailored):
+    from sections.models import SectionEntry
+
+    section = tailored.sections.get()
+    # Make "cook" the first entry so the reorder has something to do.
+    cook = section.section_entries.get(entry__alias="cook")
+    py = section.section_entries.get(entry__alias="py")
+    cook.order, py.order = 0, 1
+    cook.save()
+    py.save()
+    url = reverse("cv-tailor-apply", args=[tailored.id])
+
+    client.force_login(other_user)
+    assert client.post(url, {"posting": "python django"}).status_code == 404
+
+    client.force_login(user)
+    resp = client.post(url, {"posting": "Python and Django"})
+    assert resp.status_code == 302
+    order = list(
+        SectionEntry.objects.filter(section=section)
+        .order_by("order")
+        .values_list("entry__alias", flat=True)
+    )
+    assert order == ["py", "cook"]

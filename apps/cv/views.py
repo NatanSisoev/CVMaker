@@ -255,7 +255,27 @@ class CVTailorView(LoginRequiredMixin, View):
         cv = get_object_or_404(CV, pk=cv_id, user=request.user)
         posting = request.POST.get("posting", "").strip()[:MAX_TEXT]
         result = tailor_cv(cv, posting) if posting else None
-        return render(request, "cv/_tailor_result.html", {"cv": cv, "result": result})
+        return render(
+            request, "cv/_tailor_result.html", {"cv": cv, "result": result, "posting": posting}
+        )
+
+
+class CVTailorApplyView(LoginRequiredMixin, View):
+    """POST: reorder each section's entries so the best matches for a posting come first."""
+
+    def post(self, request, cv_id):
+        from .tailor import MAX_TEXT, apply_tailor_order
+
+        cv = get_object_or_404(CV, pk=cv_id, user=request.user)
+        posting = request.POST.get("posting", "").strip()[:MAX_TEXT]
+        changed = apply_tailor_order(cv, posting) if posting else 0
+        messages.success(
+            request,
+            f"Reordered entries in {changed} section{'s' if changed != 1 else ''}."
+            if changed
+            else "Entries were already in the best order.",
+        )
+        return redirect("cv-editor", cv_id=cv.id)
 
 
 class CVDuplicateView(LoginRequiredMixin, View):

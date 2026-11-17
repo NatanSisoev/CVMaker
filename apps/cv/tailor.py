@@ -148,6 +148,8 @@ def tailor_cv(cv: CV, posting: str) -> dict:
             results.append(
                 {
                     "section": section.title,
+                    "section_id": section.pk,
+                    "entry_id": entry.pk,
                     "alias": entry.alias,
                     "matched": matched,
                     "score": len(matched),
@@ -160,3 +162,24 @@ def tailor_cv(cv: CV, posting: str) -> dict:
         "ranked": results,
         "missing": [w for w in words if w not in covered],
     }
+
+
+def apply_tailor_order(cv: CV, posting: str) -> int:
+    """Reorder entries inside each section by match score (best first, ties keep order).
+
+    Sections are shared between CVs, so the new order shows up everywhere the
+    section is used. Returns how many sections actually changed.
+    """
+    from sections.models import Section
+    from sections.services import reorder_entries
+
+    ranked = tailor_cv(cv, posting)["ranked"]
+    scores = {(r["section_id"], r["entry_id"]): r["score"] for r in ranked}
+    changed = 0
+    for section in Section.objects.filter(pk__in={r["section_id"] for r in ranked}):
+        current = list(section.section_entries.order_by("order").values_list("entry_id", flat=True))
+        wanted = sorted(current, key=lambda eid: -scores.get((section.pk, eid), 0))
+        if wanted != current:
+            reorder_entries(section, wanted)
+            changed += 1
+    return changed
