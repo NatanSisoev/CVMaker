@@ -178,7 +178,7 @@ Before any real data exists, swap `User` for a custom model. It is one migration
 - [x] pytest + `pytest-django` + `pytest-cov` + `factory-boy` + `pytest-playwright` wired in `pyproject.toml`.
 - [x] Factories for `User`, `CV`, `Section`, every `Entry` subtype (`tests/factories.py`). _(CVInfo factory lands alongside Phase 2.4 cleanup)_
 - [x] Smoke tests: all 7 public stubs 200, admin 200, signup 302, every named URL reverses (`tests/integration/test_smoke.py` + `test_auth_flow.py`). Unit coverage for custom User and entry `serialize()` contracts.
-- [ ] Coverage gate at 70% — wired via `[tool.coverage]` config; enforce in CI after the first green run establishes a baseline.
+- [x] Coverage gate — CI runs pytest with `--cov-fail-under=85` (full suite measured 94% on 2026-11-17, e2e excluded). Not in pyproject so partial local runs stay green. _(was: wired via `[tool.coverage]` config; enforce in CI after the first green run establishes a baseline.)_
 
 **Definition of done:** `make dev` brings up the full stack locally; `make test` runs green; `git push` triggers CI that gates the merge; the site looks unchanged to a user but the repo is now professional software.
 
