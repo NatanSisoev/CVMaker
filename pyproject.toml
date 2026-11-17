@@ -28,6 +28,7 @@ dependencies = [
     "Django>=5.1,<5.2",
     "django-cotton>=1.4,<2",              # Phase 4: component-template system
     "django-environ>=0.11,<1",
+    "markdown>=3.5,<4",                   # legal pages rendered from docs/legal/*.md
     "django-model-utils>=5.0,<6",         # InheritanceManager for polymorphic entries
     # --- Database ---
     "dj-database-url>=2.3,<3",

@@ -21,6 +21,7 @@ from core.gallery import gallery_view, sample_image_view, sample_pdf_view
 from core.views import (
     contact_view,
     healthz,
+    legal_view,
     palette_view,
     readyz,
     robots_txt,
@@ -78,6 +79,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("help/", TemplateView.as_view(template_name="help.html"), name="help"),
     path("contact/", contact_view, name="contact"),
     path("status/", status_view, name="status"),
+    path("legal/<slug:slug>/", legal_view, name="legal"),
     path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
     # Cotton component kitchen-sink. View 404s outside DEBUG; URL stays
     # registered so tests can hit it under test settings.

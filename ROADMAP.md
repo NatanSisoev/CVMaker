@@ -315,7 +315,7 @@ Prepare for real signups.
 - [x] `django-ratelimit` on auth and render endpoints. _(2026-10-08)_
 - [x] `django-allauth`'s MFA app for TOTP. _(TOTP + recovery codes, linked from Settings)_
 - [x] CSRF, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy headers via middleware. _(Permissions-Policy added 2026-10-08; the rest were already in prod.py)_
-- [ ] Legal: ToS, Privacy Policy, Cookie Policy. Static pages in `docs/legal/` rendered with markdown-to-html.
+- [x] Legal: ToS, Privacy Policy, Cookie Policy. Static pages in `docs/legal/` rendered with markdown-to-html. _(2026-11-17: `/legal/<slug>/`, footer links; text is a draft template -- get it legally reviewed)_
 - [x] GDPR: account deletion (hard delete) and data export (JSON of everything). _(2026-10-08, Settings page)_
 - [x] Waitlist flag so we can collect emails before opening signup if we want. _(`SIGNUP_MODE=waitlist`, 2026-10-08)_
 

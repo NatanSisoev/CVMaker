@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -252,3 +253,21 @@ def contact_view(request):
             initial = {"name": request.user.get_display_name(), "email": request.user.email}
         form = ContactForm(initial=initial)
     return render(request, "contact.html", {"form": form})
+
+
+LEGAL_DIR = Path(__file__).resolve().parents[2] / "docs" / "legal"
+LEGAL_PAGES = {"terms": "Terms of Service", "privacy": "Privacy Policy", "cookies": "Cookie Policy"}
+
+
+@require_GET
+def legal_view(request, slug):
+    """Render ``docs/legal/<slug>.md`` (Terms, Privacy, Cookies) as a page."""
+    import markdown
+    from django.http import Http404
+
+    if slug not in LEGAL_PAGES:
+        raise Http404("Unknown legal page")
+    html = markdown.markdown(
+        (LEGAL_DIR / f"{slug}.md").read_text(encoding="utf-8"), extensions=["tables"]
+    )
+    return render(request, "legal.html", {"title": LEGAL_PAGES[slug], "body": html})
