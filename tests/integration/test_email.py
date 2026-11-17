@@ -203,3 +203,19 @@ def test_settings_toggle_saves(client, user):
     )
     user.refresh_from_db()
     assert user.notify_on_render is True
+
+
+def test_render_timeout_fails_gracefully(user, renderable_cv, no_dispatch, monkeypatch):
+    from rq.timeouts import JobTimeoutException
+
+    def stall(payload, style=""):
+        raise JobTimeoutException("Task exceeded maximum timeout value (35 seconds)")
+
+    monkeypatch.setattr(tasks, "_render_payload_to_pdf", stall)
+    render = enqueue_render(renderable_cv, requested_by=user)
+    tasks.render_cv(render.id)  # must not raise
+
+    render.refresh_from_db()
+    assert render.status == "failed"
+    assert "longer than 30 seconds" in render.error
+    assert render.completed_at is not None

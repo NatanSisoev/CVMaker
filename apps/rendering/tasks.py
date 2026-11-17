@@ -93,6 +93,18 @@ def render_cv(render_id) -> None:
         render.save(update_fields=["status", "error", "completed_at"])
         _notify(render)
         return
+    except _timeout_exceptions() as exc:
+        # RQ's queue timeout (35s) fired while Typst was compiling.
+        logger.warning("render_cv: Render %s timed out: %s", render_id, exc)
+        render.status = RenderStatus.FAILED
+        render.error = (
+            f"Rendering took longer than {TYPST_TIMEOUT_SECONDS} seconds and was stopped. "
+            "Try a shorter CV or a simpler style, then retry."
+        )
+        render.completed_at = timezone.now()
+        render.save(update_fields=["status", "error", "completed_at"])
+        _notify(render)
+        return
     except Exception:  # last-resort
         # Anything that escaped the inner handler is a genuine bug --
         # log the full traceback for ops, store a generic user-facing
@@ -123,6 +135,13 @@ def render_cv(render_id) -> None:
 # ---------------------------------------------------------------------------
 # Internals
 # ---------------------------------------------------------------------------
+def _timeout_exceptions() -> tuple[type[BaseException], ...]:
+    """RQ's timeout exception, resolved lazily so tests need no Redis."""
+    from rq.timeouts import JobTimeoutException
+
+    return (JobTimeoutException,)
+
+
 def _notify(render) -> None:
     """Email the requester if they opted in (Settings). Never fails a render."""
     user = render.requested_by

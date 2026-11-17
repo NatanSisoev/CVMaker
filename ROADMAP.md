@@ -242,7 +242,7 @@ Take PDF rendering out of the request and make it fast, cached, and robust.
 - [x] `tasks.py`: RQ job `render_cv(render_id)` that calls rendercv + Typst, writes the PDF to S3, updates the model. _(orchestration Phase 3.3; real rendercv 2.8 call wired 2026-10-07)_
 - [x] Content-hash the render input (`sha256` of the serialized payload + theme) and cache by hash — identical inputs never re-render.
 - [x] Replace `download_cv` with: POST `/renders/cv/<id>/` enqueues a job (cache-hit redirect to PDF, cache-miss 202 + polling fragment); GET `/renders/<id>/` polls; GET `/renders/<id>/pdf/` streams the file once done. HTMX polls with `hx-trigger="every 500ms"` until terminal. _(legacy `download_cv` left in place; cv.html template still uses it -- Phase 4 frontend rewrite swaps to the new flow)_
-- [ ] Hard timeout (30s) and graceful failure with a readable error.
+- [x] Hard timeout (30s) and graceful failure with a readable error. _(RQ queue timeout 35s; `JobTimeoutException` caught in `render_cv` → FAILED + readable error, tested)_
 - [ ] Sandbox the Typst subprocess: `nobody` user, no network, 256MB memory cap, cgroup-limited.
 - [x] Store rendered PDFs in S3 (MinIO locally).
 
