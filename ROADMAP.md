@@ -348,7 +348,7 @@ Not selling anything yet, but the hooks need to exist so we don't have to retrof
 - [ ] PostHog for product analytics (free self-hosted or cloud).
 - [ ] Uptime monitoring (Better Stack / UptimeRobot).
 - [ ] Backups: nightly pg_dump to S3, 30-day retention.
-- [ ] Health endpoints: `/healthz` (DB + Redis + S3 reachable), `/readyz`.
+- [~] Health endpoints: `/healthz` (DB + Redis + S3 reachable), `/readyz`. _(DB + Redis done; S3 check pending)_
 - [ ] A staging environment on the same provider.
 - [ ] One-command deploy from main via GitHub Actions on green CI.
 

@@ -108,17 +108,36 @@ def healthz(request):
     return JsonResponse({"status": "ok"})
 
 
+def _redis_status() -> str:
+    """ "up" / "down", or "skipped" when the RQ queues run synchronously (no Redis)."""
+    from django.conf import settings
+
+    if not all(q.get("ASYNC", True) for q in settings.RQ_QUEUES.values()):
+        return "skipped"
+    try:
+        import django_rq
+
+        django_rq.get_connection("default").ping()
+    except Exception:
+        return "down"
+    return "up"
+
+
 @require_GET
 def readyz(request):
-    """Readiness: the database answers. 503 tells the load balancer to wait."""
+    """Readiness: database and Redis answer. 503 tells the load balancer to wait."""
     from django.db import connection
 
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
+        database = "up"
     except Exception:
-        return JsonResponse({"status": "unavailable", "database": "down"}, status=503)
-    return JsonResponse({"status": "ok", "database": "up"})
+        database = "down"
+    redis = _redis_status()
+    ok = database == "up" and redis != "down"
+    body = {"status": "ok" if ok else "unavailable", "database": database, "redis": redis}
+    return JsonResponse(body, status=200 if ok else 503)
 
 
 @require_GET
