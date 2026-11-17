@@ -243,7 +243,7 @@ Take PDF rendering out of the request and make it fast, cached, and robust.
 - [x] Content-hash the render input (`sha256` of the serialized payload + theme) and cache by hash — identical inputs never re-render.
 - [x] Replace `download_cv` with: POST `/renders/cv/<id>/` enqueues a job (cache-hit redirect to PDF, cache-miss 202 + polling fragment); GET `/renders/<id>/` polls; GET `/renders/<id>/pdf/` streams the file once done. HTMX polls with `hx-trigger="every 500ms"` until terminal. _(legacy `download_cv` left in place; cv.html template still uses it -- Phase 4 frontend rewrite swaps to the new flow)_
 - [x] Hard timeout (30s) and graceful failure with a readable error. _(RQ queue timeout 35s; `JobTimeoutException` caught in `render_cv` → FAILED + readable error, tested)_
-- [ ] Sandbox the Typst subprocess: `nobody` user, no network, 256MB memory cap, cgroup-limited.
+- [~] Sandbox the Typst subprocess: `nobody` user, no network, 256MB memory cap, cgroup-limited. _(2026-11-17: worker runs non-root, caps dropped, 512MB/128 pids/1 CPU in `compose.yaml`; egress policy is a Phase 8 deploy concern)_
 - [x] Store rendered PDFs in S3 (MinIO locally).
 
 **Definition of done:** rendering a CV is fire-and-forget from the UI; the PDF appears within 3 seconds for a cached entry, 8 seconds cold; two simultaneous renders don't block the web worker; a render failure shows a clear error with a "Retry" button.

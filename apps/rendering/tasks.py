@@ -10,10 +10,11 @@ the Render row's status.
 Sandbox model (see ADR-0007 for the full reasoning):
 
   - **Process isolation**: container-level. The worker container runs
-    as a non-root user, has a 256 MiB memory cap, and -- crucially --
-    starts with no outbound network policy in compose. Typst doesn't
-    need the network at render time; rendercv has already gathered all
-    inputs by the time we invoke the binary.
+    as a non-root user with all capabilities dropped, no-new-privileges,
+    a 512 MiB memory cap, 128 pids and 1 CPU (see ``compose.yaml``).
+    Typst compiles in-process (``typst-py``), so these limits bound the
+    whole worker. The container keeps its compose-network access (Postgres,
+    Redis, S3); blocking all other egress is a deploy-time network policy.
   - **Time bound**: ``subprocess.run(..., timeout=30)``. RQ's per-queue
     DEFAULT_TIMEOUT is 35 to leave room for orchestration overhead
     (Render row updates, file writes); if Typst itself stalls past 30s

@@ -61,6 +61,16 @@ services:
     volumes:
       - .:/app
       - media:/app/media
+    # Render sandbox (ROADMAP Phase 3): Typst compiles untrusted CV content,
+    # so cap what a runaway or malicious render can consume. The worker still
+    # needs the compose network for Postgres/Redis/MinIO.
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 128
+    cpus: 1.0
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       postgres:
         condition: service_healthy
