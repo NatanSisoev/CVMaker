@@ -25,6 +25,8 @@
                       <option value="7d" selected>7 days</option>
                       <option value="30d">30 days</option>
                     </select>
+                    <input type="text" name="password" autocomplete="off" placeholder="Password (optional)" aria-label="Optional link password"
+                           class="w-40 rounded-md border border-border bg-surface-2 px-2 py-1 text-sm text-text">
                     <c-button type="submit" variant="secondary" size="sm">Share</c-button>
                   </form>
                 </div>
@@ -38,7 +40,7 @@
                   <input readonly value="{{ request.scheme }}://{{ request.get_host }}{% url 'rendering:shared' token=link.token %}"
                          onclick="this.select()" aria-label="Share link"
                          class="min-w-0 flex-1 bg-transparent font-mono text-xs text-text">
-                  <span class="text-text-muted">expires {{ link.expires_at|date:"M j" }} · {{ link.view_count }} view{{ link.view_count|pluralize }}</span>
+                  <span class="text-text-muted">expires {{ link.expires_at|date:"M j" }}{% if link.has_password %} · password{% endif %} · {{ link.view_count }} view{{ link.view_count|pluralize }}</span>
                   <form action="{% url 'rendering:share-revoke' link_id=link.id %}" method="post">
                     {% csrf_token %}
                     <button type="submit" class="text-danger underline">Revoke</button>

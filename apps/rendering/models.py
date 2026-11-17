@@ -142,12 +142,28 @@ class ShareLink(models.Model):
     expires_at = models.DateTimeField()
     revoked = models.BooleanField(default=False)
     view_count = models.PositiveIntegerField(default=0)
+    # Optional password (Django password hash); blank means anyone with the link.
+    password_hash = models.CharField(max_length=128, blank=True, default="", editable=False)
 
     class Meta:
         ordering = ("-created_at",)
 
     def __str__(self) -> str:
         return f"ShareLink({self.render_id}, revoked={self.revoked})"
+
+    @property
+    def has_password(self) -> bool:
+        return bool(self.password_hash)
+
+    def set_password(self, raw: str) -> None:
+        from django.contrib.auth.hashers import make_password
+
+        self.password_hash = make_password(raw) if raw else ""
+
+    def check_password(self, raw: str) -> bool:
+        from django.contrib.auth.hashers import check_password
+
+        return bool(self.password_hash) and check_password(raw, self.password_hash)
 
     @property
     def is_active(self) -> bool:

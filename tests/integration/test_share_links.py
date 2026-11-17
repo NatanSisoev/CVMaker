@@ -98,3 +98,32 @@ def test_dashboard_without_renders_has_no_pdf_link(client):
     Render.objects.create(cv=cv, payload_hash="q", status=RenderStatus.FAILED)
     client.force_login(cv.user)
     assert "Latest PDF" not in client.get(reverse("cv-list")).content.decode()
+
+
+def test_password_protected_link(client, done_render):
+    link = ShareLink(render=done_render, expires_at=timezone.now() + timedelta(days=1))
+    link.set_password("s3cret")
+    link.save()
+    url = reverse("rendering:shared", args=[link.token])
+
+    gate = client.get(url)
+    assert gate.status_code == 200 and b"password protected" in gate.content
+    assert client.post(url, {"password": "nope"}).status_code == 401
+    link.refresh_from_db()
+    assert link.view_count == 0
+
+    ok = client.post(url, {"password": "s3cret"})
+    assert ok.status_code == 200 and b"".join(ok.streaming_content).startswith(b"%PDF")
+    link.refresh_from_db()
+    assert link.view_count == 1
+
+
+def test_create_link_with_password_stores_hash_not_plaintext(client, done_render):
+    client.force_login(done_render.cv.user)
+    client.post(
+        reverse("rendering:share-create", args=[done_render.id]),
+        {"duration": "1d", "password": "hunter2"},
+    )
+    link = ShareLink.objects.get()
+    assert link.has_password and "hunter2" not in link.password_hash
+    assert link.check_password("hunter2") and not link.check_password("x")

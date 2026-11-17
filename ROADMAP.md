@@ -362,7 +362,7 @@ The fun column. Not ordered — pick as energy allows.
 
 - [ ] **AI-drafted translations.** "Translate this entry to Spanish" calls an LLM (Anthropic Claude via the API) with the user's own style guide (from existing translated entries) as context. User reviews + edits.
 - [ ] **AI-drafted entries.** Paste a job description and your profile; suggest highlights phrased for that role.
-- [~] **Share links.** Signed, expiring, optional password, view analytics. _(f30242e: expiring tokenised links + revoke; password and view analytics not done)_
+- [x] **Share links.** Signed, expiring, optional password, view analytics. _(f30242e: expiring links, revoke, view counts; 2026-11-17: optional password)_
 - [x] **Public profile pages** at `cvmaker.app/@natan` — opt-in, renders a chosen CV as HTML with OG tags and JSON-LD. _(9d56874, d16278c)_
 - [ ] **PDF import.** Upload an existing PDF, extract entries, populate the library.
 - [ ] **LinkedIn import.** Paste a public LinkedIn URL, we scrape the public data.

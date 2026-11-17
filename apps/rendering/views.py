@@ -26,7 +26,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.clickjacking import xframe_options_sameorigin
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 from django_ratelimit.decorators import ratelimit
 
 from cv.models import CV
@@ -160,8 +160,11 @@ def share_create_view(request, render_id):
     if render_row.status != RenderStatus.DONE or not render_row.pdf_file:
         raise Http404("PDF not ready")
     days = SHARE_DURATIONS.get(request.POST.get("duration", "7d"), 7)
-    ShareLink.objects.create(render=render_row, expires_at=timezone.now() + timedelta(days=days))
-    messages.success(request, f"Share link created; it expires in {days} day(s).")
+    link = ShareLink(render=render_row, expires_at=timezone.now() + timedelta(days=days))
+    link.set_password(request.POST.get("password", "").strip())
+    link.save()
+    suffix = " and needs a password" if link.has_password else ""
+    messages.success(request, f"Share link created; it expires in {days} day(s){suffix}.")
     return redirect("rendering:history", cv_id=render_row.cv_id)
 
 
@@ -179,9 +182,9 @@ def share_revoke_view(request, link_id):
     return redirect("rendering:history", cv_id=link.render.cv_id)
 
 
-@require_GET
+@require_http_methods(["GET", "POST"])
 def shared_pdf_view(request, token):
-    """Public: anyone holding a live token can read that one PDF."""
+    """Public: anyone holding a live token (and its password, if set) can read that PDF."""
     from django.db.models import F
 
     from .models import ShareLink
@@ -189,6 +192,20 @@ def shared_pdf_view(request, token):
     link = get_object_or_404(ShareLink.objects.select_related("render__cv"), token=token)
     if not link.is_active or not link.render.pdf_file:
         raise Http404("This link has expired or was revoked.")
+    if link.has_password:
+        # Verify on POST only, so the password never travels in a URL.
+        if request.method != "POST" or not link.check_password(request.POST.get("password", "")):
+            response = render(
+                request,
+                "rendering/share_password.html",
+                {"wrong": request.method == "POST"},
+                status=401 if request.method == "POST" else 200,
+            )
+            response["X-Robots-Tag"] = "noindex, nofollow"
+            response["Cache-Control"] = "private, no-store"
+            return response
+    elif request.method == "POST":
+        return redirect("rendering:shared", token=token)
     ShareLink.objects.filter(pk=link.pk).update(view_count=F("view_count") + 1)
     response = FileResponse(
         link.render.pdf_file.open("rb"),
