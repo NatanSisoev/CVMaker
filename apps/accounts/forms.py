@@ -12,8 +12,18 @@ from typing import ClassVar
 
 from django import forms
 from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import PasswordChangeForm
 
 User = get_user_model()
+
+
+class QuietPasswordChangeForm(PasswordChangeForm):
+    """Django's form autofocuses ``old_password``; on the Settings page that scrolls
+    the whole page down to it on every load, so drop the autofocus."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["old_password"].widget.attrs.pop("autofocus", None)
 
 
 _HANDLE_RE = re.compile(r"^[a-z0-9_-]{3,30}$")

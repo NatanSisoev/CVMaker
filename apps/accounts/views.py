@@ -5,7 +5,6 @@ from __future__ import annotations
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout, update_session_auth_hash
-from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
@@ -16,7 +15,7 @@ from django.views import View
 from django_ratelimit.decorators import ratelimit
 from rest_framework.authtoken.models import Token
 
-from .forms import DeleteAccountForm, ProfileForm, WaitlistForm
+from .forms import DeleteAccountForm, ProfileForm, QuietPasswordChangeForm, WaitlistForm
 from .gdpr import delete_account, export_user_data
 from .models import WaitlistEntry
 
@@ -60,7 +59,7 @@ class AccountSettingsView(LoginRequiredMixin, View):
             self.template_name,
             {
                 "profile_form": profile_form or ProfileForm(instance=request.user),
-                "password_form": password_form or PasswordChangeForm(request.user),
+                "password_form": password_form or QuietPasswordChangeForm(request.user),
                 "api_token": Token.objects.filter(user=request.user).first(),
                 "delete_form": delete_form or DeleteAccountForm(request.user),
             },
@@ -79,7 +78,7 @@ class AccountSettingsView(LoginRequiredMixin, View):
                 return redirect("profile")
             return self._render(request, profile_form=form)
         if action == "password":
-            form = PasswordChangeForm(request.user, request.POST)
+            form = QuietPasswordChangeForm(request.user, request.POST)
             if form.is_valid():
                 user = form.save()
                 update_session_auth_hash(request, user)  # stay logged in

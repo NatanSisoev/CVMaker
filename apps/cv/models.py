@@ -73,6 +73,9 @@ class CV(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     modified_date = models.DateTimeField(auto_now=True)
 
+    def __str__(self) -> str:
+        return self.alias
+
     def save(self, *args, **kwargs):
         limit = settings.MAX_CVS_PER_USER
         if (
