@@ -30,3 +30,8 @@ def test_settings_page_does_not_autofocus_the_password_field(client, user):
     client.force_login(user)
     html = client.get(reverse("profile")).content.decode()
     assert "autofocus" not in html
+
+
+def test_homepage_shows_the_inline_explainer_diagram(client):
+    html = client.get(reverse("homepage")).content.decode()
+    assert "How a CV is assembled" in html and "explainer.svg" not in html

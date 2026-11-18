@@ -1,0 +1,90 @@
+{# How a CV is built: one CV points at its details and sections; sections hold reusable entries.
+   Inline SVG so it picks up the theme tokens (light/dark) and the self-hosted fonts. #}
+<svg viewBox="0 0 680 520" role="img" aria-labelledby="explainer-title explainer-desc"
+     class="mx-auto h-auto w-full max-w-3xl" style="font-family: Inter, ui-sans-serif, system-ui, sans-serif">
+  <title id="explainer-title">How a CV is assembled</title>
+  <desc id="explainer-desc">
+    A CV combines personal details, a design, a locale and render settings with an ordered list of sections.
+    Each section holds entries that you write once and reuse across CVs.
+  </desc>
+  <style>
+    .ex-line { fill: none; stroke: var(--text-muted); stroke-opacity: .75; stroke-width: 1.75; stroke-linecap: round;
+               animation: ex-fade .9s ease-out .1s both; }
+    @keyframes ex-fade { from { opacity: 0; } to { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .ex-line { animation: none; } }
+    .ex-label { fill: var(--text-muted); font-size: 11px; font-weight: 600; letter-spacing: .12em; }
+    .ex-title { fill: var(--text); font-size: 13px; font-weight: 600; }
+    .ex-sub   { fill: var(--text-muted); font-size: 11px; }
+    .ex-card  { fill: var(--surface); stroke: var(--border); stroke-width: 1; }
+    .ex-pill  { fill: var(--surface-2); stroke: var(--border); stroke-width: 1; }
+    .ex-chip  { fill: none; stroke: var(--border); stroke-width: 1; }
+    .ex-dot   { fill: var(--accent); }
+  </style>
+
+  {# --- connectors (drawn first so boxes sit on top) --- #}
+  <g>
+    {# CV -> details #}
+    <path class="ex-line" d="M190 256 C230 256 230 54 270 54"/>
+    <path class="ex-line" d="M190 256 C230 256 230 114 270 114"/>
+    <path class="ex-line" d="M190 256 C230 256 230 174 270 174"/>
+    <path class="ex-line" d="M190 256 C230 256 230 234 270 234"/>
+    {# CV -> sections #}
+    <path class="ex-line" d="M190 256 C230 256 230 335 270 335"/>
+    <path class="ex-line" d="M190 256 C230 256 230 445 270 445"/>
+    {# Experience -> entries #}
+    <path class="ex-line" d="M410 335 C465 335 465 303 520 303"/>
+    <path class="ex-line" d="M410 335 C465 335 465 335 520 335"/>
+    <path class="ex-line" d="M410 335 C465 335 465 367 520 367"/>
+    {# Education -> entries #}
+    <path class="ex-line" d="M410 445 C465 445 465 413 520 413"/>
+    <path class="ex-line" d="M410 445 C465 445 465 445 520 445"/>
+    <path class="ex-line" d="M410 445 C465 445 465 477 520 477"/>
+  </g>
+
+  {# --- CV --- #}
+  <rect x="24" y="166" width="168" height="180" rx="16" style="fill: var(--accent)"/>
+  <text x="48" y="226" style="fill: var(--accent-ink); font-family: Fraunces, Georgia, serif; font-size: 40px; font-weight: 600">CV</text>
+  <text x="48" y="254" style="fill: var(--accent-ink); font-size: 12px; opacity: .85">One per role,</text>
+  <text x="48" y="271" style="fill: var(--accent-ink); font-size: 12px; opacity: .85">in any language</text>
+  <rect x="48" y="304" width="52" height="22" rx="11" style="fill: var(--accent-ink); opacity: .18"/>
+  <text x="74" y="319" text-anchor="middle" style="fill: var(--accent-ink); font-size: 11px; font-weight: 600">PDF</text>
+
+  {# --- details --- #}
+  <text class="ex-label" x="270" y="20">DETAILS</text>
+  <g>
+    <rect class="ex-pill" x="270" y="32" width="140" height="44" rx="10"/>
+    <text class="ex-title" x="286" y="51">Info</text><text class="ex-sub" x="286" y="67">Name &amp; contact</text>
+    <rect class="ex-pill" x="270" y="92" width="140" height="44" rx="10"/>
+    <text class="ex-title" x="286" y="111">Design</text><text class="ex-sub" x="286" y="127">Theme &amp; layout</text>
+    <rect class="ex-pill" x="270" y="152" width="140" height="44" rx="10"/>
+    <text class="ex-title" x="286" y="171">Locale</text><text class="ex-sub" x="286" y="187">Language &amp; dates</text>
+    <rect class="ex-pill" x="270" y="212" width="140" height="44" rx="10"/>
+    <text class="ex-title" x="286" y="231">Settings</text><text class="ex-sub" x="286" y="247">Render options</text>
+  </g>
+
+  {# --- sections --- #}
+  <text class="ex-label" x="270" y="296">SECTIONS</text>
+  <g>
+    <rect class="ex-card" x="270" y="300" width="140" height="70" rx="12"/>
+    <rect class="ex-dot" x="270" y="316" width="4" height="38" rx="2"/>
+    <text class="ex-title" x="290" y="331">Experience</text><text class="ex-sub" x="290" y="349">3 entries</text>
+    <rect class="ex-card" x="270" y="410" width="140" height="70" rx="12"/>
+    <rect class="ex-dot" x="270" y="426" width="4" height="38" rx="2"/>
+    <text class="ex-title" x="290" y="441">Education</text><text class="ex-sub" x="290" y="459">3 entries</text>
+  </g>
+
+  {# --- entries --- #}
+  <text class="ex-label" x="520" y="276">ENTRIES · WRITE ONCE</text>
+  <g>
+    <rect class="ex-chip" x="520" y="290" width="150" height="26" rx="13"/><text class="ex-sub" x="538" y="307" style="fill: var(--text)">Senior engineer</text>
+    <rect class="ex-chip" x="520" y="322" width="150" height="26" rx="13"/><text class="ex-sub" x="538" y="339" style="fill: var(--text)">Research intern</text>
+    <rect class="ex-chip" x="520" y="354" width="150" height="26" rx="13"/><text class="ex-sub" x="538" y="371" style="fill: var(--text)">Freelance work</text>
+    <rect class="ex-chip" x="520" y="400" width="150" height="26" rx="13"/><text class="ex-sub" x="538" y="417" style="fill: var(--text)">MSc thesis</text>
+    <rect class="ex-chip" x="520" y="432" width="150" height="26" rx="13"/><text class="ex-sub" x="538" y="449" style="fill: var(--text)">BSc degree</text>
+    <rect class="ex-chip" x="520" y="464" width="150" height="26" rx="13"/><text class="ex-sub" x="538" y="481" style="fill: var(--text)">Online course</text>
+  </g>
+  <g>
+    <circle class="ex-dot" cx="520" cy="303" r="3"/><circle class="ex-dot" cx="520" cy="335" r="3"/><circle class="ex-dot" cx="520" cy="367" r="3"/>
+    <circle class="ex-dot" cx="520" cy="413" r="3"/><circle class="ex-dot" cx="520" cy="445" r="3"/><circle class="ex-dot" cx="520" cy="477" r="3"/>
+  </g>
+</svg>
