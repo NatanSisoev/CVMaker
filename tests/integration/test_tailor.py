@@ -78,3 +78,16 @@ def test_apply_puts_best_matches_first(client, user, other_user, tailored):
         .values_list("entry__alias", flat=True)
     )
     assert order == ["py", "cook"]
+
+
+def test_filler_words_are_not_keywords():
+    assert "need" not in keywords("We need Python and are looking for a great candidate")
+
+
+def test_reorder_button_only_when_something_matches(client, user, tailored):
+    client.force_login(user)
+    url = reverse("cv-tailor", args=[tailored.id])
+    assert "Put best matches first" in client.post(url, {"posting": "Python"}).content.decode()
+    assert (
+        "Put best matches first" not in client.post(url, {"posting": "Kubernetes"}).content.decode()
+    )

@@ -1,7 +1,19 @@
 {% extends 'base.html' %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
-  <article class="prose prose-neutral dark:prose-invert mx-auto max-w-2xl px-4 py-16">
+  {# Styled with the theme tokens (not the typography plugin) so it reads in light and dark. #}
+  <article class="mx-auto max-w-2xl px-4 py-16 text-text
+                  [&_h1]:font-display [&_h1]:text-3xl [&_h1]:mb-4
+                  [&_h2]:font-display [&_h2]:text-xl [&_h2]:mt-8 [&_h2]:mb-2
+                  [&_p]:mb-4 [&_p]:text-text-muted [&_p]:leading-relaxed
+                  [&_em]:text-text-muted
+                  [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:text-text-muted
+                  [&_li]:mb-1 [&_strong]:text-text
+                  [&_a]:text-accent [&_a]:underline
+                  [&_code]:font-mono [&_code]:text-sm
+                  [&_table]:w-full [&_table]:mb-4 [&_table]:text-sm [&_table]:text-text-muted
+                  [&_th]:text-left [&_th]:text-text [&_th]:py-1 [&_th]:pr-4
+                  [&_td]:py-1 [&_td]:pr-4 [&_tr]:border-b [&_tr]:border-border">
     {{ body|safe }}
   </article>
 {% endblock %}

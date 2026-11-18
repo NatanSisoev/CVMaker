@@ -113,6 +113,21 @@ _STOP = frozenset(
         "including",
         "etc",
         "new",
+        "need",
+        "needs",
+        "looking",
+        "seeking",
+        "join",
+        "candidate",
+        "ideal",
+        "someone",
+        "responsible",
+        "required",
+        "preferred",
+        "plus",
+        "good",
+        "great",
+        "well",
     ]
 )
 MAX_TEXT = 20_000
@@ -158,6 +173,7 @@ def tailor_cv(cv: CV, posting: str) -> dict:
     results.sort(key=lambda r: -r["score"])
     covered = {w for r in results for w in r["matched"]}
     return {
+        "any_match": any(r["score"] for r in results),
         "keywords": words,
         "ranked": results,
         "missing": [w for w in words if w not in covered],
